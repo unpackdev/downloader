@@ -1,52 +1,32 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.0;
 
 import "./SimpleReadAccessController.sol";
 import "./AccessControllerInterface.sol";
-import "./TypeAndVersionInterface.sol";
-
-/* dev dependencies - to be re/moved after audit */
 import "./FlagsInterface.sol";
 
 /**
  * @title The Flags contract
  * @notice Allows flags to signal to any reader on the access control list.
- * The owner can set flags, or designate other addresses to set flags.
- * Raise flag actions are controlled by its own access controller.
- * Lower flag actions are controlled by its own access controller.
- * An expected pattern is to allow addresses to raise flags on themselves, so if you are subscribing to
+ * The owner can set flags, or designate other addresses to set flags. The
+ * owner must turn the flags off, other setters cannot. An expected pattern is
+ * to allow addresses to raise flags on themselves, so if you are subscribing to
  * FlagOn events you should filter for addresses you care about.
  */
-contract Flags is TypeAndVersionInterface, FlagsInterface, SimpleReadAccessController {
+contract Flags is FlagsInterface, SimpleReadAccessController {
   AccessControllerInterface public raisingAccessController;
-  AccessControllerInterface public loweringAccessController;
 
   mapping(address => bool) private flags;
 
   event FlagRaised(address indexed subject);
   event FlagLowered(address indexed subject);
   event RaisingAccessControllerUpdated(address indexed previous, address indexed current);
-  event LoweringAccessControllerUpdated(address indexed previous, address indexed current);
 
   /**
    * @param racAddress address for the raising access controller.
-   * @param lacAddress address for the lowering access controller.
    */
-  constructor(address racAddress, address lacAddress) {
+  constructor(address racAddress) {
     setRaisingAccessController(racAddress);
-    setLoweringAccessController(lacAddress);
-  }
-
-  /**
-   * @notice versions:
-   *
-   * - Flags 1.1.0: upgraded to solc 0.8, added lowering access controller
-   * - Flags 1.0.0: initial release
-   *
-   * @inheritdoc TypeAndVersionInterface
-   */
-  function typeAndVersion() external pure virtual override returns (string memory) {
-    return "Flags 1.1.0";
   }
 
   /**
@@ -80,9 +60,9 @@ contract Flags is TypeAndVersionInterface, FlagsInterface, SimpleReadAccessContr
    * @param subject The contract address whose flag is being raised
    */
   function raiseFlag(address subject) external override {
-    require(_allowedToRaiseFlags(), "Not allowed to raise flags");
+    require(allowedToRaiseFlags(), "Not allowed to raise flags");
 
-    _tryToRaiseFlag(subject);
+    tryToRaiseFlag(subject);
   }
 
   /**
@@ -92,38 +72,25 @@ contract Flags is TypeAndVersionInterface, FlagsInterface, SimpleReadAccessContr
    * @param subjects List of the contract addresses whose flag is being raised
    */
   function raiseFlags(address[] calldata subjects) external override {
-    require(_allowedToRaiseFlags(), "Not allowed to raise flags");
+    require(allowedToRaiseFlags(), "Not allowed to raise flags");
 
     for (uint256 i = 0; i < subjects.length; i++) {
-      _tryToRaiseFlag(subjects[i]);
+      tryToRaiseFlag(subjects[i]);
     }
   }
 
   /**
-   * @notice allows owner to disable the warning flags for an addresses.
-   * Access is controlled by loweringAccessController, except for owner
-   * who always has access.
-   * @param subject The contract address whose flag is being lowered
-   */
-  function lowerFlag(address subject) external override {
-    require(_allowedToLowerFlags(), "Not allowed to lower flags");
-
-    _tryToLowerFlag(subject);
-  }
-
-  /**
    * @notice allows owner to disable the warning flags for multiple addresses.
-   * Access is controlled by loweringAccessController, except for owner
-   * who always has access.
    * @param subjects List of the contract addresses whose flag is being lowered
    */
-  function lowerFlags(address[] calldata subjects) external override {
-    require(_allowedToLowerFlags(), "Not allowed to lower flags");
-
+  function lowerFlags(address[] calldata subjects) external override onlyOwner {
     for (uint256 i = 0; i < subjects.length; i++) {
       address subject = subjects[i];
 
-      _tryToLowerFlag(subject);
+      if (flags[subject]) {
+        flags[subject] = false;
+        emit FlagLowered(subject);
+      }
     }
   }
 
@@ -141,36 +108,16 @@ contract Flags is TypeAndVersionInterface, FlagsInterface, SimpleReadAccessContr
     }
   }
 
-  function setLoweringAccessController(address lacAddress) public override onlyOwner {
-    address previous = address(loweringAccessController);
-
-    if (previous != lacAddress) {
-      loweringAccessController = AccessControllerInterface(lacAddress);
-
-      emit LoweringAccessControllerUpdated(previous, lacAddress);
-    }
-  }
-
   // PRIVATE
-  function _allowedToRaiseFlags() private view returns (bool) {
+
+  function allowedToRaiseFlags() private view returns (bool) {
     return msg.sender == owner() || raisingAccessController.hasAccess(msg.sender, msg.data);
   }
 
-  function _allowedToLowerFlags() private view returns (bool) {
-    return msg.sender == owner() || loweringAccessController.hasAccess(msg.sender, msg.data);
-  }
-
-  function _tryToRaiseFlag(address subject) private {
+  function tryToRaiseFlag(address subject) private {
     if (!flags[subject]) {
       flags[subject] = true;
       emit FlagRaised(subject);
-    }
-  }
-
-  function _tryToLowerFlag(address subject) private {
-    if (flags[subject]) {
-      flags[subject] = false;
-      emit FlagLowered(subject);
     }
   }
 }
