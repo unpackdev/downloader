@@ -1,0 +1,94 @@
+// SPDX-License-Identifier: UNLICENSED
+// Copyright (c) 2023 Tokemak Ops Ltd. All rights reserved.
+
+pragma solidity 0.8.17;
+
+import "./IERC20.sol";
+
+import "./IVault.sol";
+import "./IBalancerPool.sol";
+import "./IBalancerMetaStablePool.sol";
+
+library BalancerUtilities {
+    error BalancerVaultReentrancy();
+
+    // 400 is Balancers Vault REENTRANCY error code
+    bytes32 internal constant REENTRANCY_ERROR_HASH = keccak256(abi.encodeWithSignature("Error(string)", "BAL#400"));
+
+    /**
+     * @notice Verifies reentrancy to the Balancer Vault
+     * @dev Reverts if gets BAL#400 error
+     */
+    function checkReentrancy(address balancerVault) external view {
+        // solhint-disable max-line-length
+        // https://github.com/balancer/balancer-v2-monorepo/blob/227683919a7031615c0bc7f144666cdf3883d212/pkg/pool-utils/contracts/lib/VaultReentrancyLib.sol
+        (, bytes memory returnData) = balancerVault.staticcall{ gas: 10_000 }(
+            abi.encodeWithSelector(IVault.manageUserBalance.selector, new IVault.UserBalanceOp[](0))
+        );
+        if (keccak256(returnData) == REENTRANCY_ERROR_HASH) {
+            revert BalancerVaultReentrancy();
+        }
+    }
+
+    /**
+     * @notice Checks if a given address is Balancer Composable pool
+     * @dev Using the presence of a getBptIndex() fn as an indicator of pool type
+     */
+    function isComposablePool(address pool) public view returns (bool) {
+        // slither-disable-start low-level-calls
+        // solhint-disable-next-line no-unused-vars
+        (bool success, bytes memory data) = pool.staticcall(abi.encodeWithSignature("getBptIndex()"));
+        if (success) {
+            return data.length > 0;
+        }
+        // slither-disable-end low-level-calls
+        return success;
+    }
+
+    /**
+     * @dev This helper function is a fast and cheap way to convert between IERC20[] and IAsset[] types
+     */
+    function _convertERC20sToAddresses(IERC20[] memory tokens) internal pure returns (address[] memory assets) {
+        //slither-disable-start assembly
+        //solhint-disable-next-line no-inline-assembly
+        assembly {
+            assets := tokens
+        }
+        //slither-disable-end assembly
+    }
+
+    /**
+     * @dev This helper function to retrieve Balancer pool tokens
+     */
+    function _getPoolTokens(
+        IVault balancerVault,
+        address balancerPool
+    ) internal view returns (IERC20[] memory assets, uint256[] memory balances) {
+        bytes32 poolId = IBalancerPool(balancerPool).getPoolId();
+
+        (assets, balances,) = balancerVault.getPoolTokens(poolId);
+    }
+
+    /**
+     * @notice Gets the virtual price of a Balancer metastable pool with an invariant adjustment
+     * @dev removes accrued admin fees that haven't been taken yet by Balancer
+     */
+    function _getMetaStableVirtualPrice(
+        IVault balancerVault,
+        address balancerPool
+    ) internal view returns (uint256 virtualPrice) {
+        IBalancerMetaStablePool pool = IBalancerMetaStablePool(balancerPool);
+        virtualPrice = pool.getRate(); // e18
+
+        uint256 totalSupply = pool.totalSupply(); // e18
+        uint256 unscaledInv = (virtualPrice * totalSupply) / 1e18; // e18
+        uint256 lastInvariant = pool.getLastInvariant(); // e18
+        if (unscaledInv > lastInvariant) {
+            uint256 delta = unscaledInv - lastInvariant; // e18 - e18 -> e18
+            uint256 swapFee = balancerVault.getProtocolFeesCollector().getSwapFeePercentage(); //e18
+            uint256 protocolPortion = ((delta * swapFee) / 1e18); // e18
+            uint256 scaledInv = unscaledInv - protocolPortion; // e18 - e18 -> e18
+            virtualPrice = scaledInv * 1e18 / totalSupply; // e36 / e18 -> e18
+        }
+    }
+}
