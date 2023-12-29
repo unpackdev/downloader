@@ -15,7 +15,7 @@ For now it will be focused only on mainnet contracts. Ethereum is the first one,
 
 ## Contract Processing Important Notes
 
-- I am trying to keep as low as possible usage of third party services such as [Etherscan](https://etherscan.io/). Instead, focusing on [Smart Contract Sanctuary](https://github.com/tintinweb/smart-contract-sanctuary), [Sourcify.dev](https://sourcify.dev/) and direct access to the [IPFS](https://ipfs.io/) network.
+- I am trying to keep as low as possible usage of third party services such as [Etherscan](https://etherscan.io/). Instead, focusing on [Smart Contract Sanctuary](https://github.com/tintinweb/smart-contract-sanctuary), [Sourcify.dev](https://sourcify.dev/) and direct access to the [IPFS](https://github.com/ipfs/kubo) network.
 - With help of [SolGo](https://github.com/unpackdev/solgo) I am able to, if code is provided extract licenses and many other information from the source code itself.
 - From the IPFS and deployed bytecode I am able to extract information such as if it's optimized or not, which compiler version, and so forth. 
 
