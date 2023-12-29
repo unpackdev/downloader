@@ -32,7 +32,7 @@ These notes will be moved into appropriate sections of the README as the project
 
 ## LICENSE
 
-I am offering this code related to contracts at no cost, under the Apache License 2.0. For more details about this license, please refer to the [LICENSE](LICENSE) file included in this repository.
+I am offering this code, not related to contracts at no cost, under the Apache License 2.0. For more details about this license, please refer to the [LICENSE](LICENSE) file included in this repository.
 
 **Please note:** The contracts themselves are subject to their respective licenses. These licenses can be found within the source code of each individual contract. It is imperative that you review and adhere to these licenses when using the contracts.
 
