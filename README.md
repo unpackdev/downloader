@@ -1,9 +1,12 @@
 # Ethereum Smart Contracts Downloader and Storage Manager
 
 ## Overview
-The Ethereum Smart Contracts Downloader and Storage Manager is a high-performance tool tailored for Ethereum smart contracts. Built with Golang and BadgerDB, this application not only ensures efficient and dependable downloading of smart contracts but also provides robust features for pausing and resuming downloads. It facilitates seamless storage of contracts in a local database, simplifying access and retrieval.
+The Ethereum Smart Contracts Downloader and Storage Manager is a high-performance tool tailored for Ethereum smart contracts. Built with [Golang](https://go.dev/) and [BadgerDB](https://github.com/dgraph-io/badger), this application not only ensures efficient and dependable downloading of smart contracts but also provides robust features for pausing and resuming downloads. It facilitates seamless storage of contracts in a local database, simplifying access and retrieval.
 
-Key capabilities include easy retrieval of contract metadata, bytecode, and source code, especially for contracts verified on Etherscan. This makes it an indispensable tool for developers working with Ethereum smart contracts.
+Key capabilities include easy retrieval of contract metadata and source code, especially for contracts verified on [Etherscan](https://etherscan.io/). This makes it an indispensable tool for developers working with Ethereum smart contracts.
+
+This project is inspired from [Smart Contract Sanctuary](https://github.com/tintinweb/smart-contract-sanctuary).
+For now it will be focused only on mainnet contracts. Ethereum is the first one, Binance Smart Chain and Polygon will be added later including others.
 
 ## Features
 - **Efficient Contract Downloading:** Streamlined process for downloading Ethereum smart contracts.
@@ -17,3 +20,22 @@ Key capabilities include easy retrieval of contract metadata, bytecode, and sour
 ## WARNING
 - This tool is still in development and is not yet ready for production use.
 - This repository is large. It contains gigabytes of data and will take a significant amount of time to clone. Please be mindful of this if you choose to download it.
+
+
+## Notes
+
+These notes will be moved into appropriate sections of the README as the project progresses.
+
+- For the best performance, it is recommended to run this project on NVME storage. This is because the database is very large and requires fast read and write to the storage to perform well.
+- The database is currently around 3GB in size. 
+- In the future will figure out better way to store contracts to ensure that this repository stays as clean as possible. Right now I don't want to spend money on S3 storage or any alike.
+
+## LICENSE
+
+I am offering this code related to contracts at no cost, under the Apache License 2.0. For more details about this license, please refer to the [LICENSE](LICENSE) file included in this repository.
+
+**Please note:** The contracts themselves are subject to their respective licenses. These licenses can be found within the source code of each individual contract. It is imperative that you review and adhere to these licenses when using the contracts.
+
+## Message to Etherscan
+
+I extend my sincere gratitude to the Etherscan team for your invaluable contributions. After reviewing your licensing terms, I believe that my use of your services aligns with these terms. However, should there be any concerns or issues regarding my usage, I welcome your feedback and guidance. Please feel free to contact me at [info(at)unpack.dev](mailto:info@unpack.dev).
