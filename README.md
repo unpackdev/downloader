@@ -8,6 +8,17 @@ Key capabilities include easy retrieval of contract metadata and source code, es
 This project is inspired from [Smart Contract Sanctuary](https://github.com/tintinweb/smart-contract-sanctuary).
 For now it will be focused only on mainnet contracts. Ethereum is the first one, Binance Smart Chain and Polygon will be added later including others.
 
+## WARNING
+
+- This tool is still in development and is not yet ready for production use.
+- This repository is large. It contains gigabytes of data and will take a significant amount of time to clone. Please be mindful of this if you choose to download it.
+
+## Contract Processing Important Notes
+
+- I am trying to keep as low as possible usage of third party services such as [Etherscan](https://etherscan.io/). Instead, focusing on [Smart Contract Sanctuary](https://github.com/tintinweb/smart-contract-sanctuary), [Sourcify.dev](https://sourcify.dev/) and direct access to the [IPFS](https://ipfs.io/) network.
+- With help of [SolGo](https://github.com/unpackdev/solgo) I am able to, if code is provided extract licenses and many other information from the source code itself.
+- From the IPFS and deployed bytecode I am able to extract information such as if it's optimized or not, which compiler version, and so forth. 
+
 ## Features
 - **Efficient Contract Downloading:** Streamlined process for downloading Ethereum smart contracts.
 - **Download Resumption:** Capability to pause and resume downloads, ensuring progress isn't lost.
@@ -17,10 +28,6 @@ For now it will be focused only on mainnet contracts. Ethereum is the first one,
 - **Source Code Access:** Provides easy access to the source code of verified contracts on Etherscan.
 - **High-Performance Backend:** Built with Golang, known for its efficiency and speed.
 
-## WARNING
-- This tool is still in development and is not yet ready for production use.
-- This repository is large. It contains gigabytes of data and will take a significant amount of time to clone. Please be mindful of this if you choose to download it.
-
 
 ## Notes
 
@@ -29,6 +36,7 @@ These notes will be moved into appropriate sections of the README as the project
 - For the best performance, it is recommended to run this project on NVME storage. This is because the database is very large and requires fast read and write to the storage to perform well.
 - The database is currently around 3GB in size. 
 - In the future will figure out better way to store contracts to ensure that this repository stays as clean as possible. Right now I don't want to spend money on S3 storage or any alike.
+
 
 ## LICENSE
 
