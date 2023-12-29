@@ -42,9 +42,14 @@ build-darwin: ## Build the binary for MacOS
 build-windows: ## Build the binary for Windows
 	GOOS=windows GOARCH=amd64 go build -o ./$(BIN_NAME).exe -ldflags "-X main.Version=$(VERSION)" .
 
-.PHONY: generate-graphql
-generate-graphql: ## Initialize GraphQL schema
+.PHONY: build-graphql
+build-graphql: ## Generate GraphQL schema
 	go generate ./...
+
+
+.PHONY: run
+run: build ## Run the binary
+	./$(BIN_NAME)
 
 .PHONY: test
 test: ## Run tests
