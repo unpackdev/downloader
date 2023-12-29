@@ -12,12 +12,14 @@ For now it will be focused only on mainnet contracts. Ethereum is the first one,
 
 - This tool is still in development and is not yet ready for production use.
 - This repository is large. It contains gigabytes of data and will take a significant amount of time to clone. Please be mindful of this if you choose to download it.
+- Due to licensing issues, I am not going to provide information that stricly breaks licenses. Instead, I am going to provide you the tools to extract information yourself if you have access to the 3rd party sources, utilising their respective API keys.
 
 ## Contract Processing Important Notes
 
 - I am trying to keep as low as possible usage of third party services such as [Etherscan](https://etherscan.io/). Instead, focusing on [Smart Contract Sanctuary](https://github.com/tintinweb/smart-contract-sanctuary), [Sourcify.dev](https://sourcify.dev/) and direct access to the [IPFS](https://github.com/ipfs/kubo) network.
 - With help of [SolGo](https://github.com/unpackdev/solgo) I am able to, if code is provided extract licenses and many other information from the source code itself.
-- From the IPFS and deployed bytecode I am able to extract information such as if it's optimized or not, which compiler version, and so forth. 
+- From the IPFS and deployed bytecode I am able to extract information such as if it's optimized or not, which compiler version, and so forth.
+
 
 ## Features
 - **Efficient Contract Downloading:** Streamlined process for downloading Ethereum smart contracts.
