@@ -1,0 +1,244 @@
+scalar UUID
+scalar Time
+
+directive @goModel(
+	model: String
+	models: [String!]
+	forceGenerate: Boolean
+) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+
+directive @goField(
+	forceResolver: Boolean
+	name: String
+	omittable: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @goTag(
+	key: String!
+	value: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+"""
+Defines the queries available on the network.
+"""
+type Query {
+    """
+    Retrieves a list of networks based on provided criteria.
+    """
+    networks(
+        networkId: Int, 
+        name: String, 
+        symbol: String, 
+        suspended: Boolean, 
+        maintenance: Boolean
+    ): [Network!]!
+
+    """
+    Retrieves a list of contracts based on provided criteria.
+    """
+
+    contracts(
+        networkIds: [Int!],
+        blockNumbers: [Int!],
+        blockHashes: [String!],
+        transactionHashes: [String!],
+        addresses: [String!],
+        limit: Int,
+        first: Int,
+        after: String
+    ): ContractConnection!   
+}
+
+schema {
+    query: Query
+}
+
+"""
+A representation of a blockchain smart contract and its associated metadata.
+"""
+type Contract {
+    """
+    The unique identifier of the contract.
+    """
+    uuid: UUID!
+    
+    """
+    The network information associated with this contract.
+    """
+    network: Network!
+    
+    """
+    The blockchain address of the contract.
+    """
+    address: String!
+
+    """
+    The name of the contract.
+    """
+    name: String!
+    
+    """
+    The version of the Solidity compiler used.
+    """
+    solgoVersion: String
+    
+    """
+    The current processing state of the contract.
+    """
+    currentState: String!
+    
+    """
+    The next expected processing state of the contract.
+    """
+    nextState: String!
+    
+    """
+    The states that have been completed in processing the contract.
+    """
+    completedStates: [String!]!
+    
+    """
+    Indicates if the contract processing has been completed.
+    """
+    completed: Boolean!
+    
+    """
+    Indicates if the contract is only partially processed.
+    """
+    partial: Boolean!
+    
+    """
+    Indicates if the contract has been corrupted.
+    """
+    corrupted: Boolean!
+    
+    """
+    The reason for the contract being marked as corrupted.
+    """
+    corruptedReason: String
+    
+    """
+    The timestamp indicating when the contract data was created in the database.
+    """
+    createdAt: Time!
+    
+    """
+    The timestamp indicating the last update time for the contract data in the database.
+    """
+    updatedAt: Time!
+}
+
+"""
+A connection to a list of contracts, providing pagination capabilities.
+"""
+type ContractConnection {
+    """
+    A list of contract edges, representing the contracts in this connection.
+    """
+    edges: [ContractEdge!]!
+
+    """
+    Metadata that provides information about the current page of results.
+    """
+    pageInfo: PageInfo!
+}
+
+"""
+Represents an individual contract as part of a paginated list (connection).
+"""
+type ContractEdge {
+    """
+    The actual contract data.
+    """
+    node: Contract!
+
+    """
+    A unique identifier used for pagination, marking the position of this contract in the overall list.
+    """
+    cursor: String!
+}
+
+
+"""
+A representation of a network with its essential details.
+"""
+type Network {
+    
+    """
+    Unique identifier of the network.
+    """
+    uuid: UUID!
+
+    """
+    Official (chain) ID of the network.
+    """
+    networkId: Int!
+    
+    """
+    Name of the network.
+    """
+    name: String!
+    
+    """
+    Official or recognized name of the network.
+    """
+    canonicalName: String!
+    
+    """
+    Short symbol representation of the network.
+    """
+    symbol: String!
+    
+    """
+    Website URL of the network.
+    """
+    website: String!
+    
+    """
+    Flag indicating if the network is suspended.
+    """
+    suspended: Boolean!
+    
+    """
+    Flag indicating if the network is under maintenance.
+    """
+    maintenance: Boolean!
+    
+    """
+    Timestamp indicating when the network was created.
+    """
+    createdAt: Time!
+    
+    """
+    Timestamp indicating the last update time for the network.
+    """
+    updatedAt: Time!
+}
+
+
+"""
+Information about pagination in a connection.
+"""
+type PageInfo {
+    """
+    Indicates if there are more items following the current set.
+    """
+    hasNextPage: Boolean!
+
+    """
+    Indicates if there are more items preceding the current set.
+    """
+    hasPreviousPage: Boolean!
+
+    """
+    The cursor for the first item in the current set.
+    """
+    startCursor: String!
+
+    """
+    The cursor for the last item in the current set.
+    """
+    endCursor: String!
+}
+
+

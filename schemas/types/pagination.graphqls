@@ -1,0 +1,24 @@
+"""
+Information about pagination in a connection.
+"""
+type PageInfo {
+    """
+    Indicates if there are more items following the current set.
+    """
+    hasNextPage: Boolean!
+
+    """
+    Indicates if there are more items preceding the current set.
+    """
+    hasPreviousPage: Boolean!
+
+    """
+    The cursor for the first item in the current set.
+    """
+    startCursor: String!
+
+    """
+    The cursor for the last item in the current set.
+    """
+    endCursor: String!
+}

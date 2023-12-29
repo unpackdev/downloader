@@ -1,0 +1,55 @@
+"""
+A representation of a network with its essential details.
+"""
+type Network {
+    
+    """
+    Unique identifier of the network.
+    """
+    uuid: UUID!
+
+    """
+    Official (chain) ID of the network.
+    """
+    networkId: Int!
+    
+    """
+    Name of the network.
+    """
+    name: String!
+    
+    """
+    Official or recognized name of the network.
+    """
+    canonicalName: String!
+    
+    """
+    Short symbol representation of the network.
+    """
+    symbol: String!
+    
+    """
+    Website URL of the network.
+    """
+    website: String!
+    
+    """
+    Flag indicating if the network is suspended.
+    """
+    suspended: Boolean!
+    
+    """
+    Flag indicating if the network is under maintenance.
+    """
+    maintenance: Boolean!
+    
+    """
+    Timestamp indicating when the network was created.
+    """
+    createdAt: Time!
+    
+    """
+    Timestamp indicating the last update time for the network.
+    """
+    updatedAt: Time!
+}

@@ -1,0 +1,104 @@
+"""
+A representation of a blockchain smart contract and its associated metadata.
+"""
+type Contract {
+    """
+    The unique identifier of the contract.
+    """
+    uuid: UUID!
+    
+    """
+    The network information associated with this contract.
+    """
+    network: Network!
+    
+    """
+    The blockchain address of the contract.
+    """
+    address: String!
+
+    """
+    The name of the contract.
+    """
+    name: String!
+    
+    """
+    The version of the Solidity compiler used.
+    """
+    solgoVersion: String
+    
+    """
+    The current processing state of the contract.
+    """
+    currentState: String!
+    
+    """
+    The next expected processing state of the contract.
+    """
+    nextState: String!
+    
+    """
+    The states that have been completed in processing the contract.
+    """
+    completedStates: [String!]!
+    
+    """
+    Indicates if the contract processing has been completed.
+    """
+    completed: Boolean!
+    
+    """
+    Indicates if the contract is only partially processed.
+    """
+    partial: Boolean!
+    
+    """
+    Indicates if the contract has been corrupted.
+    """
+    corrupted: Boolean!
+    
+    """
+    The reason for the contract being marked as corrupted.
+    """
+    corruptedReason: String
+    
+    """
+    The timestamp indicating when the contract data was created in the database.
+    """
+    createdAt: Time!
+    
+    """
+    The timestamp indicating the last update time for the contract data in the database.
+    """
+    updatedAt: Time!
+}
+
+"""
+A connection to a list of contracts, providing pagination capabilities.
+"""
+type ContractConnection {
+    """
+    A list of contract edges, representing the contracts in this connection.
+    """
+    edges: [ContractEdge!]!
+
+    """
+    Metadata that provides information about the current page of results.
+    """
+    pageInfo: PageInfo!
+}
+
+"""
+Represents an individual contract as part of a paginated list (connection).
+"""
+type ContractEdge {
+    """
+    The actual contract data.
+    """
+    node: Contract!
+
+    """
+    A unique identifier used for pagination, marking the position of this contract in the overall list.
+    """
+    cursor: String!
+}

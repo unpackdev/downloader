@@ -1,0 +1,30 @@
+"""
+Defines the queries available on the network.
+"""
+type Query {
+    """
+    Retrieves a list of networks based on provided criteria.
+    """
+    networks(
+        networkId: Int, 
+        name: String, 
+        symbol: String, 
+        suspended: Boolean, 
+        maintenance: Boolean
+    ): [Network!]!
+
+    """
+    Retrieves a list of contracts based on provided criteria.
+    """
+
+    contracts(
+        networkIds: [Int!],
+        blockNumbers: [Int!],
+        blockHashes: [String!],
+        transactionHashes: [String!],
+        addresses: [String!],
+        limit: Int,
+        first: Int,
+        after: String
+    ): ContractConnection!   
+}
