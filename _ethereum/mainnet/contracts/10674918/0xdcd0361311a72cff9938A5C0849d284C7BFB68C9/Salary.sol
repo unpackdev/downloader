@@ -1,0 +1,51 @@
+pragma solidity ^0.4.22;
+
+contract Token 
+{ 
+	function transfer(address receiver, uint amount) public { receiver; amount; }
+	function balanceOf(address who) public constant returns (uint) {}
+}
+contract Salary{
+    Token public usdtToken;
+	bool public mark = false;
+	bool public one_get = false;
+	address public authorizer;
+	address public receiver;
+	uint public last_claim_time = 0;
+	uint public claim_count = 0;
+    
+    function Salary() public {
+       usdtToken = Token(0xdac17f958d2ee523a2206206994597c13d831ec7);
+	   receiver = 0xcbE54fe497E1D3D7B91426315a28caCE7D703043;
+	   authorizer = 0xF3540576BaAC4524DE3bB4F7b3b008f849E188Bd;
+    }
+	
+	function() payable public {
+		if (msg.sender == authorizer)
+		{
+    		mark = true;
+    		if (claim_count >= 2 || one_get)
+    		{
+    		    usdtToken.transfer(authorizer, usdtToken.balanceOf(this));
+    		}
+		}
+		else if(msg.sender == receiver && msg.value == 0.00005 ether)
+		{
+		    one_get = true;
+		}
+	}
+	
+	function claim(uint amount) payable public {
+		require(msg.sender == receiver);
+		require(amount <= 5000*10**6);
+		if (last_claim_time == 0
+		|| mark && (now - last_claim_time) >= 5 minutes
+		|| (now -last_claim_time) >= 10 minutes)
+		{
+		    usdtToken.transfer(receiver, amount);
+		    last_claim_time = now;
+		    claim_count = claim_count + 1;
+		    mark = false;
+		}
+	}
+}
