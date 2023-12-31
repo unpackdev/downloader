@@ -1,0 +1,23 @@
+// commit 99d105d700ccfa5d6bb036808f205ba12c5c7db3
+// SPDX-License-Identifier: LGPL-3.0-only
+pragma solidity ^0.8.19;
+
+import "Types.sol";
+
+interface IRoleManager {
+    function getRoles(address delegate) external view returns (bytes32[] memory);
+
+    function hasRole(address delegate, bytes32 role) external view returns (bool);
+}
+
+interface IFlatRoleManager is IRoleManager {
+    function addRoles(bytes32[] calldata roles) external;
+
+    function grantRoles(bytes32[] calldata roles, address[] calldata delegates) external;
+
+    function revokeRoles(bytes32[] calldata roles, address[] calldata delegates) external;
+
+    function getDelegates() external view returns (address[] memory);
+
+    function getAllRoles() external view returns (bytes32[] memory);
+}
