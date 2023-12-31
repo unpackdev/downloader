@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Chainlink Contracts v0.8
-pragma solidity ^0.8.0;
+pragma solidity >=0.6.0;
 
 interface AggregatorInterface {
   function latestAnswer() external view returns (int256);
