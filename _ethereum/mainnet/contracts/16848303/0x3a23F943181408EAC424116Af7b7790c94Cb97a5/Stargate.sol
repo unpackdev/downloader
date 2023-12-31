@@ -4,31 +4,40 @@ pragma solidity ^0.8.4;
 import "./SafeTransferLib.sol";
 import "./ERC20.sol";
 import "./stargate.sol";
-import "./SocketErrors.sol";
 import "./BridgeImplBase.sol";
 import "./RouteIdentifiers.sol";
 
 /**
- * @title Stargate-L2-Route Implementation
- * @notice Route implementation with functions to bridge ERC20 and Native via Stargate-L2-Bridge
- * Called via SocketGateway if the routeId in the request maps to the routeId of Stargate-L2-Implementation
+ * @title Stargate-L1-Route Implementation
+ * @notice Route implementation with functions to bridge ERC20 and Native via Stargate-L1-Bridge
+ * Called via SocketGateway if the routeId in the request maps to the routeId of Stargate-L1-Implementation
  * Contains function to handle bridging as post-step i.e linked to a preceeding step for swap
  * RequestData is different to just bride and bridging chained with swap
  * @author Socket dot tech.
  */
-contract StargateImplL2 is BridgeImplBase {
+contract StargateImplL1 is BridgeImplBase {
     /// @notice SafeTransferLib - library for safe and optimised operations on ERC20 tokens
     using SafeTransferLib for ERC20;
 
     bytes32 public immutable StargateIdentifier = STARGATE;
 
-    /// @notice Function-selector for ERC20-token bridging on Stargate-L2-Route
+    /// @notice Function-selector for ERC20-token bridging on Stargate-L1-Route
     /// @dev This function selector is to be used while buidling transaction-data to bridge ERC20 tokens
     bytes4
-        public immutable STARGATE_L2_ERC20_EXTERNAL_BRIDGE_FUNCTION_SELECTOR =
+        public immutable STARGATE_L1_ERC20_EXTERNAL_BRIDGE_FUNCTION_SELECTOR =
         bytes4(
             keccak256(
-                "bridgeERC20To(address,address,address,uint256,uint256,uint256,(uint256,uint256,uint256,uint256,bytes32,bytes,uint16))"
+                "bridgeERC20To(address,address,address,uint256,uint256,(uint256,uint256,uint256,uint256,bytes32,bytes,uint16))"
+            )
+        );
+
+    /// @notice Function-selector for Native bridging on Stargate-L1-Route
+    /// @dev This function selector is to be used while buidling transaction-data to bridge Native tokens
+    bytes4
+        public immutable STARGATE_L1_NATIVE_EXTERNAL_BRIDGE_FUNCTION_SELECTOR =
+        bytes4(
+            keccak256(
+                "bridgeNativeTo(address,address,uint16,uint256,uint256,uint256,bytes32)"
             )
         );
 
@@ -36,16 +45,6 @@ contract StargateImplL2 is BridgeImplBase {
         bytes4(
             keccak256(
                 "swapAndBridge(uint32,bytes,(address,address,uint16,uint256,uint256,uint256,uint256,uint256,uint256,bytes32,bytes))"
-            )
-        );
-
-    /// @notice Function-selector for Native bridging on Stargate-L2-Route
-    /// @dev This function selector is to be used while buidling transaction-data to bridge Native tokens
-    bytes4
-        public immutable STARGATE_L2_NATIVE_EXTERNAL_BRIDGE_FUNCTION_SELECTOR =
-        bytes4(
-            keccak256(
-                "bridgeNativeTo(address,address,uint16,uint256,uint256,uint256,bytes32)"
             )
         );
 
@@ -67,8 +66,6 @@ contract StargateImplL2 is BridgeImplBase {
         routerETH = IBridgeStargate(_routerEth);
     }
 
-    /// @notice Struct to be used as a input parameter for Bridging tokens via Stargate-L2-route
-    /// @dev while building transactionData,values should be set in this sequence of properties in this struct
     struct StargateBridgeExtraData {
         uint256 srcPoolId;
         uint256 dstPoolId;
@@ -177,7 +174,7 @@ contract StargateImplL2 is BridgeImplBase {
     }
 
     /**
-     * @notice function to bridge tokens after swapping.
+     * @notice function to bridge tokens after swap.
      * @notice this is different from bridgeAfterSwap since this function holds the logic for swapping tokens too.
      * @notice This method is payable because the caller is doing token transfer and briding operation
      * @dev for usage, refer to controller implementations
@@ -207,6 +204,7 @@ contract StargateImplL2 is BridgeImplBase {
         );
 
         if (token == NATIVE_TOKEN_ADDRESS) {
+            // perform bridging
             routerETH.swapETH{
                 value: bridgeAmount + stargateBridgeData.optionalValue
             }(
@@ -228,8 +226,8 @@ contract StargateImplL2 is BridgeImplBase {
                     stargateBridgeData.minReceivedAmt,
                     IBridgeStargate.lzTxObj(
                         stargateBridgeData.destinationGasLimit,
-                        0,
-                        "0x"
+                        0, // zero amount since this is a ERC20 bridging
+                        "0x" //empty data since this is for only ERC20
                     ),
                     abi.encodePacked(stargateBridgeData.receiverAddress),
                     stargateBridgeData.destinationPayload
@@ -256,7 +254,6 @@ contract StargateImplL2 is BridgeImplBase {
      * @param receiverAddress address of recipient
      * @param amount amount of token being bridge
      * @param value value
-     * @param optionalValue optionalValue
      * @param stargateBridgeExtraData stargate bridge extradata
      */
     function bridgeERC20To(
@@ -265,40 +262,27 @@ contract StargateImplL2 is BridgeImplBase {
         address receiverAddress,
         uint256 amount,
         uint256 value,
-        uint256 optionalValue,
         StargateBridgeExtraData calldata stargateBridgeExtraData
     ) external payable {
-        // token address might not be indication thats why passed through extraData
-        if (token == NATIVE_TOKEN_ADDRESS) {
-            // perform bridging
-            routerETH.swapETH{value: amount + optionalValue}(
+        ERC20 tokenInstance = ERC20(token);
+        tokenInstance.safeTransferFrom(msg.sender, socketGateway, amount);
+        tokenInstance.safeApprove(address(router), amount);
+        {
+            router.swap{value: value}(
                 stargateBridgeExtraData.stargateDstChainId,
-                payable(senderAddress),
-                abi.encodePacked(receiverAddress),
+                stargateBridgeExtraData.srcPoolId,
+                stargateBridgeExtraData.dstPoolId,
+                payable(senderAddress), // default to refund to main contract
                 amount,
-                stargateBridgeExtraData.minReceivedAmt
+                stargateBridgeExtraData.minReceivedAmt,
+                IBridgeStargate.lzTxObj(
+                    stargateBridgeExtraData.destinationGasLimit,
+                    0, // zero amount since this is a ERC20 bridging
+                    "0x" //empty data since this is for only ERC20
+                ),
+                abi.encodePacked(receiverAddress),
+                stargateBridgeExtraData.destinationPayload
             );
-        } else {
-            ERC20 tokenInstance = ERC20(token);
-            tokenInstance.safeTransferFrom(msg.sender, socketGateway, amount);
-            tokenInstance.safeApprove(address(router), amount);
-            {
-                router.swap{value: value}(
-                    stargateBridgeExtraData.stargateDstChainId,
-                    stargateBridgeExtraData.srcPoolId,
-                    stargateBridgeExtraData.dstPoolId,
-                    payable(senderAddress), // default to refund to main contract
-                    amount,
-                    stargateBridgeExtraData.minReceivedAmt,
-                    IBridgeStargate.lzTxObj(
-                        stargateBridgeExtraData.destinationGasLimit,
-                        0, // zero amount since this is a ERC20 bridging
-                        "0x" //empty data since this is for only ERC20
-                    ),
-                    abi.encodePacked(receiverAddress),
-                    stargateBridgeExtraData.destinationPayload
-                );
-            }
         }
 
         emit SocketBridge(
@@ -312,6 +296,16 @@ contract StargateImplL2 is BridgeImplBase {
         );
     }
 
+    /**
+     * @notice function to handle Native bridging to receipent via Stargate-L1-Bridge
+     * @notice This method is payable because the caller is doing token transfer and briding operation
+     * @param receiverAddress address of receipient
+     * @param senderAddress address of sender
+     * @param stargateDstChainId stargate defines chain id in its way
+     * @param amount amount of token being bridge
+     * @param minReceivedAmt defines the slippage, the min qty you would accept on the destination
+     * @param optionalValue optionalValue Native amount
+     */
     function bridgeNativeTo(
         address receiverAddress,
         address senderAddress,

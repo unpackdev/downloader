@@ -10,11 +10,13 @@ import "./RouteIdentifiers.sol";
  * @title Anyswap-V4-Route L1 Implementation
  * @notice Route implementation with functions to bridge ERC20 via Anyswap-Bridge
  * Called via SocketGateway if the routeId in the request maps to the routeId of AnyswapImplementation
- * This is the L2 implementation, so this is used when transferring from l2.
+ * This is the L1 implementation, so this is used when transferring from l1 to supported l1s or L1.
  * Contains function to handle bridging as post-step i.e linked to a preceeding step for swap
  * RequestData is different to just bride and bridging chained with swap
  * @author Socket dot tech.
  */
+
+/// @notice Interface to interact with AnyswapV4-Router Implementation
 interface AnyswapV4Router {
     function anySwapOutUnderlying(
         address token,
@@ -24,7 +26,7 @@ interface AnyswapV4Router {
     ) external;
 }
 
-contract AnyswapL2Impl is BridgeImplBase {
+contract AnyswapImplL1 is BridgeImplBase {
     /// @notice SafeTransferLib - library for safe and optimised operations on ERC20 tokens
     using SafeTransferLib for ERC20;
 
@@ -32,7 +34,7 @@ contract AnyswapL2Impl is BridgeImplBase {
 
     /// @notice Function-selector for ERC20-token bridging on Anyswap-Route
     /// @dev This function selector is to be used while buidling transaction-data to bridge ERC20 tokens
-    bytes4 public immutable ANYSWAP_L2_ERC20_EXTERNAL_BRIDGE_FUNCTION_SELECTOR =
+    bytes4 public immutable ANYSWAP_L1_ERC20_EXTERNAL_BRIDGE_FUNCTION_SELECTOR =
         bytes4(
             keccak256(
                 "bridgeERC20To(uint256,uint256,bytes32,address,address,address)"
@@ -46,12 +48,13 @@ contract AnyswapL2Impl is BridgeImplBase {
             )
         );
 
-    // polygon router multichain router v4
+    /// @notice AnSwapV4Router Contract instance used to deposit ERC20 on to Anyswap-Bridge
+    /// @dev contract instance is to be initialized in the constructor using the router-address passed as constructor argument
     AnyswapV4Router public immutable router;
 
     /**
      * @notice Constructor sets the router address and socketGateway address.
-     * @dev anyswap v4 router is immutable. so no setter function required.
+     * @dev anyswap 4 router is immutable. so no setter function required.
      */
     constructor(
         address _router,
