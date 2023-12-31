@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.9;
+
+import "./OwnableUpgradeable.sol";
+import "./Initializable.sol";
+import "./IERC20.sol";
+import "./IERC721.sol";
+
+abstract contract ProhibitionV2EthArbBase is OwnableUpgradeable {
+    uint256 public constant PROJECT_ID = 10;
+    uint256 public constant COUNT = 1;
+    uint256 public constant NFT_PRICE = 0.0369 ether;
+    
+    uint256[50] private _gap;
+
+    function initialize() public initializer {
+        __Ownable_init();
+    }
+
+    function withdraw(
+        address token,
+        address to,
+        uint256 amount
+    ) external onlyOwner {
+        if (token == address(0)) {
+            payable(to).transfer(amount);
+        } else {
+            IERC20(token).transfer(to, amount);
+        }
+    }
+
+    function withdrawERC721(
+        address token,
+        address to,
+        uint256 tokenId
+    ) external onlyOwner {
+        IERC721(token).transferFrom(address(this), to, tokenId);
+    }
+}
