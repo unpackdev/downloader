@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.9;
+
+import "./ERC20Upgradeable.sol";
+import "./ERC20BurnableUpgradeable.sol";
+import "./PausableUpgradeable.sol";
+import "./OwnableUpgradeable.sol";
+import "./ERC20PermitUpgradeable.sol";
+import "./Initializable.sol";
+
+// Beneficiary Token for Syrupal
+contract BSRPToken is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, PausableUpgradeable, OwnableUpgradeable, ERC20PermitUpgradeable {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize() initializer public {
+        __ERC20_init("Syrupal Beneficiary", "BSRP");
+        __ERC20Burnable_init();
+        __Pausable_init();
+        __Ownable_init();
+        __ERC20Permit_init("Syrupal Beneficiary");
+
+        _mint(msg.sender, 1000000000 * 10 ** decimals());
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        whenNotPaused
+        override
+    {
+        super._beforeTokenTransfer(from, to, amount);
+    }
+}

@@ -1,0 +1,166 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+// imported contracts
+import "./ReentrancyGuardUpgradeable.sol";
+import "./SafeERC20.sol";
+
+import "./PermissionedToken.sol";
+
+// interfaces
+import "./IERC20Metadata.sol";
+
+import "./errors.sol";
+
+abstract contract DepositWithdrawToken is ReentrancyGuardUpgradeable, PermissionedToken {
+    using SafeERC20 for IERC20Metadata;
+
+    /*///////////////////////////////////////////////////////////////
+                         State Variables V1
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice the address of the underlying erc-20 token
+    IERC20Metadata public immutable underlying;
+
+    /*///////////////////////////////////////////////////////////////
+                                Events
+    //////////////////////////////////////////////////////////////*/
+
+    event Deposit(address indexed from, uint256 amount);
+
+    event Withdrawal(address indexed to, uint256 amount);
+
+    /*///////////////////////////////////////////////////////////////
+                Constructor for implementation Contract
+    //////////////////////////////////////////////////////////////*/
+
+    constructor(string memory _name, string memory _symbol, uint8 _decimals, address _allowlist, address _underlying)
+        PermissionedToken(_name, _symbol, _decimals, _allowlist)
+        initializer
+    {
+        underlying = IERC20Metadata(_underlying);
+
+        if (_underlying != address(0) && underlying.decimals() != _decimals) revert();
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                            Initializer
+    //////////////////////////////////////////////////////////////*/
+    function __DepositWithdrawToken_init(string memory _name, string memory _symbol, address _owner) internal onlyInitializing {
+        __PermissionedToken_init(_name, _symbol, _owner);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                       External Override Functions
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Deposits underlying to mint wrapped version
+     * @param _amount is the amount of coin to deposit
+     */
+    function deposit(uint256 _amount) external nonReentrant returns (uint256) {
+        return _depositFor(msg.sender, _amount);
+    }
+
+    /**
+     * @notice Deposits underlying to mint wrapped version to a recipient
+     * @param _recipient is the address of the recipient
+     * @param _amount is the amount of coin to deposit
+     */
+    function depositFor(address _recipient, uint256 _amount) external nonReentrant returns (uint256) {
+        return _depositFor(_recipient, _amount);
+    }
+
+    /**
+     * @notice Withdraws underlying by burning wrapped token
+     * @param _amount is the amount of wrapped token to burn
+     */
+    function withdraw(uint256 _amount, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns (uint256) {
+        return _withdrawTo(msg.sender, _amount, _v, _r, _s);
+    }
+
+    /**
+     * @notice Withdraws underlying by burning wrapped token and sends to a recipient
+     * @param _recipient is the address of the recipient
+     * @param _amount is the amount of wrapped token to burn
+     */
+    function withdrawTo(address _recipient, uint256 _amount, uint8 _v, bytes32 _r, bytes32 _s)
+        external
+        nonReentrant
+        returns (uint256)
+    {
+        return _withdrawTo(_recipient, _amount, _v, _r, _s);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                            Internal Functions
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Deposits underlying to mint wrapped version to a recipient
+     * @param _recipient is the address of the recipient
+     * @param _amount is the amount of coin to deposit
+     */
+    function _depositFor(address _recipient, uint256 _amount) internal returns (uint256) {
+        if (address(underlying) == address(0)) revert();
+
+        _checkPermissions(msg.sender);
+        _checkPermissions(_recipient);
+
+        _mint(_recipient, _amount);
+
+        emit Deposit(_recipient, _amount);
+
+        underlying.safeTransferFrom(msg.sender, address(this), _amount);
+
+        return _amount;
+    }
+
+    /**
+     * @notice Withdraws a stable coin by burning SDYC and sends to a recipient
+     * @param _recipient is the address of the recipient
+     * @param _amount is the amount of SDYC to burn
+     */
+    function _withdrawTo(address _recipient, uint256 _amount, uint8 _v, bytes32 _r, bytes32 _s) internal returns (uint256) {
+        if (address(underlying) == address(0)) revert();
+
+        _checkPermissions(msg.sender);
+        // Not checking _recipient permissions because it could be a LP
+        _assertWithdrawSignature(_recipient, _amount, _v, _r, _s);
+
+        _burn(msg.sender, _amount);
+
+        emit Withdrawal(_recipient, _amount);
+
+        underlying.safeTransfer(_recipient, _amount);
+
+        return _amount;
+    }
+
+    function _assertWithdrawSignature(address _to, uint256 _amount, uint8 _v, bytes32 _r, bytes32 _s) internal {
+        if (address(underlying) == address(0)) revert();
+
+        // Unchecked because the only math done is incrementing
+        // the owner's nonce which cannot realistically overflow.
+        unchecked {
+            address recoveredAddress = ecrecover(
+                keccak256(
+                    abi.encodePacked(
+                        "\x19\x01",
+                        DOMAIN_SEPARATOR(),
+                        keccak256(
+                            abi.encode(
+                                keccak256("Withdraw(address to,uint256 amount,uint256 nonce)"), _to, _amount, nonces[_to]++
+                            )
+                        )
+                    )
+                ),
+                _v,
+                _r,
+                _s
+            );
+
+            if (recoveredAddress == address(0) || recoveredAddress != owner()) revert InvalidSignature();
+        }
+    }
+}

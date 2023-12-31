@@ -1,0 +1,98 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+pragma solidity 0.8.21;
+
+import "./BosonConstants.sol";
+import "./IBosonOfferHandler.sol";
+import "./IBosonExchangeHandler.sol";
+import "./IBosonAccountHandler.sol";
+import "./BosonTypes.sol";
+import "./BeaconClientLib.sol";
+import "./IClientExternalAddresses.sol";
+
+/**
+ * @title BeaconClientBase
+ *
+ * @notice Extended by Boson Protocol contracts that need to communicate with the ProtocolDiamond
+ * but are NOT facets of the ProtocolDiamond. This is used where it's expected that multiple clients
+ * will use the same implementation. If it's expected that only one client will use it, it's recommended to use `ClientBase` instead
+ *
+ * Boson client contracts include BosonVoucher
+ */
+abstract contract BeaconClientBase is BosonTypes {
+    /**
+     * @dev Modifier that checks that the caller has a specific role.
+     *
+     * Reverts if:
+     * - Caller doesn't have role
+     *
+     * See: {AccessController.hasRole}
+     *
+     * @param _role - the role to check
+     */
+    modifier onlyRole(bytes32 _role) {
+        require(BeaconClientLib.hasRole(_role), ACCESS_DENIED);
+        _;
+    }
+
+    /**
+     * @notice Gets the info about the offer associated with a voucher's exchange
+     *
+     * @param _exchangeId - the id of the exchange
+     * @return exists - the offer was found
+     * @return offer - the offer associated with the _exchangeId
+     */
+    function getBosonOfferByExchangeId(uint256 _exchangeId) internal view returns (bool exists, Offer memory offer) {
+        address protocolDiamond = IClientExternalAddresses(BeaconClientLib._beacon()).getProtocolAddress();
+        (, Exchange memory exchange, ) = IBosonExchangeHandler(protocolDiamond).getExchange(_exchangeId);
+        (exists, offer, , , , ) = IBosonOfferHandler(protocolDiamond).getOffer(exchange.offerId);
+    }
+
+    /**
+     * @notice Gets the info about the offer associated with a voucher's exchange
+     *
+     * @param _offerId - the offer id
+     * @return offer - the offer associated with the _offerId
+     * @return offerDates - the offer dates associated with the _offerId
+     */
+    function getBosonOffer(uint256 _offerId) internal view returns (Offer memory offer, OfferDates memory offerDates) {
+        address protocolDiamond = IClientExternalAddresses(BeaconClientLib._beacon()).getProtocolAddress();
+        (, offer, offerDates, , , ) = IBosonOfferHandler(protocolDiamond).getOffer(_offerId);
+    }
+
+    /**
+     * @notice Informs protocol of new buyer associated with an exchange
+     *
+     * @param _exchangeId - the id of the exchange
+     * @param _newBuyer - the address of the new buyer
+     */
+    function onVoucherTransferred(uint256 _exchangeId, address payable _newBuyer) internal {
+        address protocolDiamond = IClientExternalAddresses(BeaconClientLib._beacon()).getProtocolAddress();
+        IBosonExchangeHandler(protocolDiamond).onVoucherTransferred(_exchangeId, _newBuyer);
+    }
+
+    /**
+     * @notice Gets the info about the seller associated with the sellerId.
+     *
+     * @param _sellerId - the id of the seller
+     * @return exists - the seller was found
+     * @return seller - the seller associated with the _sellerId
+     */
+    function getBosonSeller(uint256 _sellerId) internal view returns (bool exists, Seller memory seller) {
+        address protocolDiamond = IClientExternalAddresses(BeaconClientLib._beacon()).getProtocolAddress();
+
+        (exists, seller, ) = IBosonAccountHandler(protocolDiamond).getSeller(_sellerId);
+    }
+
+    /**
+     * @notice Gets the info about the seller associated with the address.
+     *
+     * @param _sellerAddress - the address of the seller
+     * @return exists - the seller was found
+     * @return seller - the seller associated with the _sellerAddress
+     */
+    function getBosonSellerByAddress(address _sellerAddress) internal view returns (bool exists, Seller memory seller) {
+        address protocolDiamond = IClientExternalAddresses(BeaconClientLib._beacon()).getProtocolAddress();
+
+        (exists, seller, ) = IBosonAccountHandler(protocolDiamond).getSellerByAddress(_sellerAddress);
+    }
+}
