@@ -5,31 +5,32 @@ import "./Casting.sol" as Casting;
 import "./Helpers.sol" as Helpers;
 import "./Math.sol" as Math;
 
-/// @notice The unsigned 60.18-decimal fixed-point number representation, which can have up to 60 digits and up to 18
-/// decimals. The values of this are bound by the minimum and the maximum values permitted by the Solidity type uint256.
-/// @dev The value type is defined here so it can be imported in all other files.
-type UD60x18 is uint256;
+/// @notice The signed 59.18-decimal fixed-point number representation, which can have up to 59 digits and up to 18
+/// decimals. The values of this are bound by the minimum and the maximum values permitted by the underlying Solidity
+/// type int256.
+type SD59x18 is int256;
 
 /*//////////////////////////////////////////////////////////////////////////
                                     CASTING
 //////////////////////////////////////////////////////////////////////////*/
 
 using {
+    Casting.intoInt256,
     Casting.intoSD1x18,
     Casting.intoUD2x18,
-    Casting.intoSD59x18,
-    Casting.intoUint128,
+    Casting.intoUD60x18,
     Casting.intoUint256,
+    Casting.intoUint128,
     Casting.intoUint40,
     Casting.unwrap
-} for UD60x18 global;
+} for SD59x18 global;
 
 /*//////////////////////////////////////////////////////////////////////////
                             MATHEMATICAL FUNCTIONS
 //////////////////////////////////////////////////////////////////////////*/
 
-// The global "using for" directive makes the functions in this library callable on the UD60x18 type.
 using {
+    Math.abs,
     Math.avg,
     Math.ceil,
     Math.div,
@@ -39,20 +40,19 @@ using {
     Math.frac,
     Math.gm,
     Math.inv,
-    Math.ln,
     Math.log10,
     Math.log2,
+    Math.ln,
     Math.mul,
     Math.pow,
     Math.powu,
     Math.sqrt
-} for UD60x18 global;
+} for SD59x18 global;
 
 /*//////////////////////////////////////////////////////////////////////////
                                 HELPER FUNCTIONS
 //////////////////////////////////////////////////////////////////////////*/
 
-// The global "using for" directive makes the functions in this library callable on the UD60x18 type.
 using {
     Helpers.add,
     Helpers.and,
@@ -71,14 +71,15 @@ using {
     Helpers.sub,
     Helpers.uncheckedAdd,
     Helpers.uncheckedSub,
+    Helpers.uncheckedUnary,
     Helpers.xor
-} for UD60x18 global;
+} for SD59x18 global;
 
 /*//////////////////////////////////////////////////////////////////////////
                                     OPERATORS
 //////////////////////////////////////////////////////////////////////////*/
 
-// The global "using for" directive makes it possible to use these operators on the UD60x18 type.
+// The global "using for" directive makes it possible to use these operators on the SD59x18 type.
 using {
     Helpers.add as +,
     Helpers.and2 as &,
@@ -88,11 +89,12 @@ using {
     Helpers.gte as >=,
     Helpers.lt as <,
     Helpers.lte as <=,
-    Helpers.or as |,
     Helpers.mod as %,
     Math.mul as *,
     Helpers.neq as !=,
     Helpers.not as ~,
+    Helpers.or as |,
     Helpers.sub as -,
+    Helpers.unary as -,
     Helpers.xor as ^
-} for UD60x18 global;
+} for SD59x18 global;

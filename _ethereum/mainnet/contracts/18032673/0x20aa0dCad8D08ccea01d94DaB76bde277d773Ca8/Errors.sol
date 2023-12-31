@@ -3,8 +3,20 @@ pragma solidity >=0.8.19;
 
 import "./ValueType.sol";
 
-/// @notice Thrown when trying to cast a UD2x18 number that doesn't fit in SD1x18.
-error PRBMath_UD2x18_IntoSD1x18_Overflow(UD2x18 x);
+/// @notice Thrown when trying to cast a SD1x18 number that doesn't fit in UD2x18.
+error PRBMath_SD1x18_ToUD2x18_Underflow(SD1x18 x);
 
-/// @notice Thrown when trying to cast a UD2x18 number that doesn't fit in uint40.
-error PRBMath_UD2x18_IntoUint40_Overflow(UD2x18 x);
+/// @notice Thrown when trying to cast a SD1x18 number that doesn't fit in UD60x18.
+error PRBMath_SD1x18_ToUD60x18_Underflow(SD1x18 x);
+
+/// @notice Thrown when trying to cast a SD1x18 number that doesn't fit in uint128.
+error PRBMath_SD1x18_ToUint128_Underflow(SD1x18 x);
+
+/// @notice Thrown when trying to cast a SD1x18 number that doesn't fit in uint256.
+error PRBMath_SD1x18_ToUint256_Underflow(SD1x18 x);
+
+/// @notice Thrown when trying to cast a SD1x18 number that doesn't fit in uint40.
+error PRBMath_SD1x18_ToUint40_Overflow(SD1x18 x);
+
+/// @notice Thrown when trying to cast a SD1x18 number that doesn't fit in uint40.
+error PRBMath_SD1x18_ToUint40_Underflow(SD1x18 x);
