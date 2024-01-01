@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/// @title: Theme Park
+/// @author: manifold.xyz
+
+import "./ERC721Creator.sol";
+
+//////////////////////
+//                  //
+//                  //
+//    Theme Park    //
+//                  //
+//                  //
+//////////////////////
+
+
+contract TP is ERC721Creator {
+    constructor() ERC721Creator("Theme Park", "TP") {}
+}

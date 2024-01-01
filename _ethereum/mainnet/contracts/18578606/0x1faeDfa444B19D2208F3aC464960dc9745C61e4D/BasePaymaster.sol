@@ -1,0 +1,135 @@
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity 0.8.17;
+
+import "./Math.sol";
+import "./Initializable.sol";
+import "./UUPSUpgradeable.sol";
+import "./OwnableUpgradeable.sol";
+import "./PausableUpgradeable.sol";
+import "./IPaymaster.sol";
+import "./IEntryPoint.sol";
+import "./PaymasterUtils.sol";
+import "./UserOperation.sol";
+import "./IStakeManager.sol";
+
+/**
+* The paymaster must also have a deposit, which the entry point will charge UserOperation costs from.
+* The deposit (for paying gas fees) is separate from the stake (which is locked).
+* Note that this signature is NOT a replacement for the account-specific signature:
+* - the paymaster checks a signature to agree to pay for gas.
+* - the account checks a signature prove identity and account ownership.
+* Since this contract is upgradable, we do not allow use either selfdestruct or delegatecall to prevent a malicious actor from
+* destroying the logic contract.
+*/
+abstract contract BasePaymaster is IPaymaster, Initializable, UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable {
+    // global entry point
+    IEntryPoint public immutable entryPoint;
+    /**
+    * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
+
+    /// @inheritdoc UUPSUpgradeable
+    // The {_authorizeUpgrade} function must be overridden to include access restriction to the upgrade mechanism.
+    // Authorize the owner to upgrade the contract.
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    // for immutable values in implementations
+    constructor(IEntryPoint _newEntryPoint) {
+        entryPoint = _newEntryPoint;
+        // lock the implementation contract so it can only be called from proxies
+        _disableInitializers();
+    }
+
+    function __BasePaymaster_init(address _newOwner) internal onlyInitializing {
+        __UUPSUpgradeable_init();
+        __Ownable_init();
+        transferOwnership(_newOwner);
+        __Pausable_init();
+    }
+
+    /// @inheritdoc IPaymaster
+    function validatePaymasterUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256 maxCost)
+    external whenNotPaused override returns (bytes memory context, uint256 validationData) {
+        _requireFromEntryPoint();
+        return _validatePaymasterUserOp(userOp, userOpHash, maxCost);
+    }
+
+    function _validatePaymasterUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256 maxCost)
+    internal virtual returns (bytes memory context, uint256 validationData);
+
+    /// @inheritdoc IPaymaster
+    function postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) external whenNotPaused override {
+        _requireFromEntryPoint();
+        _postOp(mode, context, actualGasCost);
+    }
+
+    function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) internal virtual {}
+
+    /**
+     * add a deposit for this paymaster, used for paying for transaction fees
+     */
+    function deposit() public whenNotPaused payable {
+        entryPoint.depositTo{value : msg.value}(address(this));
+    }
+
+    /**
+     * return current paymaster's deposit on the entryPoint.
+     */
+    function getDeposit() public view returns (uint256) {
+        return entryPoint.balanceOf(address(this));
+    }
+
+    /**
+    * return current paymaster's full deposit&stake information on the entryPoint.
+    */
+    function getDepositInfo() public view returns (IStakeManager.DepositInfo memory info) {
+        return entryPoint.getDepositInfo(address(this));
+    }
+
+    /**
+    * add stake for this paymaster.
+    * This method can also carry eth value to add to the current stake.
+    * @param unstakeDelaySec - the unstake delay for this paymaster. Can only be increased.
+    */
+    function addStake(uint32 unstakeDelaySec) public onlyOwner whenNotPaused payable {
+        entryPoint.addStake{value : msg.value}(unstakeDelaySec);
+    }
+
+    /**
+     * unlock the stake, in order to withdraw it.
+     * The paymaster can't serve requests once unlocked, until it calls addStake again
+     */
+    function unlockStake() public onlyOwner whenNotPaused {
+        entryPoint.unlockStake();
+    }
+
+    /**
+     * withdraw the entire paymaster's stake.
+     * stake must be unlocked first (and then wait for the unstakeDelay to be over)
+     * @param withdrawAddress the address to send withdrawn value.
+     */
+    function withdrawStake(address payable withdrawAddress) public onlyOwner whenNotPaused {
+        entryPoint.withdrawStake(withdrawAddress);
+    }
+
+    /// validate the call is made from a valid entrypoint
+    function _requireFromEntryPoint() internal view {
+        require(msg.sender == address(entryPoint), "Sender not EntryPoint");
+    }
+
+    function pause() public onlyOwner whenNotPaused {
+        _pause();
+    }
+
+    function unpause() public onlyOwner whenPaused {
+        _unpause();
+    }
+
+    function withdrawTo(address payable withdrawAddress, uint256 amount) public onlyOwner whenNotPaused {
+        entryPoint.withdrawTo(withdrawAddress, amount);
+    }
+}
