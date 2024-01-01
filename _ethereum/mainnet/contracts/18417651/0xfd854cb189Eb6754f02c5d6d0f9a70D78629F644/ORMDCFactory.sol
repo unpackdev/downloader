@@ -1,0 +1,60 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+import "./Clones.sol";
+import "./IORMDCFactory.sol";
+import "./IORMakerDeposit.sol";
+import "./IORManager.sol";
+import "./HelperLib.sol";
+
+contract ORMDCFactory is IORMDCFactory {
+    using HelperLib for bytes;
+
+    IORManager private _manager;
+    address private _implementation;
+    uint256 private _mdcCreatedTotal;
+
+    constructor(address manager_, address implementation_) {
+        require(manager_ != address(0), "MZ");
+        require(implementation_ != address(0), "IZ");
+
+        _manager = IORManager(manager_);
+        _implementation = implementation_;
+    }
+
+    function manager() external view returns (address) {
+        return address(_manager);
+    }
+
+    function implementation() external view returns (address) {
+        return _implementation;
+    }
+
+    function mdcCreatedTotal() external view returns (uint) {
+        return _mdcCreatedTotal;
+    }
+
+    function createMDC() external {
+        require(_mdcCreatedTotal < _manager.maxMDCLimit(), "MML");
+        address mdcAddress = Clones.cloneDeterministic(
+            _implementation,
+            abi.encodePacked(address(this), msg.sender).hash()
+        );
+
+        unchecked {
+            ++_mdcCreatedTotal;
+        }
+
+        IORMakerDeposit(mdcAddress).initialize(msg.sender);
+
+        emit MDCCreated(msg.sender, mdcAddress);
+    }
+
+    function predictMDCAddress() external view returns (address) {
+        address mdcAddress = Clones.predictDeterministicAddress(
+            _implementation,
+            abi.encodePacked(address(this), msg.sender).hash()
+        );
+        return mdcAddress;
+    }
+}
