@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.6.12 <0.8.0;
+
+import "./IERC20.sol";
+
+interface ILnAsset is IERC20 {
+    function keyName() external view returns (bytes32);
+
+    function mint(address account, uint256 amount) external;
+
+    function burn(address account, uint256 amount) external;
+
+    function move(
+        address from,
+        address to,
+        uint256 amount
+    ) external;
+}
