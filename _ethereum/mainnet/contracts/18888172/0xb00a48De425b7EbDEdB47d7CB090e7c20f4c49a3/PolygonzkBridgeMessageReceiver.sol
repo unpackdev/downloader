@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: AGPL-3.0
+
+pragma solidity 0.6.12;
+
+import "./IBridgeMessageReceiver.sol";
+
+abstract contract PolygonzkBridgeMessageReceiver {
+    address public xDomainMessageSender;
+    uint256 public xDomainNetwork;
+
+    address constant public DEAD_ADDRESS = 0x000000000000000000000000000000000000dEaD;
+    uint256 constant public DEFAULT_NETWORK = uint256(bytes32(keccak256("Default Network")));
+
+    constructor () public {
+        xDomainMessageSender = DEAD_ADDRESS;
+        xDomainNetwork = DEFAULT_NETWORK;
+    }
+
+    function _onMessageReceived(
+        address originAddress,
+        uint32 originNetwork,
+        bytes memory data,
+        address targetAddress,
+        address messengerAddress
+    ) internal {
+        require(msg.sender == messengerAddress, "PLY_ZK_BRG_MR: Caller is not the messenger");
+
+        xDomainMessageSender = originAddress;
+        xDomainNetwork = uint256(originNetwork);
+        (bool success,) = targetAddress.call(data);
+        require(success, "PLY_ZK_BRG_MR: Call to Bridge failed");
+        xDomainMessageSender = DEAD_ADDRESS;
+        xDomainNetwork = DEFAULT_NETWORK;
+    }
+}
