@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/ERC165.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "./IERC165.sol";
 
@@ -16,14 +16,12 @@ import "./IERC165.sol";
  *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);
  * }
  * ```
- *
- * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.
  */
-abstract contract CNCERC165 is CNCIERC165 {
+abstract contract ERC165 is IERC165 {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(CNCIERC165).interfaceId;
+    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
+        return interfaceId == type(IERC165).interfaceId;
     }
 }

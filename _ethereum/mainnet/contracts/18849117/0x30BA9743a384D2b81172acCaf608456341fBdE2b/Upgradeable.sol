@@ -20,12 +20,11 @@ pragma solidity ^0.8.20;
 pragma experimental ABIEncoderV2;
 
 import "./Address.sol";
-import "./State.sol";
 
 /**
  * Based off of, and designed to interface with, openzeppelin/upgrades package
  */
-abstract contract Upgradeable is State {
+abstract contract Upgradeable {
     /**
      * @dev Storage slot with the address of the current implementation.
      * This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1, and is
