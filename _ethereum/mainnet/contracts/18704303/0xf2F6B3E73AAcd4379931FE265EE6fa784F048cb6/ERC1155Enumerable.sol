@@ -1,0 +1,68 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.8;
+
+import "./EnumerableSet.sol";
+import "./ERC1155BaseInternal.sol";
+import "./IERC1155Enumerable.sol";
+import "./ERC1155EnumerableInternal.sol";
+
+/**
+ * @title ERC1155 implementation including enumerable and aggregate functions
+ */
+abstract contract ERC1155Enumerable is
+    IERC1155Enumerable,
+    ERC1155EnumerableInternal
+{
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.UintSet;
+
+    /**
+     * @inheritdoc IERC1155Enumerable
+     */
+    function totalSupply(uint256 id) public view virtual returns (uint256) {
+        return _totalSupply(id);
+    }
+
+    /**
+     * @inheritdoc IERC1155Enumerable
+     */
+    function totalHolders(uint256 id) public view virtual returns (uint256) {
+        return _totalHolders(id);
+    }
+
+    /**
+     * @inheritdoc IERC1155Enumerable
+     */
+    function accountsByToken(
+        uint256 id
+    ) public view virtual returns (address[] memory) {
+        return _accountsByToken(id);
+    }
+
+    /**
+     * @inheritdoc IERC1155Enumerable
+     */
+    function tokensByAccount(
+        address account
+    ) public view virtual returns (uint256[] memory) {
+        return _tokensByAccount(account);
+    }
+
+    function grandTotalHolder() public view virtual returns(uint256){
+        return _getGrandTotalHolder();
+    }
+
+    function grandTotalSupply() public view virtual returns(uint256){
+        return _getGrandTotalSupply();
+    }
+
+    function getHolders() public view virtual returns(address[] memory){
+        return _getHolders();
+    }
+
+    function getHoldersByPage(uint256 _page, uint256 _limit) public view returns (address[] memory){
+        return _getHoldersByPage(_page, _limit);
+    }
+
+}
