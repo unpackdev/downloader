@@ -1,0 +1,34 @@
+//SPDX-License-Identifier: Unlicense
+pragma solidity 0.7.3;
+import "./SafeMath.sol";
+import "./IVault.sol";
+import "./IUniswapRouter.sol";
+import "./Ownable.sol";
+
+contract UniswapHarvester is Ownable {
+    using SafeMath for uint256;
+    IUniswapRouter public router;
+    mapping (IVault => uint) public ratePerToken;
+
+    constructor(IUniswapRouter router_) {
+        router = router_;
+    }
+
+    function harvestVault(IVault vault, uint amount, uint outMin, address[] calldata path, uint deadline) public onlyOwner {
+        uint afterFee = vault.harvest(amount);
+        uint durationSinceLastHarvest = block.timestamp.sub(vault.lastDistribution());
+        ratePerToken[vault] = afterFee.div(vault.totalSupply()).div(durationSinceLastHarvest);
+        IERC20Detailed from = vault.underlying();
+        IERC20 to = vault.target();
+        from.approve(address(router), afterFee);
+        uint received = router.swapExactTokensForTokens(afterFee, outMin, path, address(this), deadline)[path.length-1];
+        to.approve(address(vault), received);
+        vault.distribute(received);
+    }
+
+    // no tokens should ever be stored on this contract. Any tokens that are sent here by mistake are recoverable by the owner
+    function sweep(address _token) external onlyOwner {
+        IERC20(_token).transfer(owner(), IERC20(_token).balanceOf(address(this)));
+    }
+
+}
