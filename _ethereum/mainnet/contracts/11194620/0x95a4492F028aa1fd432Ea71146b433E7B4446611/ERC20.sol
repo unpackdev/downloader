@@ -1,17 +1,18 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.6.0;
 
 import "./Context.sol";
 import "./IERC20.sol";
 import "./SafeMath.sol";
 import "./Address.sol";
-import "./Initializable.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
  *
  * This implementation is agnostic to the way tokens are created. This means
  * that a supply mechanism has to be added in a derived contract using {_mint}.
- * For a generic mechanism see {ERC20MinterPauser}.
+ * For a generic mechanism see {ERC20PresetMinterPauser}.
  *
  * TIP: For a detailed writeup see our guide
  * https://forum.zeppelin.solutions/t/how-to-implement-erc20-supply-mechanisms/226[How
@@ -30,7 +31,7 @@ import "./Initializable.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract ERC20UpgradeSafe is Initializable, ContextUpgradeSafe, IERC20 {
+contract ERC20 is Context, IERC20 {
     using SafeMath for uint256;
     using Address for address;
 
@@ -53,21 +54,11 @@ contract ERC20UpgradeSafe is Initializable, ContextUpgradeSafe, IERC20 {
      * All three of these values are immutable: they can only be set once during
      * construction.
      */
-
-    function __ERC20_init(string memory name, string memory symbol) internal initializer {
-        __Context_init_unchained();
-        __ERC20_init_unchained(name, symbol);
-    }
-
-    function __ERC20_init_unchained(string memory name, string memory symbol) internal initializer {
-
-
+    constructor (string memory name, string memory symbol) public {
         _name = name;
         _symbol = symbol;
         _decimals = 18;
-
     }
-
 
     /**
      * @dev Returns the name of the token.
@@ -267,9 +258,9 @@ contract ERC20UpgradeSafe is Initializable, ContextUpgradeSafe, IERC20 {
     }
 
     /**
-     * @dev Sets `amount` as the allowance of `spender` over the `owner`s tokens.
+     * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
      *
-     * This is internal function is equivalent to `approve`, and can be used to
+     * This internal function is equivalent to `approve`, and can be used to
      * e.g. set automatic allowances for certain subsystems, etc.
      *
      * Emits an {Approval} event.
@@ -313,6 +304,4 @@ contract ERC20UpgradeSafe is Initializable, ContextUpgradeSafe, IERC20 {
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
-
-    uint256[44] private __gap;
 }

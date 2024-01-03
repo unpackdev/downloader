@@ -1,0 +1,36 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.6.8;
+pragma experimental ABIEncoderV2;
+
+import "./ERC20.sol";
+import "./Ownable.sol";
+
+contract CTokenMock is ERC20, Ownable {
+  constructor(
+    string memory name,
+    string memory symbol,
+    uint8 decimals
+  ) public ERC20(name, symbol) {
+    _setupDecimals(decimals);
+  }
+
+  /// @dev Mint new tokens if the contract owner
+  /// @param account address of account to mint tokens to
+  /// @param amount amount of tokens to mint
+  function mint(address account, uint256 amount) public onlyOwner {
+    _mint(account, amount);
+  }
+
+  /// @dev Burn tokens if the contract owner
+  /// @param account address of account to burn tokens from
+  /// @param amount amount of tokens to burn
+  function burn(address account, uint256 amount) public onlyOwner {
+    _burn(account, amount);
+  }
+
+  /// @dev Burn all tokens of the account
+  /// @param account address of account to burn tokens from
+  function burnAll(address account) public onlyOwner {
+    _burn(account, balanceOf(account));
+  }
+}
