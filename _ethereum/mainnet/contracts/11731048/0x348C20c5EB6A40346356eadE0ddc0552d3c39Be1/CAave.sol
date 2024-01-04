@@ -1,0 +1,7 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.0;
+
+// Aave Lending Pool Addresses Provider
+address constant LENDING_POOL_ADDRESSES_PROVIDER = 0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5;
+address constant CHAINLINK_ETH_FEED = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+address constant AAVE_PROTOCOL_DATA_PROVIDER = 0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d;

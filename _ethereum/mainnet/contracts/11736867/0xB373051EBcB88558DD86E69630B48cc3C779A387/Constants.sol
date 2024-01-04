@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.12;
+pragma experimental ABIEncoderV2;
+
+library Constants {
+    uint256 private constant MAX = ~uint256(0);
+    uint256 private constant _launchSupply = 2 * 10**5 * 10**9;
+    uint256 private constant _largeTotal = (MAX - (MAX % _launchSupply));
+
+    uint256 private constant _baseExpansionFactor = 100;
+    uint256 private constant _baseContractionFactor = 100;
+    uint256 private constant _baseUtilityFee = 50;
+    uint256 private constant _baseContractionCap = 1000;
+
+    uint256 private constant _epochLength = 4 hours;
+
+    address private constant _routerAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address private constant _factoryAddress = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
+
+    string private constant _name = "ZSTABLE.PROTOCOL";
+    string private constant _symbol = "ZST";
+    uint8 private constant _decimals = 9;
+
+    /****** Getters *******/
+    function getLaunchSupply() internal pure returns (uint256) {
+        return _launchSupply;
+    }
+    function getLargeTotal() internal pure returns (uint256) {
+        return _largeTotal;
+    }
+    function getBaseExpansionFactor() internal pure returns (uint256) {
+        return _baseExpansionFactor;
+    }
+    function getBaseContractionFactor() internal pure returns (uint256) {
+        return _baseContractionFactor;
+    }
+    function getBaseContractionCap() internal pure returns (uint256) {
+        return _baseContractionCap;
+    }
+    function getBaseUtilityFee() internal pure returns (uint256) {
+        return _baseUtilityFee;
+    }
+    function getEpochLength() internal pure returns (uint256) {
+        return _epochLength;
+    }
+    function getRouterAdd() internal pure returns (address) {
+        return _routerAddress;
+    }
+    function getFactoryAdd() internal pure returns (address) {
+        return _factoryAddress;
+    }
+    function getName() internal pure returns (string memory)  {
+        return _name;
+    }
+    function getSymbol() internal pure returns (string memory) {
+        return _symbol;
+    }
+    function getDecimals() internal pure returns (uint8) {
+        return _decimals;
+    }
+}
