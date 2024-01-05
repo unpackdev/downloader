@@ -1,0 +1,64 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.7.6;
+
+import "./IERC20.sol";
+import "./Ownable.sol";
+import "./SafeMath.sol";
+import "./Alchemist.sol";
+
+contract StreamV1 is Ownable {
+    using SafeMath for uint256;
+
+    address public immutable mist;
+
+    address[] public recipients;
+    uint256[] public shareBPS;
+
+    event Advanced(uint256 amtMinted);
+    event RecipientsUpdated(address[] _recipients, uint256[] _shareBPS);
+
+    constructor(address _mist, address _owner) {
+        mist = _mist;
+        Ownable.transferOwnership(_owner);
+    }
+
+    /* user functions */
+
+    function advance() external {
+        // only if recipient
+        require(address(this) == IAlchemist(mist).getRecipient(), "not recipient");
+        // call advance
+        IAlchemist(mist).advance();
+        // get balance
+        uint256 balance = IERC20(mist).balanceOf(address(this));
+        // transfer to recipients
+        for (uint256 index = 0; index < recipients.length; index++) {
+            IERC20(mist).transfer(recipients[index], balance.mul(shareBPS[index]).div(10_000));
+        }
+        // emit event
+        emit Advanced(balance);
+    }
+
+    /* admin functions */
+
+    function updateRecipients(address[] calldata _recipients, uint256[] calldata _shareBPS)
+        external
+        onlyOwner
+    {
+        // clear storage
+        delete recipients;
+        delete shareBPS;
+        assert(recipients.length == 0 && shareBPS.length == 0);
+        // sumBPS distribution
+        uint256 sumBPS = 0;
+        for (uint256 index = 0; index < _recipients.length; index++) {
+            sumBPS += _shareBPS[index];
+        }
+        require(sumBPS == 10_000, "invalid sum");
+        // update storage
+        recipients = _recipients;
+        shareBPS = _shareBPS;
+        // emit event
+        emit RecipientsUpdated(_recipients, _shareBPS);
+    }
+}
