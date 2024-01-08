@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
+
+pragma solidity ^0.8.0;
+
+import "./IERC1155.sol";
+import "./IERC1155Enumerable.sol";
+import "./IMulticall.sol";
+
+interface IPoolBase is IERC1155, IERC1155Enumerable, IMulticall {
+    function name() external view returns (string memory);
+}

@@ -1,0 +1,9 @@
+pragma solidity ^0.8.0;
+
+contract test123456 {
+    event SentMessage(bytes message);
+    
+    function callMe() public {
+        emit SentMessage("werty");
+    }
+}

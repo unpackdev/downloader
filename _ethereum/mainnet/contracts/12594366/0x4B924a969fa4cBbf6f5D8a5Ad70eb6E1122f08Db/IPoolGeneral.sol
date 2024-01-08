@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.6.12;
+
+import "./IPoolInteraction.sol";
+import "./IPoolDeployment.sol";
+
+interface ISynthereumPoolGeneral is
+  ISynthereumPoolDeployment,
+  ISynthereumPoolInteraction
+{}

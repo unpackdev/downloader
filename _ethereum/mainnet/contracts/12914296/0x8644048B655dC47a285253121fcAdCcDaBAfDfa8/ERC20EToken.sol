@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.4;
+
+import "./ERC20PresetMinterPauser.sol";
+
+contract ERC20EToken is ERC20PresetMinterPauser {
+    constructor (
+        string memory name,
+        string memory symbol
+    ) ERC20PresetMinterPauser(name, symbol) {}
+}

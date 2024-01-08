@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+// Contracts
+import "./TellerNFT.sol";
+import "./RolesMods.sol";
+import "./roles.sol";
+
+// Libraries
+import "./EnumerableSet.sol";
+import "./NFTLib.sol";
+import "./RolesLib.sol";
+
+contract NFTFacet is RolesMods {
+    function getStakedNFTs(address nftOwner)
+        public
+        view
+        returns (uint256[] memory staked_)
+    {
+        staked_ = NFTLib.stakedNFTs(nftOwner);
+    }
+
+    /**
+     * @notice Transfers multiple Teller NFTs to Diamond and applies user stake.
+     * @param nftIDs IDs of Teller NFTs to stake.
+     */
+    function stakeNFTs(uint256[] calldata nftIDs) external {
+        for (uint256 i; i < nftIDs.length; i++) {
+            // Stake NFT and transfer into diamond
+            NFTLib.stake(nftIDs[i], msg.sender);
+        }
+        // Give the caller authorization to protocol
+        RolesLib.grantRole(AUTHORIZED, msg.sender);
+    }
+
+    /**
+     * @notice Sets a merkle root that is used to verify an NFT ID to its predetermined base loan size.
+     * @param merkleRoot New merkle root to use.
+     *
+     * Requirements:
+     *  - Sender must have `ADMIN` role
+     */
+    function setNFTMerkleRoot(bytes32 merkleRoot)
+        external
+        authorized(ADMIN, msg.sender)
+    {
+        NFTLib.s().nftMerkleRoot = merkleRoot;
+    }
+}

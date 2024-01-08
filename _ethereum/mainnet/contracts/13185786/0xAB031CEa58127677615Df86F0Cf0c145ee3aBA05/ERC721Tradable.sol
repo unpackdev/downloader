@@ -1,0 +1,159 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+import "./ERC721.sol";
+import "./ERC721Enumerable.sol";
+import "./Ownable.sol";
+import "./SafeMath.sol";
+import "./Strings.sol";
+
+contract OwnableDelegateProxy {}
+
+contract ProxyRegistry {
+    mapping(address => OwnableDelegateProxy) public proxies;
+}
+
+/**
+ * @title ERC721Tradable
+ * ERC721Tradable - ERC721 contract that whitelists a trading address, and has minting functionality.
+ */
+abstract contract ERC721Tradable is ERC721Enumerable, Ownable {
+    using Strings for string;
+    using SafeMath for uint256;
+
+    address proxyRegistryAddress;
+    address factoryAddress;
+    uint256 private _currentTokenId = 0;
+
+    mapping (uint256 => string) private bucket_mapping;
+    mapping (uint256 => uint256) private option_ids_mapping;
+
+
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _proxyRegistryAddress
+    ) ERC721(_name, _symbol) {
+        proxyRegistryAddress = _proxyRegistryAddress;
+    }
+
+    // todo ipfs hash might be removed
+
+    /**
+     * @dev Mints a token to an address with a tokenURI.
+     * @param _to address of the future owner of the token
+     */
+    function mintTo(address _to, uint256 token_id_for_option, string memory token_bucket ) public onlyOwner {
+        uint256 newTokenId = _getNextTokenId();
+        option_ids_mapping[newTokenId] = token_id_for_option;
+        bucket_mapping[newTokenId] = token_bucket;
+        _mint(_to, newTokenId);
+        _incrementTokenId();
+    }
+
+
+    function factoryMint(address _to, uint256 token_id_for_option, string memory token_bucket) public {
+        require(factoryAddress == _msgSender(), "Ownable: caller is not the factory!");
+        uint256 newTokenId = _getNextTokenId();
+        option_ids_mapping[newTokenId] = token_id_for_option;
+        bucket_mapping[newTokenId] = token_bucket;
+        _mint(_to, newTokenId);
+        _incrementTokenId();
+    }
+
+    function setFactoryAddress(address _factoryAddress) public onlyOwner {
+        factoryAddress = _factoryAddress;
+    }
+
+    /**
+     * @dev calculates the next token ID based on value of _currentTokenId
+     * @return uint256 for the next token ID
+     */
+    function _getNextTokenId() private view returns (uint256) {
+        return _currentTokenId.add(1);
+    }
+
+    /**
+     * @dev increments the value of _currentTokenId
+     */
+    function _incrementTokenId() private {
+        _currentTokenId++;
+    }
+
+    function baseTokenURI() virtual public pure returns (string memory);
+
+    function tokenURI(uint256 _tokenId) override public view returns (string memory) {
+        return string(abi.encodePacked(baseTokenURI(), bucket_mapping[_tokenId], uint2str(option_ids_mapping[_tokenId]), ".json"));
+    }
+
+    /**
+     * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-less listings.
+     */
+    function isApprovedForAll(address owner, address operator)
+        override
+        public
+        view
+        returns (bool)
+    {
+        // Whitelist OpenSea proxy contract for easy trading.
+        ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
+        if (address(proxyRegistry.proxies(owner)) == operator) {
+            return true;
+        }
+
+        return super.isApprovedForAll(owner, operator);
+    }
+
+     /**
+     * @dev override transfer to prevent transfer of calimed tokens
+     */
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
+        //solhint-disable-next-line max-line-length
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
+
+        _transfer(from, to, tokenId);
+    }
+
+    /**
+     * @dev override transfer to prevent transfer of calimed tokens
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
+        safeTransferFrom(from, to, tokenId, "");
+    }
+
+    /**
+     * @dev override transfer to prevent transfer of calimed tokens
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public virtual override {
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
+        _safeTransfer(from, to, tokenId, _data);
+    }
+    
+    function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint j = _i;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len;
+        while (_i != 0) {
+            k = k-1;
+            uint8 temp = (48 + uint8(_i - _i / 10 * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            _i /= 10;
+        }
+        return string(bstr);
+    }
+
+    function burn(uint256 _tokenId) public {
+        require(ownerOf(_tokenId) == _msgSender());
+        _burn(_tokenId); 
+    }
+}

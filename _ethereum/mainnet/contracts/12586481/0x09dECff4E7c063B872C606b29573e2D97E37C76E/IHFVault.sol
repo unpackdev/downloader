@@ -1,0 +1,13 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.7.6;
+
+import "./IERC20Upgradeable.sol";
+
+interface IHFVault is IERC20Upgradeable {
+    function deposit(uint256) external;
+
+    function withdraw(uint256) external;
+
+    function getPricePerFullShare() external view returns (uint256);
+    function underlyingUnit() external view returns(uint256);
+}
