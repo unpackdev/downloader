@@ -1,0 +1,178 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+// Contracts
+import "./PausableMods.sol";
+import "./ReentryMods.sol";
+import "./ERC20.sol";
+
+// Libraries
+import "./LibCreateLoan.sol";
+import "./LibLoans.sol";
+import "./PlatformSettingsLib.sol";
+import "./NFTLib.sol";
+import "./app.sol";
+
+import "./TellerNFT_V2.sol";
+
+// Interfaces
+import "./ITToken.sol";
+
+// Storage
+import "./market.sol";
+
+/**
+ * @notice This facet contains the logic for taking out a loan using the Teller NFT.
+ * @dev This contract contains the base layer logic for creating and taking out
+ *  a loan. It also includes the internal function {_takeOutLoanProcessNFTs} that
+ *  handles the decoding of token data. As the same logic is used for Teller NFT
+ *  V1 and V2 for creating and funding a loan, the logic for processing the token
+ *  IDs and how many are different.
+ * @dev See {MainnetCreateLoanWithNFTFacet._takeOutLoanProcessNFTs}
+ * @author developer@teller.finance
+ */
+contract CreateLoanWithNFTFacet is ReentryMods, PausableMods {
+    // TELLER NFT V2
+    TellerNFT_V2 private immutable TELLER_NFT_V2;
+    address private immutable DAI;
+    address private immutable USDC;
+    address private immutable USDT;
+
+    constructor(
+        address tellerNFTV2Address,
+        address daiAddress,
+        address usdcAddress,
+        address usdtAddress
+    ) {
+        require(daiAddress != address(0), "DAI null");
+        require(usdcAddress != address(0), "USDC null");
+        require(usdtAddress != address(0), "USDT null");
+
+        TELLER_NFT_V2 = TellerNFT_V2(tellerNFTV2Address);
+        DAI = daiAddress;
+        USDC = usdcAddress;
+        USDT = usdtAddress;
+    }
+
+    /**
+     * @notice Creates a loan with the loan request and NFTs without any collateral
+     * @param assetAddress Asset address to take out a loan
+     * @param amount The amount of the {assetAddress} used for the loan
+     * @param duration How long the loan should last (in seconds)
+     * @param tokenData Encoded token data used to take out the loan. Data is
+     *  is decode by the internal functions {_takeOutLoanProcessTokenDataVersion}
+     *  and {_takeOutLoanProcessNFTs}
+     */
+    function takeOutLoanWithNFTs(
+        address assetAddress,
+        uint256 amount,
+        uint32 duration,
+        bytes calldata tokenData
+    ) external paused(LibLoans.ID, false) {
+        Loan storage loan = LibCreateLoan.initNewLoan(
+            assetAddress,
+            amount,
+            duration,
+            PlatformSettingsLib.getNFTInterestRate()
+        );
+
+        // Calculate the max loan size based on NFT V1 values
+        uint8 lendingDecimals = ERC20(assetAddress).decimals();
+        uint256 allowedBaseLoanSize = _takeOutLoanProcessTokenDataVersion(
+            loan.id,
+            tokenData
+        ) *
+            (10**lendingDecimals) *
+            10; // Convert base loan with decimals
+        uint256 allowedLoanSize;
+        if (
+            assetAddress == DAI || assetAddress == USDC || assetAddress == USDT
+        ) {
+            allowedLoanSize = allowedBaseLoanSize;
+        } else {
+            allowedLoanSize = AppStorageLib.store().priceAggregator.getValueFor(
+                    USDC,
+                    assetAddress,
+                    allowedBaseLoanSize
+                );
+        }
+        require(
+            loan.borrowedAmount <= allowedLoanSize,
+            "Teller: insufficient NFT loan size"
+        );
+
+        // Fund the loan
+        LibCreateLoan.fundLoan(
+            loan.lendingToken,
+            LibCreateLoan.createEscrow(loan.id),
+            loan.borrowedAmount
+        );
+
+        // Set the loan to active
+        loan.status = LoanStatus.Active;
+
+        emit LibCreateLoan.LoanTakenOut(
+            loan.id,
+            msg.sender,
+            loan.borrowedAmount,
+            true
+        );
+    }
+
+    /**
+     * @notice Process the NFT data to determine which token version to use
+     * @dev Only knows how to process {tokenData} for NFT V2
+     * @param loanID The ID for the loan to apply the NFTs to
+     * @param tokenData Encoded token ID array. NFT V2 includes the IDs and amounts
+     * @return allowedLoanSize_ The max loan size calculated by the token IDs and amounts
+     */
+    function _takeOutLoanProcessTokenDataVersion(
+        uint256 loanID,
+        bytes calldata tokenData
+    ) internal returns (uint256) {
+        (uint16 version, bytes memory tokenData_) = abi.decode(
+            tokenData,
+            (uint8, bytes)
+        );
+
+        return _takeOutLoanProcessNFTs(loanID, version, tokenData_);
+    }
+
+    /**
+     * @notice Process the NFT data to calculate max loan size and apply to the loan
+     * @dev Only knows how to process {tokenData} for NFT V2
+     * @param loanID The ID for the loan to apply the NFTs to
+     * @param version The token version used to know how to decode the data
+     * @param tokenData Encoded token ID array. NFT V2 includes the IDs and amounts
+     * @return allowedLoanSize_ The max loan size calculated by the token IDs and amounts
+     */
+    function _takeOutLoanProcessNFTs(
+        uint256 loanID,
+        uint16 version,
+        bytes memory tokenData
+    ) internal virtual returns (uint256 allowedLoanSize_) {
+        bool useV2;
+        uint256[] memory nftIDs;
+        uint256[] memory amounts;
+        if (version == 2) {
+            (nftIDs, amounts) = abi.decode(tokenData, (uint256[], uint256[]));
+            useV2 = true;
+        } else if ((2 & version) == 2) {
+            (, nftIDs, amounts) = abi.decode(
+                tokenData,
+                (uint256[], uint256[], uint256[])
+            );
+            useV2 = true;
+        }
+        if (useV2) {
+            for (uint256 i; i < nftIDs.length; i++) {
+                NFTLib.applyToLoanV2(loanID, nftIDs[i], amounts[i], msg.sender);
+
+                uint256 baseLoanSize = TELLER_NFT_V2.tokenBaseLoanSize(
+                    nftIDs[i]
+                );
+                allowedLoanSize_ += baseLoanSize * amounts[i];
+            }
+        }
+    }
+}

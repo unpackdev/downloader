@@ -1,0 +1,65 @@
+pragma solidity 0.5.17;
+
+import "./SafeMath.sol";
+import "./UsingConfig.sol";
+import "./UsingStorage.sol";
+import "./IMarketGroup.sol";
+
+contract MarketGroup is UsingConfig, UsingStorage, IMarketGroup {
+	using SafeMath for uint256;
+
+	constructor(address _config) public UsingConfig(_config) UsingStorage() {}
+
+	function addGroup(address _addr) external {
+		require(msg.sender == config().marketFactory(), "illegal access");
+
+		require(
+			eternalStorage().getBool(getGroupKey(_addr)) == false,
+			"already enabled"
+		);
+		eternalStorage().setBool(getGroupKey(_addr), true);
+		addCount();
+	}
+
+	function deleteGroup(address _addr) external {
+		require(msg.sender == config().marketFactory(), "illegal access");
+
+		require(
+			eternalStorage().getBool(getGroupKey(_addr)) == true,
+			"not exist"
+		);
+		eternalStorage().setBool(getGroupKey(_addr), false);
+		reduceCount();
+	}
+
+	function isGroup(address _addr) external view returns (bool) {
+		return eternalStorage().getBool(getGroupKey(_addr));
+	}
+
+	function reduceCount() private {
+		bytes32 key = getCountKey();
+		uint256 number = eternalStorage().getUint(key);
+		number = number.sub(1);
+		eternalStorage().setUint(key, number);
+	}
+
+	function addCount() private {
+		bytes32 key = getCountKey();
+		uint256 number = eternalStorage().getUint(key);
+		number = number.add(1);
+		eternalStorage().setUint(key, number);
+	}
+
+	function getCount() external view returns (uint256) {
+		bytes32 key = getCountKey();
+		return eternalStorage().getUint(key);
+	}
+
+	function getCountKey() private pure returns (bytes32) {
+		return keccak256(abi.encodePacked("_count"));
+	}
+
+	function getGroupKey(address _addr) private pure returns (bytes32) {
+		return keccak256(abi.encodePacked("_group", _addr));
+	}
+}
