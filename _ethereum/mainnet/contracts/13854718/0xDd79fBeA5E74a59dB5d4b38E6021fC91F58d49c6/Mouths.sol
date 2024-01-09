@@ -1,0 +1,160 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./Trait.sol";
+
+contract Mouths is Trait {
+  // Skin view
+  // Mouse: 0
+  string public constant MOUSE_MUSTACHE =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAgMAAADXB5lNAAAACVBMVEUAALVYWFj80eMK120yAAAAAXRSTlMAQObYZgAAABxJREFUOMtjYBjmQAFdIASNz+jKMApGwSggCwAAaIUAuwUYiUcAAAAASUVORK5CYII=";
+  string public constant MOUSE_BIG =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAgMAAADXB5lNAAAACVBMVEUAAOtYWFj80eN5Pf/YAAAAAXRSTlMAQObYZgAAABxJREFUOMtjYBjegFERXcQFXQUjwygYBaOALAAAXiEAaZ6N2uMAAAAASUVORK5CYII=";
+
+  // Frog: 1
+  string public constant FROG_SMALL =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEVWa3SUT2C1RgEMAAAAAXRSTlMAQObYZgAAABJJREFUKM9jYKAD4GMYBcMUAAAcOgAPPOXO0QAAAABJRU5ErkJggg==";
+  string public constant FROG_MUSTACHE =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAgMAAADXB5lNAAAACVBMVEV0APksIR6UTl1i+bioAAAAAXRSTlMAQObYZgAAABpJREFUOMtjYBhCgDEETYB1KcMoGAWjYMAAAIeXAQDvPvAiAAAAAElFTkSuQmCC";
+
+  // Cats: 2
+
+  
+  // Alien: 3
+  string public constant ALIEN_SMIRK =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEVya3WUT2CRxyFJAAAAAXRSTlMAQObYZgAAABRJREFUKM9jYBgQoABjyDCMgqEMAGxgAD0bClW7AAAAAElFTkSuQmCC";
+  string public constant ALIEN_BIG =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEUAAACUT2BlLptxAAAAAXRSTlMAQObYZgAAABJJREFUKM9jYBhYYMMwCoYyAABrQAA9cZpOMgAAAABJRU5ErkJggg==";
+  string public constant ALIEN_SMALL =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEVCaW6UT2BoZaUaAAAAAXRSTlMAQObYZgAAABJJREFUKM9jYBhYIMMwCoYyAAAzQAAddC7+RwAAAABJRU5ErkJggg==";
+  string public constant ALIEN_MUSTACHE =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAgMAAADXB5lNAAAACVBMVEVwANI1IAuUT2DNoiTcAAAAAXRSTlMAQObYZgAAABpJREFUOMtjYBjegDEATYB1CsMoGAWjgDoAAA8gAOueLsSjAAAAAElFTkSuQmCC";
+
+// Ape: 4
+  string public constant APE_SMIRK = ALIEN_SMIRK;
+  string public constant APE_BIG = ALIEN_BIG;
+  string public constant APE_SMALL = ALIEN_SMALL;
+  string public constant APE_FROWN =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAgMAAADXB5lNAAAACVBMVEUAAC6UT2BssdvWgWEuAAAAAXRSTlMAQObYZgAAABlJREFUOMtjYBhWQIGgCkYHhlEwCkYBdQAAST4AYreuqbAAAAAASUVORK5CYII=";
+  string public constant APE_MUSTACHE = ALIEN_MUSTACHE;
+
+  // Doge: 5
+  string public constant DOGE_SMIRK =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEVya3WUT2CRxyFJAAAAAXRSTlMAQObYZgAAABRJREFUKM9jYBgQIABj8DGMgqEMADdQAB8IFVfpAAAAAElFTkSuQmCC";
+  string public constant DOGE_BIG =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEVzAACUT2DomOQeAAAAAXRSTlMAQObYZgAAABJJREFUKM9jYBhYIMcwCoYyAAA2wAAf/BIHWwAAAABJRU5ErkJggg==";
+  string public constant DOGE_SMALL =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEUAAACUT2BlLptxAAAAAXRSTlMAQObYZgAAABJJREFUKM9jYBhYwMcwCoYyAAAawAAPQ9QEUQAAAABJRU5ErkJggg==";
+  string public constant DOGE_FROWN =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAgMAAADXB5lNAAAACVBMVEVwAJqUT2BsstvZNZqLAAAAAXRSTlMAQObYZgAAABxJREFUOMtjYBhWQIGwkgA0PiMLwygYBaOALAAAiwEAdlwHFK4AAAAASUVORK5CYII=";
+  string public constant DOGE_MUSTACHE =
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAgMAAADXB5lNAAAACVBMVEV0ACg2IQyUT2B2Y3PgAAAAAXRSTlMAQObYZgAAABlJREFUOMtjYBjmIASNz5jKMApGwSigDgAAcJ8AuwGKa1QAAAAASUVORK5CYII=";
+
+  // Front view
+  // Mouse: 0
+  string public constant FRONT_MOUSE_MUSTACHE =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAgMAAABm5xBfAAAACVBMVEUAAAD80eNYWFjkEfkPAAAAAXRSTlMAQObYZgAAABZJREFUCNdjYMANBEDECiBm6mIYKAAAnvIBRSBsz2QAAAAASUVORK5CYII=";
+  string public constant FRONT_MOUSE_BIG =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAgMAAABm5xBfAAAACVBMVEUAAABYWFj80eN4mg01AAAAAXRSTlMAQObYZgAAABZJREFUCNdjYMAJGBVBpAuIxcgwUAAANNoAaVg+T9UAAAAASUVORK5CYII=";
+
+  // Frog: 1
+  string public constant FRONT_FROG_SMALL =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAQMAAAAhR2qPAAAABlBMVEUAAACUT2BlLptxAAAAAXRSTlMAQObYZgAAAA9JREFUCNdjYICDBww0AABKwADhDIMvpQAAAABJRU5ErkJggg==";
+  string public constant FRONT_FROG_MUSTACHE =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAgMAAABm5xBfAAAACVBMVEUAAAAsIR6UTl0+UFV7AAAAAXRSTlMAQObYZgAAABRJREFUCNdjYEAAxhAgwbqUYTABAI/BAQBb10M/AAAAAElFTkSuQmCC";
+
+  // Cats: 2
+
+
+  // Alien: 3
+  string public constant FRONT_ALIEN_SMIRK =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAQMAAAAhR2qPAAAABlBMVEUAAACUT2BlLptxAAAAAXRSTlMAQObYZgAAABNJREFUCNdjYEAFTAwMjAcYqAcAOk0AxAK2t8EAAAAASUVORK5CYII=";
+  string public constant FRONT_ALIEN_BIG =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAQMAAAAhR2qPAAAABlBMVEUAAACUT2BlLptxAAAAAXRSTlMAQObYZgAAABBJREFUCNdjYMAAzAcYqAcAOkcAxDphh+IAAAAASUVORK5CYII=";
+  string public constant FRONT_ALIEN_SMALL =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAQMAAAAhR2qPAAAABlBMVEUAAACUT2BlLptxAAAAAXRSTlMAQObYZgAAABBJREFUCNdjYMAAjAcYqAcAOa0Awvt43+8AAAAASUVORK5CYII=";
+  string public constant FRONT_ALIEN_MUSTACHE =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAgMAAABm5xBfAAAACVBMVEUAAAA1IAuUT2ABXfVlAAAAAXRSTlMAQObYZgAAABRJREFUCNdjYMAJGAOABOsUhgEFAHZRAOu70/C4AAAAAElFTkSuQmCC";
+
+  // Ape: 4
+  string public constant FRONT_APE_SMIRK = FRONT_ALIEN_SMIRK;
+  string public constant FRONT_APE_BIG = FRONT_ALIEN_BIG;
+  string public constant FRONT_APE_SMALL = FRONT_ALIEN_SMALL;
+  string public constant FRONT_APE_FROWN =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAgMAAABm5xBfAAAACVBMVEUAAABssduUT2Dg7htjAAAAAXRSTlMAQObYZgAAABNJREFUCNdjYMAGBOAspgaGAQUAScAAk5NAtAAAAAAASUVORK5CYII=";
+  string public constant FRONT_APE_MUSTACHE = FRONT_ALIEN_MUSTACHE;
+
+  // Doge: 5
+  string public constant FRONT_DOGE_SMIRK =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAQMAAAAhR2qPAAAABlBMVEUAAACUT2BlLptxAAAAAXRSTlMAQObYZgAAABJJREFUCNdjYEAFjED8gIF6AABDMADi7zfJjwAAAABJRU5ErkJggg==";
+  string public constant FRONT_DOGE_BIG =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAQMAAAAhR2qPAAAABlBMVEUAAACUT2BlLptxAAAAAXRSTlMAQObYZgAAABBJREFUCNdjYMAAjA8YqAcAQy0A4p55BkcAAAAASUVORK5CYII=";
+  string public constant FRONT_DOGE_SMALL =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAQMAAAAhR2qPAAAABlBMVEUAAACUT2BlLptxAAAAAXRSTlMAQObYZgAAAA9JREFUCNdjYMAEDxioBwBC4ADhVa/7BAAAAABJRU5ErkJggg==";
+  string public constant FRONT_DOGE_FROWN =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAgMAAABm5xBfAAAACVBMVEUAAABsstuUT2CnTmGzAAAAAXRSTlMAQObYZgAAABZJREFUCNdjYMAGBBDMBUDMxMEwUAAAXWYAu5CDr/AAAAAASUVORK5CYII=";
+  string public constant FRONT_DOGE_MUSTACHE =
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAgAgMAAABm5xBfAAAACVBMVEUAAAA2IQyUT2AnfpbCAAAAAXRSTlMAQObYZgAAABNJREFUCNdjYMANQoCYMZVhQAEAXosAu6Iz+KcAAAAASUVORK5CYII=";
+
+  constructor() {
+    _tiers = [3000, 5000, 7000, 9000, 10000];
+  }
+
+  function getName(uint256 traitIndex)
+    public
+    pure
+    override
+    returns (string memory name)
+  {
+    if (traitIndex == 0) {
+      return "Small";
+    } else if (traitIndex == 1) {
+      return "Smirk";
+    } else if (traitIndex == 2) {
+      return "Big";
+    } else if (traitIndex == 3) {
+      return "Frown";
+    } else if (traitIndex == 4) {
+      return "Mustache";
+    }
+  }
+
+  function _getLayer(
+    uint256 traitIndex,
+    uint256 layerIndex,
+    string memory prefix
+  ) internal view override returns (string memory layer) {
+    if (traitIndex == 0) {
+      return _indexedLayer(layerIndex, prefix, "SMALL");
+    } else if (traitIndex == 1) {
+      return _indexedLayer(layerIndex, prefix, "SMIRK");
+    } else if (traitIndex == 2) {
+      return _indexedLayer(layerIndex, prefix, "BIG");
+    } else if (traitIndex == 3) {
+      return _indexedLayer(layerIndex, prefix, "FROWN");
+    } else if (traitIndex == 4) {
+      return _indexedLayer(layerIndex, prefix, "MUSTACHE");
+    }
+  }
+
+  function _getLayerPrefix(uint256 layerIndex)
+    internal
+    pure
+    override
+    returns (string memory prefix)
+  {
+    if (layerIndex == 0) {
+      return "FROG_";
+    } else if (layerIndex == 1) {
+      return "MOUSE_";
+    } else if (layerIndex == 2) {
+      return "APE_";
+    } else if (layerIndex == 3) {
+      return "CAT_";
+    } else if (layerIndex == 4) {
+      return "ALIEN_";
+    } else if (layerIndex == 5) {
+      return "DOGE_";
+    }
+  }
+}
