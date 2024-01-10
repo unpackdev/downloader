@@ -1,0 +1,58 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.2;
+
+import "./ERC721.sol";
+import "./ERC721Enumerable.sol";
+import "./Ownable.sol";
+
+/*
+ * Non-transferrable NFTs for HonestNFT Core Team
+ */
+
+contract HonestNFTCoreTeam is ERC721, ERC721Enumerable, Ownable {
+  mapping(address => uint256) public allowlist;
+
+  constructor() ERC721("HonestNFT Core Team NFT (Non-transferrable)", "HonestCoreTeam") {}
+
+  // // metadata URI
+  string private _baseTokenURI;
+
+  function _baseURI() internal view virtual override returns (string memory) {
+    return _baseTokenURI;
+  }
+
+  function setBaseURI(string calldata baseURI) external onlyOwner {
+    _baseTokenURI = baseURI;
+  }
+
+  // Override required by Solidity.
+  function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
+    return super.supportsInterface(interfaceId);
+  }
+
+  function mint() public {
+    require(allowlist[msg.sender] > 0, "not eligible for allowlist mint");
+    allowlist[msg.sender]--;
+    _safeMint(msg.sender, totalSupply()+1);
+  }
+
+  function setAllowlist(address[] memory addresses, uint256[] memory numSlots)
+    external
+    onlyOwner
+  {
+    require(addresses.length == numSlots.length,"addresses does not match numSlots length");
+    for (uint256 i = 0; i < addresses.length; i++) {
+      allowlist[addresses[i]] = numSlots[i];
+    }
+  }
+
+  // Non-transferability
+  function _beforeTokenTransfer(
+    address from,
+    address to,
+    uint256 tokenId
+  ) internal override(ERC721, ERC721Enumerable) {
+    require(from == address(0), "Token is not transferable");
+    super._beforeTokenTransfer(from, to, tokenId);
+  }
+}

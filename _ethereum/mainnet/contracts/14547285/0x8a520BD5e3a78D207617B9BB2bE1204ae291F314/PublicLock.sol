@@ -1,0 +1,89 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.7;
+
+import "./IPublicLock.sol";
+import "./Initializable.sol";
+import "./ERC165StorageUpgradeable.sol";
+import "./MixinDisable.sol";
+import "./MixinERC721Enumerable.sol";
+import "./MixinFunds.sol";
+import "./MixinGrantKeys.sol";
+import "./MixinKeys.sol";
+import "./MixinLockCore.sol";
+import "./MixinLockMetadata.sol";
+import "./MixinPurchase.sol";
+import "./MixinRefunds.sol";
+import "./MixinTransfer.sol";
+import "./MixinRoles.sol";
+import "./MixinConvenienceOwnable.sol";
+
+/**
+ * @title The Lock contract
+ * @author Julien Genestoux (unlock-protocol.com)
+ * @dev ERC165 allows our contract to be queried to determine whether it implements a given interface.
+ * Every ERC-721 compliant contract must implement the ERC165 interface.
+ * https://eips.ethereum.org/EIPS/eip-721
+ */
+contract PublicLock is
+  Initializable,
+  ERC165StorageUpgradeable,
+  MixinRoles,
+  MixinFunds,
+  MixinDisable,
+  MixinLockCore,
+  MixinKeys,
+  MixinLockMetadata,
+  MixinERC721Enumerable,
+  MixinGrantKeys,
+  MixinPurchase,
+  MixinTransfer,
+  MixinRefunds,
+  MixinConvenienceOwnable
+{
+  function initialize(
+    address payable _lockCreator,
+    uint _expirationDuration,
+    address _tokenAddress,
+    uint _keyPrice,
+    uint _maxNumberOfKeys,
+    string calldata _lockName
+  ) public
+    initializer()
+  {
+    MixinFunds._initializeMixinFunds(_tokenAddress);
+    MixinLockCore._initializeMixinLockCore(_lockCreator, _expirationDuration, _keyPrice, _maxNumberOfKeys);
+    MixinLockMetadata._initializeMixinLockMetadata(_lockName);
+    MixinERC721Enumerable._initializeMixinERC721Enumerable();
+    MixinRefunds._initializeMixinRefunds();
+    MixinRoles._initializeMixinRoles(_lockCreator);
+    MixinConvenienceOwnable._initializeMixinConvenienceOwnable(_lockCreator);
+    // registering the interface for erc721 with ERC165.sol using
+    // the ID specified in the standard: https://eips.ethereum.org/EIPS/eip-721
+    _registerInterface(0x80ac58cd);
+  }
+
+  /**
+   * @notice Allow the contract to accept tips in ETH sent directly to the contract.
+   * @dev This is okay to use even if the lock is priced in ERC-20 tokens
+   */
+  receive() external payable {}
+  
+  /**
+   Overrides
+  */
+  function supportsInterface(bytes4 interfaceId) 
+    public 
+    view 
+    virtual 
+    override(
+      MixinERC721Enumerable,
+      MixinLockMetadata,
+      AccessControlUpgradeable, 
+      ERC165StorageUpgradeable
+    ) 
+    returns (bool) 
+    {
+    return super.supportsInterface(interfaceId);
+  }
+
+}
