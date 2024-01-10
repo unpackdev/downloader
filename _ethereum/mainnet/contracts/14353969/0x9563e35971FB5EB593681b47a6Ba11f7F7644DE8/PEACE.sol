@@ -1,0 +1,81 @@
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/// @title: Wen Peace
+/// @author: manifold.xyz
+
+import "./ERC1155Creator.sol";
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                                //
+//                                                                                                                                //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWXXK00OOOOOOOO00KXXNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNKOxoc:,'....          ....',:coxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWXOdc;..                                ..;cdOXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWKkl;.                                            .;lkKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMNOo;.                                                    .;oONMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMNOl'                      ..            ..                      'lONMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMWKo,                 ..,:ldxO00:          :00Oxdl:,..                 ,oKWMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMNk:.               ':ok0XWMMMMMMWl          lWMMMMMMWN0ko:'               .:kNMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMNx;              .:d0NMMMMMMMMMMMMWl          lWMMMMMMMMMMMMN0d:.              ;xNMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMNk,             'lkXMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMXkl'             ,kNMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMWO;            .ckNMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMNkc.            ;OWMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMXl.           'oKWMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMWKo'           .lXMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMWO,           'xNMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMNx'           ,OWMMMMMMMMMMMM    //
+//    MMMMMMMMMMMNd.          .dNMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMNd.          .dNMMMMMMMMMMM    //
+//    MMMMMMMMMMXc          .cKMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMKc.          cXMMMMMMMMMM    //
+//    MMMMMMMMMK:          'kWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWk'          :KMMMMMMMMM    //
+//    MMMMMMMMK;          :KMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMK:          ;KMMMMMMMM    //
+//    MMMMMMMX:          lXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXl          :XMMMMMMM    //
+//    MMMMMMNl          lNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNl          lNMMMMMM    //
+//    MMMMMWx.         lNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNl         .xWMMMMM    //
+//    MMMMM0'         :XMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMX:         '0MMMMM    //
+//    MMMMWl         '0MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM0'         lWMMMM    //
+//    MMMM0'         oWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWo         '0MMMM    //
+//    MMMWo         ,KMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMK,         oWMMM    //
+//    MMMX;         oWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWo         ;XMMM    //
+//    MMMO.        .kMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMk.        .OMMM    //
+//    MMMx.        ,KMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMK,        .xMMM    //
+//    MMMd         :NMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMX:          :XMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMN:         dMMM    //
+//    MMMd         :NMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNx,            ,xNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMN:         dMMM    //
+//    MMMd         :NMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNx,                ,xNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMN:         dMMM    //
+//    MMMx.        ;XMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNx,                    ,xNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMX;        .xMMM    //
+//    MMMk.        '0MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNx,                        ,xNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM0'        .kMMM    //
+//    MMMK,        .xMMMMMMMMMMMMMMMMMMMMMMMMMMMMNx,                            ,xNMMMMMMMMMMMMMMMMMMMMMMMMMMMMx.        ,KMMM    //
+//    MMMNc         cNMMMMMMMMMMMMMMMMMMMMMMMMMNx,                                ,xNMMMMMMMMMMMMMMMMMMMMMMMMMN:         cNMMM    //
+//    MMMMx.        .kMMMMMMMMMMMMMMMMMMMMMMMNx,                                    ,xNMMMMMMMMMMMMMMMMMMMMMMMk.        .xMMMM    //
+//    MMMMX;         :NMMMMMMMMMMMMMMMMMMMMNx,            ,d:          :d,            ,xNMMMMMMMMMMMMMMMMMMMMX:         ;XMMMM    //
+//    MMMMMx.        .dWMMMMMMMMMMMMMMMMMNx,            ,xNWl          lWNx,            ,xNMMMMMMMMMMMMMMMMMWd.        .xMMMMM    //
+//    MMMMMNc         .kMMMMMMMMMMMMMMMNx,            ,xNMMWl          lWMMNx,            ,xNMMMMMMMMMMMMMMMk.         cNMMMMM    //
+//    MMMMMM0,         'OMMMMMMMMMMMMNx,            ,xNMMMMWl          lWMMMMNx,            ,xNMMMMMMMMMMMMO'         ,KMMMMMM    //
+//    MMMMMMMk.         'OMMMMMMMMMNx,            ,xNMMMMMMWl          lWMMMMMMNx,            ,xNMMMMMMMMMO'         .kMMMMMMM    //
+//    MMMMMMMWx.         .kWMMMMMNx,            ,xNMMMMMMMMWl          lWMMMMMMMMNx,            ,xNMMMMMWk.         .xWMMMMMMM    //
+//    MMMMMMMMWx.         .oNMMNx,            ,xNMMMMMMMMMMWl          lWMMMMMMMMMMNx,            ,xNMMNo.         .xWMMMMMMMM    //
+//    MMMMMMMMMWx.          ;kx,            ,xNMMMMMMMMMMMMWl          lWMMMMMMMMMMMMNx,            ,xk;          .kWMMMMMMMMM    //
+//    MMMMMMMMMMWO'                       ,xNMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMNx,                       'OWMMMMMMMMMM    //
+//    MMMMMMMMMMMMK:                    ,xNMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMNx,                    :KMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMNx.                ,xNMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMNx,                .xNMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMK:.             :XMMMMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMMMMX:             .:KMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMWk;            .;dKWMMMMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMMMMWKd;.            ;kWMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMNx,             .;oONMMMMMMMMMMMMMMWl          lWMMMMMMMMMMMMMMNOo;.             ,xNMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMNk;.              ':dOXWMMMMMMMMMWl          lWMMMMMMMMMWXOd:'              .;kNMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMWOc.                .,cok0KNWMMWl          lWMMWNK0koc,.                .cOWMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMXx:.                   .',:cc'          'cc:,'.                   .:xXMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMWKx:.                                                        .:dKWMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWXkl,.                                                .,lkXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWKko:'.                                      .':okKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNKkdl;'..                        ..';ldkKNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWXKOkdolcc:::;;;;:::cclodkOKXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//                                                                                                                                //
+//                                                                                                                                //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+contract PEACE is ERC1155Creator {
+    constructor() ERC1155Creator() {}
+}

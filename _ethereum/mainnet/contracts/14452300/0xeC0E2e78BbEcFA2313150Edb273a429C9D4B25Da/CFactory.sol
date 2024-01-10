@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity 0.8.11;
+
+// Internal references
+import "./CropFactory.sol";
+import "./CAdapter.sol";
+
+// External references
+import "./Bytes32AddressLib.sol";
+
+contract CFactory is CropFactory {
+    using Bytes32AddressLib for address;
+
+    address public constant COMPTROLLER = 0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B;
+
+    constructor(
+        address _divider,
+        FactoryParams memory _factoryParams,
+        address _reward
+    ) CropFactory(_divider, COMPTROLLER, _factoryParams, _reward) {}
+
+    function exists(address _target) external virtual override returns (bool isListed) {
+        (isListed, , ) = ComptrollerLike(protocol).markets(_target);
+    }
+
+    function deployAdapter(address _target) external override returns (address adapter) {
+        // Use the CREATE2 opcode to deploy a new Adapter contract.
+        // This will revert if a CAdapter with the provided target has already
+        // been deployed, as the salt would be the same and we can't deploy with it twice.
+        adapter = address(
+            new CAdapter{ salt: _target.fillLast12Bytes() }(
+                divider,
+                _target,
+                factoryParams.oracle,
+                factoryParams.ifee,
+                factoryParams.stake,
+                factoryParams.stakeSize,
+                factoryParams.minm,
+                factoryParams.maxm,
+                factoryParams.mode,
+                factoryParams.tilt,
+                DEFAULT_LEVEL,
+                reward
+            )
+        );
+    }
+}
