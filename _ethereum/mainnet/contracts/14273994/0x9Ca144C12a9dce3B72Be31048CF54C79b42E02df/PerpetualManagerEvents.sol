@@ -1,0 +1,85 @@
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity ^0.8.7;
+
+import "./PausableUpgradeable.sol";
+import "./IERC721ReceiverUpgradeable.sol";
+import "./IERC721Upgradeable.sol";
+import "./ERC165Upgradeable.sol";
+import "./AddressUpgradeable.sol";
+import "./CountersUpgradeable.sol";
+import "./IERC20Metadata.sol";
+import "./SafeERC20.sol";
+import "./IERC20.sol";
+
+import "./AccessControlUpgradeable.sol";
+
+import "./IFeeManager.sol";
+import "./IPoolManager.sol";
+import "./IOracle.sol";
+import "./IPerpetualManager.sol";
+import "./IRewardsDistributor.sol";
+import "./IStableMaster.sol";
+import "./IStakingRewards.sol";
+
+import "./FunctionUtils.sol";
+
+// Used in the `forceCashOutPerpetuals` function to store owners of perpetuals which have been force cashed
+// out, along with the amount associated to it
+struct Pairs {
+    address owner;
+    uint256 netCashOutAmount;
+}
+
+/// @title PerpetualManagerEvents
+/// @author Angle Core Team
+/// @notice `PerpetualManager` is the contract handling all the Hedging Agents perpetuals
+/// @dev There is one `PerpetualManager` contract per pair stablecoin/collateral in the protocol
+/// @dev This file contains all the events of the `PerpetualManager` contract
+contract PerpetualManagerEvents {
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+
+    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+
+    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+
+    event PerpetualUpdated(uint256 _perpetualID, uint256 _margin);
+
+    event PerpetualOpened(uint256 _perpetualID, uint256 _entryRate, uint256 _margin, uint256 _committedAmount);
+
+    event PerpetualClosed(uint256 _perpetualID, uint256 _closeAmount);
+
+    event PerpetualsForceClosed(uint256[] perpetualIDs, Pairs[] ownerAndCashOut, address keeper, uint256 reward);
+
+    event KeeperTransferred(address keeperAddress, uint256 liquidationFees);
+
+    // ============================== Parameters ===================================
+
+    event BaseURIUpdated(string _baseURI);
+
+    event LockTimeUpdated(uint64 _lockTime);
+
+    event KeeperFeesCapUpdated(uint256 _keeperFeesLiquidationCap, uint256 _keeperFeesClosingCap);
+
+    event TargetAndLimitHAHedgeUpdated(uint64 _targetHAHedge, uint64 _limitHAHedge);
+
+    event BoundsPerpetualUpdated(uint64 _maxLeverage, uint64 _maintenanceMargin);
+
+    event HAFeesUpdated(uint64[] _xHAFees, uint64[] _yHAFees, uint8 deposit);
+
+    event KeeperFeesLiquidationRatioUpdated(uint64 _keeperFeesLiquidationRatio);
+
+    event KeeperFeesClosingUpdated(uint64[] xKeeperFeesClosing, uint64[] yKeeperFeesClosing);
+
+    // =============================== Reward ======================================
+
+    event RewardAdded(uint256 _reward);
+
+    event RewardPaid(address indexed _user, uint256 _reward);
+
+    event RewardsDistributionUpdated(address indexed _rewardsDistributor);
+
+    event RewardsDistributionDurationUpdated(uint256 _rewardsDuration, address indexed _rewardsDistributor);
+
+    event Recovered(address indexed tokenAddress, address indexed to, uint256 amount);
+}

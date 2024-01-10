@@ -1,0 +1,90 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.7.6;
+
+import "./MerkleProof.sol";
+import "./SafeERC20.sol";
+import "./IERC20.sol";
+import "./IERC20Mintable.sol";
+import "./SafeOwnable.sol";
+
+contract ActiveVault is SafeOwnable {
+    using SafeMath for uint256;
+    using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20Mintable;
+
+    event NewHash(bytes32 oldHash, bytes32 newHash, uint256 updateAt);
+    event Claim(address user, uint amount, uint totalAmount);
+    event NewReceiver(address oldReceiver, address newReceiver);
+
+    bytes32 public rootHash;
+    IERC20Mintable immutable public rewardToken;
+    mapping(address => uint) public userClaimed;
+    uint256 public totalReleaseAmount;
+    uint256 public lastUpdate;
+    mapping(address => uint) public userLastUpdate;
+    address public receiver;
+
+    constructor(IERC20Mintable _rewardToken, address _owner, address _receiver) SafeOwnable(_owner) {
+        rewardToken = _rewardToken;
+        require(_receiver != address(0), "illegal receiver");
+        receiver = _receiver;
+        emit NewReceiver(address(0), receiver);
+    }
+
+    function setReceiver(address _receiver) external onlyOwner {
+        require(_receiver != address(0), "illegal receiver");
+        receiver = _receiver;
+        emit NewReceiver(receiver, _receiver);
+    }
+
+    function updateRootHash(bytes32 _rootHash, uint256 _releaseAmount, uint256 _updateAt) external onlyOwner {
+        //require(_updateAt > lastUpdate, "already updateed");
+        lastUpdate = _updateAt;
+        emit NewHash(rootHash, _rootHash, _updateAt);
+        rootHash = _rootHash;
+        if (_releaseAmount > 0) {
+            //rewardToken.mint(address(this), _releaseAmount);
+            totalReleaseAmount = totalReleaseAmount.add(_releaseAmount);
+        }
+    }
+
+    function claim(address _to, uint _amount, bytes32[] memory _proof) public {
+        bytes32 leaf = keccak256(abi.encodePacked(_to, _amount));
+        require(MerkleProof.verify(_proof, rootHash, leaf), "illegal amount");
+        _amount = _amount.sub(userClaimed[_to]);
+        if (_amount > 0) {
+            userClaimed[_to] = userClaimed[_to].add(_amount);
+            rewardToken.safeTransfer(_to, _amount);
+            emit Claim(_to, _amount, userClaimed[_to]);
+            userLastUpdate[_to] = lastUpdate;
+        }
+    }
+
+    function getAllUserClaimed(address[] memory addresses) external view returns (uint claimed) {
+        for (uint i = 0; i < addresses.length; i ++) {
+            claimed = claimed.add(userClaimed[addresses[i]]);
+        }
+    }
+
+    function claimAll(address[] memory _users, uint[] memory _amounts, uint[] memory _sizes, bytes32[] memory _proof) external {
+        require(_users.length == _amounts.length && _amounts.length == _sizes.length, "illegal length");
+        uint start = 0;
+        for (uint i = 0; i < _users.length; i ++) {
+            bytes32[] memory currentProof = new bytes32[](_sizes[i]); 
+            for (uint j = 0; j < _sizes[i]; j ++) {
+                currentProof[j] = _proof[j + start];
+            }
+            start = start.add(_sizes[i]);
+            claim(_users[i], _amounts[i], currentProof);
+        }
+    }
+
+    function ownerWithdraw(uint _amount) external onlyOwner {
+        uint balance = rewardToken.balanceOf(address(this));
+        if (balance < _amount) {
+            _amount = balance;
+        }
+        rewardToken.safeTransfer(receiver, _amount);
+    }
+}
