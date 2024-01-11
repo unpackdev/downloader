@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+pragma experimental ABIEncoderV2;
+
+import "./MultiPurchaseBoxerWithFreeMintLimitERC721b.sol";
+
+contract MuscleBrainBoxerERC721b is MultiPurchaseBoxerWithFreeMintLimitERC721b {
+}

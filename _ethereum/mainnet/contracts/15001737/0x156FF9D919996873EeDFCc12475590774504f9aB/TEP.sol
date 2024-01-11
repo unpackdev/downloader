@@ -1,0 +1,27 @@
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/// @title: THE EMOTIONAL PLANET
+/// @author: manifold.xyz
+
+import "./ERC721Creator.sol";
+
+///////////////////////////////////////////////////
+//                                               //
+//                                               //
+//                                               //
+//     ____  ____    _  _  _____  __  __   /\    //
+//    (  _ \( ___)  ( \/ )(  _  )(  )(  )  )(    //
+//     ) _ < )__)    \  /  )(_)(  )(__)(   \/    //
+//    (____/(____)   (__) (_____)(______)  ()    //
+//                                               //
+//                                               //
+//                                               //
+///////////////////////////////////////////////////
+
+
+contract TEP is ERC721Creator {
+    constructor() ERC721Creator("THE EMOTIONAL PLANET", "TEP") {}
+}

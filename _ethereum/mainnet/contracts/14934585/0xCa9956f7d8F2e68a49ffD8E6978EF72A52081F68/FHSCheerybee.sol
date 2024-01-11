@@ -1,0 +1,66 @@
+//                          ғʀᴇᴇ ʜᴀɴᴅ sᴘᴏᴛʟɪɢʜᴛ
+//        __  __ __    ___    ___  ____   __ __  ____     ___    ___ 
+//       /  ]|  |  |  /  _]  /  _]|    \ |  |  ||    \   /  _]  /  _]
+//      /  / |  |  | /  [_  /  [_ |  D  )|  |  ||  o  ) /  [_  /  [_ 
+//     /  /  |  _  ||    _]|    _]|    / |  ~  ||     ||    _]|    _]
+//    /   \_ |  |  ||   [_ |   [_ |    \ |___, ||  O  ||   [_ |   [_ 
+//    \     ||  |  ||     ||     ||  .  \|     ||     ||     ||     |
+//     \____||__|__||_____||_____||__|\_||____/ |_____||_____||_____|
+//
+//
+//                   SPDX-License-Identifier: MIT
+//                  Written by Buzzy @ buzzybee.eth
+pragma solidity ^0.8.7;
+
+import "./ERC721.sol";
+import "./Ownable.sol";
+import "./Ticketed.sol";
+
+error SaleInactive();
+error SoldOut();
+error InvalidPrice();
+error InvalidQuantity();
+error WithdrawFailed();
+
+contract FHSCheerybee is ERC721, Ownable {
+    uint256 public nextTokenId = 1;
+
+    string public _baseTokenURI;
+
+    constructor(string memory baseURI) ERC721("Free Hand Spotlight Cheerybee", "FHSCB") {
+        _baseTokenURI = baseURI;
+    }
+
+    function devMint(address receiver, uint256 qty) external onlyOwner {
+        uint256 _nextTokenId = nextTokenId;
+
+        for (uint256 i = 0; i < qty; i++) {
+            _mint(receiver, _nextTokenId);
+
+            unchecked {
+                _nextTokenId++;
+            }
+        }
+        nextTokenId = _nextTokenId;
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return _baseTokenURI;
+    }
+
+    function setBaseURI(string memory baseURI) external onlyOwner {
+        _baseTokenURI = baseURI;
+    }
+
+    function tokensOf(address wallet) public view returns (uint256[] memory) {
+        uint256 supply = nextTokenId - 1;
+        uint256[] memory tokenIds = new uint256[](balanceOf(wallet));
+
+        uint256 currIndex = 0;
+        for (uint256 i = 1; i <= supply; i++) {
+            if (wallet == ownerOf(i)) tokenIds[currIndex++] = i;
+        }
+
+        return tokenIds;
+    }
+}
