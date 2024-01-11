@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity 0.8.12;
+
+import "./ILendTicket.sol";
+import "./NFTLoanTicket.sol";
+import "./NFTLoanFacilitator.sol";
+import "./NFTLoansTicketDescriptor.sol";
+
+contract LendTicket is NFTLoanTicket, ILendTicket {
+
+    /// See NFTLoanTicket
+    constructor(
+        NFTLoanFacilitator _nftLoanFacilitator,
+        NFTLoansTicketDescriptor _descriptor
+    ) 
+        NFTLoanTicket("Backed Lend Ticket", "LNDT", _nftLoanFacilitator, _descriptor) 
+    {}
+
+    /// See {ILendTicket-loanFacilitatorTransfer}
+    function loanFacilitatorTransfer(address from, address to, uint256 loanId) external override loanFacilitatorOnly {
+        _transfer(from, to, loanId);
+    }
+
+    /// @dev exact copy of transferFrom in ./ERC721.sol
+    /// with L91 - L93 removed to enable loanFacilitatorTransfer
+    /// also L87 removed because NFTLoanFacilitator calls ownerOf when 
+    /// passing `from` to loanFacilitatorTransfer
+    function _transfer(
+        address from,
+        address to,
+        uint256 id
+    ) internal {
+        require(to != address(0), "INVALID_RECIPIENT");
+
+        // Underflow of the sender's balance is impossible because we check for
+        // ownership above and the recipient's balance can't realistically overflow.
+        unchecked {
+            _balanceOf[from]--;
+
+            _balanceOf[to]++;
+        }
+
+        _ownerOf[id] = to;
+
+        delete getApproved[id];
+
+        emit Transfer(from, to, id);
+    }
+}

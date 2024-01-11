@@ -1,0 +1,60 @@
+// SPDX-License-Identifier: GPL-3.0
+
+/// @title A library used to construct ERC721 token URIs and SVG images
+
+/*********************************
+ * ･ﾟ･ﾟ✧.・･ﾟshiny.club・✫・゜･ﾟ✧ *
+ *********************************/
+
+pragma solidity ^0.8.9;
+
+import "./base64.sol";
+import "./MultiPartRLEToSVG.sol";
+
+library NFTDescriptor {
+    struct TokenURIParams {
+        string name;
+        string description;
+        bytes[] parts;
+        string background;
+        bool isShiny;
+    }
+
+    /**
+     * @notice Construct an ERC721 token URI.
+     */
+    function constructTokenURI(TokenURIParams memory params, mapping(uint8 => string[]) storage palettes)
+        public
+        view
+        returns (string memory)
+    {
+        string memory image = generateSVGImage(
+            MultiPartRLEToSVG.SVGParams({ parts: params.parts, background: params.background }),
+            palettes
+        );
+        string memory is_shiny = params.isShiny ? "yes" : "no";
+
+        // prettier-ignore
+        return string(
+            abi.encodePacked(
+                'data:application/json;base64,',
+                Base64.encode(
+                    bytes(
+                        abi.encodePacked('{"name":"', params.name, '", "attributes": [{"trait_type":"is_shiny", "value":"', is_shiny, '"}], "description":"', params.description, '", "image": "', 'data:image/svg+xml;base64,', image, '"}')
+                    )
+                )
+            )
+        );
+    }
+
+    /**
+     * @notice Generate an SVG image for use in the ERC721 token URI.
+     */
+    function generateSVGImage(MultiPartRLEToSVG.SVGParams memory params, mapping(uint8 => string[]) storage palettes)
+        public
+        view
+        returns (string memory svg)
+    {
+        return Base64.encode(bytes(MultiPartRLEToSVG.generateSVG(params, palettes)));
+    }
+}

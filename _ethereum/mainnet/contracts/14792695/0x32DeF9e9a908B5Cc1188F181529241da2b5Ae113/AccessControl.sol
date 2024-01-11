@@ -1,0 +1,207 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.9;
+
+import "./IAccessControl.sol";
+import "./IRoleContainerRoot.sol";
+import "./IRoleContainerAdmin.sol";
+import "./Strings.sol";
+import "./Context.sol";
+import "./ERC165Storage.sol";
+
+/**
+ * @dev Contract module that allows children to implement role-based access
+ * control mechanisms. This is a lightweight version that doesn't allow enumerating role
+ * members except through off-chain means by accessing the contract event logs. Some
+ * applications may benefit from on-chain enumerability, for those cases see
+ * {AccessControlEnumerable}.
+ *
+ * Roles are referred to by their `bytes32` identifier. These should be exposed
+ * in the external API and be unique. The best way to achieve this is by
+ * using `public constant` hash digests:
+ *
+ * ```
+ * bytes32 public constant MY_ROLE = keccak256("MY_ROLE");
+ * ```
+ *
+ * Roles can be used to represent a set of permissions. To restrict access to a
+ * function call, use {hasRole}:
+ *
+ * ```
+ * function foo() public {
+ *     require(hasRole(MY_ROLE, _msgSender()));
+ *     ...
+ * }
+ * ```
+ *
+ * Roles can be granted and revoked dynamically via the {grantRole} and
+ * {revokeRole} functions. Each role has an associated admin role, and only
+ * accounts that have a role's admin role can call {grantRole} and {revokeRole}.
+ */
+abstract contract AccessControl is Context, ERC165Storage, IAccessControl, IRoleContainerAdmin {
+    /**
+    * @dev Root Admin role identifier.
+    */
+    bytes32 public constant ROOT_ROLE = "Root";
+
+    /**
+    * @dev Admin role identifier.
+    */
+    bytes32 public constant ADMIN_ROLE = "Admin";
+
+    /**
+    * @dev Manager role identifier.
+    */
+    bytes32 public constant MANAGER_ROLE = "Manager";
+
+    struct RoleData {
+        mapping(address => bool) members;
+        bytes32 adminRole;
+    }
+
+    mapping(bytes32 => RoleData) private _roles;
+
+    constructor() {
+        _registerInterface(type(IAccessControl).interfaceId);
+
+        _setupRole(ROOT_ROLE, _msgSender());
+        _setRoleAdmin(ADMIN_ROLE, ROOT_ROLE);
+        _setRoleAdmin(MANAGER_ROLE, ROOT_ROLE);
+    }
+
+    /**
+     * @dev Modifier that checks that an account has a specific role. Reverts
+     * with a standardized message including the required role.
+     */
+    modifier onlyRole(bytes32 role) {
+        _checkRole(role, _msgSender());
+        _;
+    }
+
+    /**
+     * @dev Returns `true` if `account` has been granted `role`.
+     */
+    function hasRole(bytes32 role, address account) public view override returns (bool) {
+        return _roles[role].members[account];
+    }
+
+    /**
+     * @dev Revert with a standard message if `account` is missing `role`.
+     */
+    function _checkRole(bytes32 role, address account) internal view {
+        if (!hasRole(role, account)) {
+            revert(
+                string(
+                    abi.encodePacked(
+                        "AccessControl: account ",
+                        Strings.toHexString(uint160(account), 20),
+                        " is missing role ",
+                        Strings.toString(role)
+                    )
+                )
+            );
+        }
+    }
+
+    /**
+     * @dev Returns the admin role that controls `role`. See {grantRole} and
+     * {revokeRole}.
+     *
+     * To change a role's admin, use {_setRoleAdmin}.
+     */
+    function getRoleAdmin(bytes32 role) public view override returns (bytes32) {
+        return _roles[role].adminRole;
+    }
+
+    /**
+     * @dev Grants `role` to `account`.
+     *
+     * If `account` had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
+     */
+    function grantRole(bytes32 role, address account) public virtual override onlyRole(getRoleAdmin(role)) {
+        _grantRole(role, account);
+    }
+
+    /**
+     * @dev Revokes `role` from `account`.
+     *
+     * If `account` had been granted `role`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
+     */
+    function revokeRole(bytes32 role, address account) public virtual override onlyRole(getRoleAdmin(role)) {
+        _revokeRole(role, account);
+    }
+
+    /**
+     * @dev Revokes `role` from the calling account.
+     *
+     * Roles are often managed via {grantRole} and {revokeRole}: this function's
+     * purpose is to provide a mechanism for accounts to lose their privileges
+     * if they are compromised (such as when a trusted device is misplaced).
+     *
+     * If the calling account had been granted `role`, emits a {RoleRevoked}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must be `account`.
+     */
+    function renounceRole(bytes32 role, address account) public virtual override {
+        require(account == _msgSender(), "AccessControl: can only renounce roles for self");
+
+        _revokeRole(role, account);
+    }
+
+    /**
+     * @dev Grants `role` to `account`.
+     *
+     * If `account` had not been already granted `role`, emits a {RoleGranted}
+     * event. Note that unlike {grantRole}, this function doesn't perform any
+     * checks on the calling account.
+     *
+     * [WARNING]
+     * ====
+     * This function should only be called from the constructor when setting
+     * up the initial roles for the system.
+     *
+     * Using this function in any other way is effectively circumventing the admin
+     * system imposed by {AccessControl}.
+     * ====
+     */
+    function _setupRole(bytes32 role, address account) private {
+        _grantRole(role, account);
+        _setRoleAdmin(role, ROOT_ROLE);
+    }
+
+    /**
+     * @dev Sets `adminRole` as ``role``'s admin role.
+     *
+     * Emits a {RoleAdminChanged} event.
+     */
+    function _setRoleAdmin(bytes32 role, bytes32 adminRole) internal virtual {
+        emit RoleAdminChanged(role, getRoleAdmin(role), adminRole);
+        _roles[role].adminRole = adminRole;
+    }
+
+    function _grantRole(bytes32 role, address account) private {
+        if (!hasRole(role, account)) {
+            _roles[role].members[account] = true;
+            emit RoleGranted(role, account, _msgSender());
+        }
+    }
+
+    function _revokeRole(bytes32 role, address account) private {
+        if (hasRole(role, account)) {
+            _roles[role].members[account] = false;
+            emit RoleRevoked(role, account, _msgSender());
+        }
+    }
+}

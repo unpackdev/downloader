@@ -1,0 +1,137 @@
+pragma solidity ^0.8.11;
+import "./Ownable.sol";
+import "./ReentrancyGuard.sol";
+import "./MerkleProof.sol";
+import "./Strings.sol";
+import "./ERC721A.sol";
+
+error MintSaleNotStarted();
+error MintInsufficientPayment();
+error MintExceedsMaxSupply();
+error MintExceedsMintLimit();
+error PresaleNotAlphalist();
+
+contract ApeAbuGenesisSquad is Ownable, ERC721A, ReentrancyGuard {
+  uint256 public constant price = 0.08 ether;
+
+  uint256 public immutable collectionSize;
+  uint256 public immutable maxPerMint;
+  uint256 public immutable maxPresaleMints;
+  uint256 public immutable amountForDevs;
+
+  bool public presaleActive = false;
+  bool public publicSaleActive = false;
+
+  string public baseExtension = ".json";
+  string private baseTokenURI;
+  bytes32 private presaleRoot;
+
+  constructor(
+    uint256 _collectionSize,
+    uint256 _maxPerMint,
+    uint256 _maxPresaleMints,
+    uint256 _amountForDevs
+  ) ERC721A("ApeAbu Genesis Squad", "APGS") {
+    collectionSize = _collectionSize;
+    maxPerMint = _maxPerMint;
+    maxPresaleMints = _maxPresaleMints;
+    amountForDevs = _amountForDevs;
+  }
+
+  function presaleMint(uint64 amount, bytes32[] calldata proof) external payable nonReentrant {
+    if (!presaleActive) revert MintSaleNotStarted();
+
+    if (msg.value < price * amount) revert MintInsufficientPayment();
+    if (totalSupply() + amount > collectionSize) revert MintExceedsMaxSupply();
+
+    uint64 numWhitelistMinted = _getAux(_msgSender()) + amount;
+    if (numWhitelistMinted > maxPresaleMints) revert MintExceedsMintLimit();
+
+    if (MerkleProof.verify(proof, presaleRoot, keccak256(abi.encodePacked(_msgSender()))) == false) {
+      revert PresaleNotAlphalist();
+    }
+
+    _safeMint(_msgSender(), amount);
+    _setAux(_msgSender(), numWhitelistMinted);
+  }
+
+  function publicMint(uint256 amount) external payable nonReentrant {
+    if (!publicSaleActive) revert MintSaleNotStarted();
+    if (msg.value < price * amount) revert MintInsufficientPayment();
+    if (amount > maxPerMint) revert MintExceedsMintLimit();
+    if (totalSupply() + amount > collectionSize) revert MintExceedsMaxSupply();
+
+    _safeMint(_msgSender(), amount);
+  }
+
+  function numberPresaleMinted(address owner) external view returns (uint256) {
+    return _getAux(owner);
+  }
+
+  function numberMinted(address owner) external view returns (uint256) {
+    return _numberMinted(owner);
+  }
+
+  function ownershipDataOf(uint256 tokenId) external view returns (TokenOwnership memory) {
+    return ownershipOf(tokenId);
+  }
+
+  // OWNER ONLY
+
+  function devMint(uint256 amount) external onlyOwner {
+    require(totalSupply() + amount <= amountForDevs, "too many already minted before dev mint");
+    require(amount % maxPerMint == 0, "can only mint a multiple of the maxPerMint");
+    uint256 numChunks = amount / maxPerMint;
+    for (uint256 i = 0; i < numChunks; i++) {
+      _safeMint(_msgSender(), maxPerMint);
+    }
+  }
+
+  function setPresaleActive(bool _active) external onlyOwner {
+    presaleActive = _active;
+  }
+
+  function setPublicSaleActive(bool _active) external onlyOwner {
+    publicSaleActive = _active;
+  }
+
+  function setPresaleRoot(bytes32 _root) external onlyOwner {
+    presaleRoot = _root;
+  }
+
+  function setBaseURI(string memory _uri) external onlyOwner {
+    baseTokenURI = _uri;
+  }
+  
+  function tokenURI(uint256 tokenId)
+    public
+    view
+    virtual
+    override
+    returns (string memory)
+  {
+    require(
+      _exists(tokenId),
+      "ERC721Metadata: URI query for nonexistent token"
+    );
+    
+    string memory currentBaseURI = _baseURI();
+    return bytes(currentBaseURI).length > 0
+        ? string(abi.encodePacked(currentBaseURI, Strings.toString(tokenId), baseExtension))
+        : "";
+  }
+  
+  function withdraw() external onlyOwner {
+    uint256 balance = address(this).balance;
+    (bool ok, ) = payable(_msgSender()).call{value: balance}("");
+    require(ok, "Failed to withdraw payment");
+  }
+
+  // INTERNAL
+
+  function _baseURI() internal view virtual override returns (string memory) {
+    return baseTokenURI;
+  }
+
+  
+}

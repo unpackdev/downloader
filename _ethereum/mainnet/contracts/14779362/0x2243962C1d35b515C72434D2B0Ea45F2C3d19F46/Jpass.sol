@@ -1,0 +1,70 @@
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/// @title: Jimmy's Pass
+/// @author: manifold.xyz
+
+import "./ERC1155Creator.sol";
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                                //
+//                                                                                                                                //
+//                                                                                                                                //
+//    KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK0000000000000000000000000000000000KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKOocllllllllllllllllllllllllllllclkKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK0kddddxkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkxdxOKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK0OOOOOOOOOOkdloolxKNNNNNNNNNNNNNNNNNNNNNNNNNNNNNWNkloxOO0KKKKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKklccccccccclOXXXXXNNNNNNNNNNNNNNNNNNNNNNNNNNWMMMMMNXKdcoOKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKKKK0xoddoddddddxOOOOOKNNNNNNNNNNNNNNNNNNNNNNX0000OKXNNNWWMMWWNKOkdox0KKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKK0OkxolllldkkkkOKNNNNNNNNNNNNNNNNNNNNNNNNNXXKK0OOOO0KKXNNNWWWWWNNKo:lOKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKK0o:lxkkkkkkkkkk0XNNNNNNNNNNNNNNNNNNNNNNNNXOkOKNNNNKkk0XNNNNNNNNNKo:oOKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKK0o:lxOkkOOOOkkOO00000XNNNNNNNNNNNNNNNNNNNXOxOKNNNNKkk0XNNNNNNNNNKo:lOKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKOc.':cccccccccccccc:lkKKKKKKKKKKKKKKKKKKK0Okk0KKKK0kkOKKKKKKK0xooddx0KKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO,                  .cxxxxxkkxxxxxxxxxxxxxxxxxddddxxxxxxxxxxxo. .dKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO'                   .....'ldl,'','',,'''''''''''''''''''''','  .dKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO'                         .',;:::::ccccccccccclddddddddocc::;.  ,:lOKKKKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO:..                         .;c::cclllolllollldO000000Oxolcc;.    .lxxxxkKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKK00d.        .................                                           :0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKKKKk' .,::::'                 .................................'..'.     ;0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKKKKk' .oxxxxl,,,,,,,,,,,,,,,,'.................................''''''''''l0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKK00x' .oxxxxOXNXXXXXXXXXXXXXXd.                                    .x0000KKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKOc'''.,oxxxxOXNNNN0OOOOOOkOkOxlcccccccccccccccccccccc:,,,,,,,,,,,,,,,'cOKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO, ..';dxkOOKNNK00o::::::::::ldxkOOOOOOOOOOOOOOOOOkxxl,,,,,,,,,,;co:. ,OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO, .',:dxOXNXXXOdo,..........,odkXXNNNNNNNNNNNNNXX0do:...........cdc. ;OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO, .cddxxOXNKkkc..,::::::::::;..:xk0NNNNNNNNNNNXOko'.,:c::::::::;'... ,OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO, .lxxxxOXNk:;;,,:lclllllldxl;,;;;xXNNNNNNNNNN0c;;,,:cllllllldxo:,'. ;OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO, .lxxxxOXNd..,llllcc:codxkkxll;..lKXNNNNNNNNNO' 'cllllc::ldxxkxol:..;OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKKKKKO, .lxxxxOXNd..,llllc' 'OWKdllll,..lXXNNNNNNNNNO' 'clllc,..dWXkllll:..;OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0o;;'.'oxxxxOXNd..,llllc. .;cccllll,..lXNXd::::l0WO' 'clllc' .,:ccllll:. ;OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..';oxxxxOXNd..;ooodo:,,,,;ldooo:..:dxd;....,okl..'ldddoc,,,,,ldoodc. ;OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..';oxxxxOXNd..ckOOOOOOOOOOOOOOkc.......,,coc. ...;xOOOOOOOOOOOOOOOo. ;OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..';oxxxxOXNKOkl',xNNNNX0OOOOd;';cl'.  ...;c;. .dOo,'oXNNNNKOOO0k:''. ;OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..',oxxxxk00KNNkccoddxddlllllcccdOOo;;,,,,'',:coKN0lcodddxdollllc;;'. ,OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..';oxxxxxxxOXNNNXl..........cKNNNN0kkkkkd;.,ONNNNNNNx'.........,okl. ,OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..';oxxxxxxxOXNNNNK0000000000KXNNNNXXXXXXX000XNNNNNNNX0000000000Okxl. ,OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..',:cldxxxxOXNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNXkxl. ;OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..'''';lodxxOKXXNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNXkxl. ,OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..''''',,:dxxxx0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNXkxl. ,OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKKK0: ..''''''',::lxxkOOKNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNX0Okl:,. ,OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKkdo,...'''''''''':dxkOO0KKKKKKKKKKKKKKNNNNNNNNNNNNNNNNNXKKKKKKKKKKKOOx:,'. ,OKKKKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKKKc...''''''''''''':dx0NXOxxxxxxxxxxxxxOXNNNNXNNNNNNNXNXNKkxxxxxxxxxkKNKl:,. ,k00KKKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKK0c. .''''''''''''':dx0NNXKKKKKKKKKKKKK0OkkkkOKNNNNX0kkkkOKKKKKKKKKKKXNKl:;'.'',l0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKK0c. .''''''''''''':dx0NNNNNNNNNNNNNNNNK0OOOOO0000000OOOOKXNNNNNNNNNNNNKo:;,'.. :0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKK0c. .''''''''''',,cdx0NNNNNNNNNNNNNNNNNNNNNNN0kkkxOXNNNNNNNNNNNNNNNNNNKo:;,'.. :0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKK0c. .'''''''''';oddxx0NNNNNNNNNNNNNNNNNNNNNNNXXXXXXXNNNNNNNNNNNNNNNNNNKo:;,'.. :0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKK0c. .'''''''''':dxxxx0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNKo:;,'.. :0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKK0c. .'''''''''':dxxxx0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNKo:;,'.. :0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKK0c. .'''''''''':dxxxx0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNKo:;,'.. :0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKK0c. .'''''''''':dxxxx0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNKo:;,'.. :0KKKKKKKKKKKKKKKKKKKKK    //
+//    KKKKKKKKKKKKKKKKKK0c. .'''''''''':dxxxx0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNKo:;,'.. :0KKKKKKKKKKKKKKKKKKKKK    //
+//                                                                                                                                //
+//                                                                                                                                //
+//                                                                                                                                //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+contract Jpass is ERC1155Creator {
+    constructor() ERC1155Creator() {}
+}
