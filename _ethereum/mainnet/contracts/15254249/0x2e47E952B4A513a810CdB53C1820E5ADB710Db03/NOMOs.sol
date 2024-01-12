@@ -1,0 +1,72 @@
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/// @title: NOMOSTAVINGAuTIST's
+/// @author: manifold.xyz
+
+import "./ERC721Creator.sol";
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                            //
+//                                                                                                            //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWNXNNKKX0OOO00KKKKKK0OOkk0KKKNXXWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMWWNXKKK00K0KKOd::::lk00KK0Oo::::oO000K0KXNWWMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMWXKKKK0KKKKKKK00Oo,....;x00KOc....'lO0000000000KXWMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMWNXXK0OkxxxkO0KKKKK000l.....;lxkc.....:k00000000000O0KXXNWMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMWNXXK0Oo:,'...',cdOKK0000o.......',......:O000000Odl::;;:cokKXNWMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMWNXK0K0d,...;lc'....:k0KKK0l..;,.....';'...:O0000Oo,...,,....,lk0XWMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMWNXKKKKKx,...,xK0d,....:k00KOc.'dx,...'dd,...;k000Ol....lOOo'....:kKKNWMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMWNXKKKKKKKo'...'d0K0l....'d0KOo'..:xd,.'okc....'lO00x,....o0K0o'....o00KKNWMMMMMMMMMMMMM    //
+//    MMMMMMMMMMWNXKKKKKKKKKx,....;x0Kd'...;k00Odccclk0kdxOOoccccldO00k;....;xKKk;....o0000KKXWMMMMMMMMMMM    //
+//    MMMMMMMMWNXKKKKKKKKKKK0d,....,lo;...;d000000000000000000000000000o'....;dkd,...:k000KKKKKXNWMMMMMMMM    //
+//    MMMMMMMWXKKKKKKKKKKKKKK0ko;'....',:oO000000000000000000OO00000000Od:'....'...;oO0000KKKK000NWMMMMMMM    //
+//    MMMMMMWXKK00O00KKKKKK00OO00OxxxxkO00000000OOOOO00000000O00000000000OkolcccloxO00K0000000KKK0XWMMMMMM    //
+//    MMMMMWXKKkc,,,;cx0KKkc,,,;d0KKKK000000000OxdoodxkkkOO0000000000000000KK000KOocd000xoc:::clldO0NMMMMM    //
+//    MMMWXKKKKOo,....':dOOo'..ck0K00000000000Okoc:::cloodxkOOOOO00000000000KKK0k:.;x0kc'...,:;...lO0NMMMM    //
+//    MMMNKKKKKK0l.......;oo;.,xK0000000000000Okoc:::::cccloddddxxxkOO00000000KOl..'lko.....:odoc:d00KNMMM    //
+//    MMWXKKKKKK0o............,xK0000KKK000000kxolccccc::cccccclllloodxk00K0000Ol...:kx,.......,;lk000XWMM    //
+//    MWKKKKKKKKKo..;do;......,xKKK0000000000OkdollllccccccccccllllllooxO0000000Oxodk0koc;'.......:OK00XWM    //
+//    WXKKKKKKKK0l..;k0Od:....,xK00000000000OkxdooolllllcccccllllloooodxO0000K00KKKKKO:'cxxdl'....;kKK00XM    //
+//    WK0KKKKKK0o'...:kKK0xc'.;kK00000OO000OOkkxdddddddooooollooooooodxkO0000000000KK0o'.';:;'...;x0KK00KW    //
+//    XKKKKKKKK0kdooox0KKKK0kdx0KK0000OOOOOOkkOOOOOOOOkkxxddxxxxxxxddxxkO00000000000KK0xolc:::coxO0KKKK00X    //
+//    K0KKKKKKKKKKKKKKKKKKKKKKKKKK000OOOOOOkkkOOO000000OOkxxkO000OOOOOOOO00000000000KKKKK00000KKKKKKKKK00K    //
+//    O0KKKKKKKKKKKKKKKKKKKKKKK00K0000OkOOOkkkkkkOOOOOOOkxddkO0000000000000000000000KKKK000KKKKKKKKKKK00Ok    //
+//    O0KKKKKKKKKKKKKKKKKKK00000000000OkkkkOkkkxkkkkkkxxxdoodkOOOOOOOOOO000000000000KKKK00KKKKKKKKKKKK000O    //
+//    O0KKKKKKKKKKKKKKKKKKKK00000000000OkkkOOOkkkxxxxddddolldxkkkkkOOOOO000000000000KKK0KKKKKKKKK000000000    //
+//    00KKKKKKKKKKKKKKKKKKK00000000000000OO0OOOOkxxxxxxxxdddxkkkxxkkOO000OOOO0000000KKKKKKKKK000000000000K    //
+//    0KKKKKKKKKKKKKKKKKKK0000000000000000000OOOOkkxxxxkkOOOOOOkkkkkO0000OOO0000000KKKKKKKKK00000KKKKK000K    //
+//    0KKKKKKKKKKKKKKK0KKKK00000000000000000000OOOkkkxxkOO000OOkkkOOO0000000000000000KKKK0000KKK0000000000    //
+//    OKKKKKKKKKKKKKKKKKKK0000000000000000000000OOOOOkkOOOOOOOOOOOOO0000000000000000000000000KKK000000000k    //
+//    0KKKKKKKKKKKKKKKK0000000000000000000000000OOOOOOOOOOOOOOOOOOO00000000000000000000000000000000000000O    //
+//    X0KKKKKKKKKKKKKK000000000000000000000000000OOOOOOOOOOOOOOOOO000000000000000000000000000000000000000X    //
+//    X0KKKKKKKKKKKKKKKKK00000000000000000000000000OOOOOOOOOOOOOO0000000000000000000000000000000000000000N    //
+//    WK0KKKKKKK0KKK000000000000000000000000OOOOO00OOOOOOOOOOOOO000000000000000000000000000000000000000OKM    //
+//    MNK0KKKKKKK0KK000000000000000000000OOOkkkOOOOOO00000000000000000OOkO000000000000000000000000000000NM    //
+//    MWXK0KKKKK000K00000000000000000000OOOkdodkOOOOOOO00000000000000OOxodk0000000000000000000000000000XMM    //
+//    MMWXK0KKKK000000000000000000000OO0OOkdlccoxkOOOOOOOOOOOOOOOOOOOkxoccoxO000000000000000000000000OKWMM    //
+//    MMMWX0KKK000000000000000000000OOOOOkdlc:::codxkOOOOOOOOOOOOkkxdolc::cldkO000000000000000000000OKWMMM    //
+//    MMMMWXKK000000000000000000000OOOOkxdlc::::::clodxkkkkkkkkxxdolcc::::::cloxkO00000000000000000OKWMMMM    //
+//    MMMMMWXK000000000000000OOOOOOkkxdolc::::::::::ccloddddddoolc:::::::::::::clodxxkkkOOO00000000XWMMMMM    //
+//    MMMMMMWNK00000000OOOOkkxxdddoollcc:::::::::::ccllllccccclllccc::::::::::::::ccclllooddxkkkkOXMMMMMMM    //
+//    MMMMMMMMNK000OOOkxddolllcccc:::::::::::::::ccclolccc::::ccclllcccc::::::::::::::::::cccclokXMMMMMMMM    //
+//    MMMMMMMMMWX0kxdollcc:::::::::::::::::::::ccccccccc:::::::c::ccccccc::::::::::::::::::::lxKWMMMMMMMMM    //
+//    MMMMMMMMMMMNOoccc::::::::::::::::::::::::::::::::::::::::cc:::::::::::::::::::::::::::lONMMMMMMMMMMM    //
+//    MMMMMMMMMMMMWKxl::::::::::::::::::::::::::::::::::::::::::c:::::::::::::::::::::::::lxKWMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMWXOoc::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::ldOXWMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMN0dl:::::::::::::::::::::::::::::::::::::::::::::::::::::::::clxKWMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMWXOdlc::::::::::::::::::::::::::::::::::::::::::::::::::cld0XWMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMWX0xoc:::::::::::::::::::::::::::::::::::::::::::ccok0XWMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMWNKOxolc::::::::::::::::::::::::::::::::::cldk0KNMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWX0Okdolc::::::::::::::::::::::loodkOKXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNX0kxolcc::::::::::ccldxk0XNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    //
+//                                                                                                            //
+//                                                                                                            //
+//                                                                                                            //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+contract NOMOs is ERC721Creator {
+    constructor() ERC721Creator("NOMOSTAVINGAuTIST's", "NOMOs") {}
+}
