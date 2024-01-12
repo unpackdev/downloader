@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+import "./Ownable.sol";
+import "./ERC1155.sol";
+import "./ERC1155Pausable.sol";
+import "./ERC1155Burnable.sol";
+
+contract Skull is Ownable, ERC1155Pausable, ERC1155Burnable {
+    mapping(address => bool) private altarOfSacrifice;
+
+    constructor(string memory uri) ERC1155(uri) {}
+
+    function mint(address to, uint256 id, uint256 amount, bytes memory data) public onlyAltars {
+        _mint(to, id, amount, data);
+    }
+
+    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) internal virtual override(ERC1155, ERC1155Pausable) {
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    function addAltar(address a) public onlyOwner {
+        altarOfSacrifice[a] = true;
+    }
+
+    function removeAltar(address a) public onlyOwner {
+        altarOfSacrifice[a] = false;
+    }
+
+    modifier onlyAltars() {
+        require(altarOfSacrifice[_msgSender()], 'Not an altar of sacrifice');
+        _;
+    }
+
+    function isApprovedForAll(address account, address operator) public override view returns (bool) {
+        if (altarOfSacrifice[operator]) {
+            return true;
+        }
+
+        return super.isApprovedForAll(account, operator);
+    }
+
+    function setURI(string memory newURI) public onlyOwner {
+        _setURI(newURI);
+    }
+}
