@@ -1,0 +1,24 @@
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/// @title: Dream Worlds Assets
+/// @author: manifold.xyz
+
+import "./ERC721Creator.sol";
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//                                                                               //
+//                                                                               //
+//    █▀▄ █▀█ █▀▀ ▄▀█ █▀▄▀█   █░█░█ █▀█ █▀█ █░░ █▀▄ █▀   ▄▀█ █▀ █▀ █▀▀ ▀█▀ █▀    //
+//    █▄▀ █▀▄ ██▄ █▀█ █░▀░█   ▀▄▀▄▀ █▄█ █▀▄ █▄▄ █▄▀ ▄█   █▀█ ▄█ ▄█ ██▄ ░█░ ▄█    //
+//                                                                               //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+
+contract DREAMS is ERC721Creator {
+    constructor() ERC721Creator("Dream Worlds Assets", "DREAMS") {}
+}
