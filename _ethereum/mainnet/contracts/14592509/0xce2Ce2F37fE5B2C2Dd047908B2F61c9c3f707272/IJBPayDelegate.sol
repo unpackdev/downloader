@@ -1,8 +1,0 @@
-// SPDX-License-Identifier: MIT
-pragma solidity 0.8.6;
-
-import "./JBDidPayData.sol";
-
-interface IJBPayDelegate {
-  function didPay(JBDidPayData calldata _data) external;
-}

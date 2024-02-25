@@ -1,8 +1,0 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.6;
-
-import "./SafeERC20.sol";
-
-interface IVotiumBribe {
-    function depositBribe(address _token, uint256 _amount, bytes32 _proposal, uint256 _choiceIndex) external ;
-}
