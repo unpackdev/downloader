@@ -2,6 +2,11 @@ logger:
   env: development
   level: debug
 
+storage:
+  enabled: true
+  contractsPath: /mnt/{disc}/downloader/
+  databasePath: /mnt/{disc}/downloader/db
+
 nodes:
   - group: "ethereum"
     type: "mainnet"
@@ -13,5 +18,18 @@ nats:
   addr: "localhost:4222"
 
 db:
-  path: "/mnt/{disc}/downloader/db"
   flattenWorkers: 10
+
+cache:
+  addr: "localhost:6739"
+  password: ""
+  db: 0
+  maxRetries: 3
+  minRetryBackoff: 8
+  maxRetryBackoff: 100
+
+etherscan:
+  provider: "etherscan"
+  endpoint: "https://api.etherscan.io/api"
+  keys:
+    - "XXXXX"

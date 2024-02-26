@@ -10,19 +10,21 @@ import (
 	"github.com/unpackdev/downloader/pkg/subscribers"
 	"github.com/unpackdev/downloader/pkg/unpacker"
 	"github.com/unpackdev/solgo/clients"
+	"github.com/unpackdev/solgo/providers/etherscan"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
-	ctx      context.Context
-	pool     *clients.ClientPool
-	nats     *nats.Conn
-	db       *db.BadgerDB
-	subs     *subscribers.Manager
-	storage  *storage.Storage
-	unpacker *unpacker.Unpacker
+	ctx       context.Context
+	pool      *clients.ClientPool
+	nats      *nats.Conn
+	db        *db.BadgerDB
+	subs      *subscribers.Manager
+	storage   *storage.Storage
+	unpacker  *unpacker.Unpacker
+	etherscan *etherscan.EtherScanProvider
 }
 
 func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error {
@@ -90,6 +92,8 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to connect to the nats server: %w", err)
 	}
 
+	// Note that there can be only one application accessing specific badgerdb database at the time...
+	// It's fuubar strategy but heck we'll need to build RPC endpoints on top of it.
 	bDb, err := db.NewBadgerDB(db.WithContext(ctx), db.WithDbPath(opts.Db.Path))
 	if err != nil {
 		return nil, fmt.Errorf("failure to open up the badgerdb database: %w", err)
@@ -124,6 +128,13 @@ func NewService(ctx context.Context) (*Service, error) {
 		subs:     subManager,
 		storage:  storageManager,
 		unpacker: unp,
+	}
+
+	// Syncer operates under state machine logic, here we're registering available states.
+	if err := RegisterMachineStates(toReturn); err != nil {
+		return nil, fmt.Errorf(
+			"failure to register syncer machine states: %w", err,
+		)
 	}
 
 	return toReturn, nil
