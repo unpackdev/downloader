@@ -1,6 +1,6 @@
 # Ethereum Smart Contracts Downloader and Storage Manager
 
-**UNDER EARLY DEVELOPMENT**
+## UNDER EARLY DEVELOPMENT
 
 Currently, nothing works as expected. Going to remove this notice once state of the project changes.
 

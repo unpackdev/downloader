@@ -22,8 +22,8 @@ type ArchiveBlock struct {
 	hooks  map[HookType][]BlockHookFn
 }
 
-func NewArchiveBlock(ctx context.Context, pool *clients.ClientPool, hooks map[HookType][]BlockHookFn) (*Block, error) {
-	toReturn := &Block{
+func NewArchiveBlock(ctx context.Context, pool *clients.ClientPool, hooks map[HookType][]BlockHookFn) (*ArchiveBlock, error) {
+	toReturn := &ArchiveBlock{
 		ctx:   ctx,
 		pool:  pool,
 		hooks: hooks,
@@ -33,7 +33,10 @@ func NewArchiveBlock(ctx context.Context, pool *clients.ClientPool, hooks map[Ho
 }
 
 func (b *ArchiveBlock) Start() error {
-	zap.L().Info("Starting up block subscriber...")
+	zap.L().Info(
+		"Starting up block subscriber...",
+		zap.Any("direction", ArchiveBlockSubscriber),
+	)
 
 	client := b.pool.GetClientByGroup("ethereum")
 	if client == nil {

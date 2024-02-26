@@ -34,7 +34,10 @@ func NewHeadBlock(ctx context.Context, pool *clients.ClientPool, hooks map[HookT
 }
 
 func (b *Block) Start() error {
-	zap.L().Info("Starting up block subscriber...")
+	zap.L().Info(
+		"Starting up block subscriber...",
+		zap.Any("direction", HeadBlockSubscriber),
+	)
 
 	client := b.pool.GetClientByGroup("ethereum")
 	if client == nil {
