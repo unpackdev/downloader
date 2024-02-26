@@ -45,8 +45,10 @@ func (s *Service) UnpackFromEntry(ctx context.Context, entry *entries.Entry, sta
 		return nil, err
 	}
 
-	if err := contract.DiscoverChainInfo(ctx, options.G().Unpacker.OtsEnabled); err != nil {
-		return nil, err
+	if entry.Header == nil || entry.Tx == nil || entry.Receipt == nil {
+		if err := contract.DiscoverChainInfo(ctx, options.G().Unpacker.OtsEnabled); err != nil {
+			return nil, err
+		}
 	}
 
 	descriptor, err := s.unpacker.Unpack(ctx, entry.GetDescriptor(s.unpacker, contract), state)
