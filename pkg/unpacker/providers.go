@@ -53,6 +53,17 @@ func (dh *ProvidersContractHandler) Process(data machine.Data) (machine.State, m
 			}
 		}
 
+		/*		if !cdescriptor.HasSources() {
+				sources, err := dh.u.downloader.Seek(dh.ctx, descriptor.GetNetwork(), cdescriptor.GetBlock().Number(), cdescriptor.GetName(), descriptor.GetAddress())
+				if err == nil {
+					contract.GetDescriptor().Sources = sources
+					descriptor.sources = sources
+
+					// In case that we didn't initially have sources and now we have...
+					descriptor.RemoveFailedState(SourceProvidersState)
+				}
+			}*/
+
 	}
 
 	if !descriptor.HasFailedState(SourceProvidersState) {

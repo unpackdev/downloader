@@ -31,7 +31,10 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 		return DiscoverState, descriptor, nil
 	}
 
-	descriptor.AppendCompletedState(FinalState)
+	if !descriptor.HasFailedState(FinalState) {
+		descriptor.AppendCompletedState(FinalState)
+	}
+
 	return DoneState, descriptor, nil
 }
 

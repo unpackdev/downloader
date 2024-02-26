@@ -32,8 +32,11 @@ func (dh *SourcesContractHandler) Process(data machine.Data) (machine.State, mac
 		return DiscoverState, descriptor, nil
 	}
 
-	descriptor.AppendCompletedState(SourcesState)
-	return FinalState, descriptor, nil
+	if !descriptor.HasFailedState(SourcesState) {
+		descriptor.AppendCompletedState(SourcesState)
+	}
+
+	return ParserState, descriptor, nil
 }
 
 func (dh *SourcesContractHandler) Exit(data machine.Data) (machine.Data, error) {
