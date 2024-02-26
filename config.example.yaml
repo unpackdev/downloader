@@ -14,3 +14,4 @@ nats:
 
 db:
   path: "/mnt/{disc}/downloader/db"
+  flattenWorkers: 10

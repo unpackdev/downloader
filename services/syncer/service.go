@@ -41,7 +41,7 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 			zap.Any("network_id", networkId),
 		)
 
-		if err := s.db.DB().Flatten(10); err != nil {
+		if err := s.db.DB().Flatten(options.G().Db.FlattenWorkers); err != nil {
 			zap.L().Error(
 				"failure to flatten badger db database on service shutdown",
 				zap.Error(err),
