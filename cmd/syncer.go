@@ -26,6 +26,29 @@ func GetDownloaderCommands() []*cli.Command {
 						return syncer.Run(cCtx)
 					},
 				},
+				{
+					Name:  "one",
+					Usage: "Synchronizes a specific contract by its address",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:     "network",
+							Required: true,
+							Value:    utils.Ethereum.String(),
+						},
+						&cli.StringFlag{
+							Name:     "addr",
+							Required: true,
+						},
+					},
+					Action: func(cCtx *cli.Context) error {
+						service, err := syncer.New(cCtx)
+						if err != nil {
+							return err
+						}
+
+						return service.Unpack(cCtx)
+					},
+				},
 			},
 		},
 	}

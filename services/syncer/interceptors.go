@@ -8,13 +8,25 @@ import (
 	"go.uber.org/zap"
 )
 
+type SyncDirection string
+
+func (s SyncDirection) String() string {
+	return string(s)
+}
+
+var (
+	HeadSyncDirection    SyncDirection = "head"
+	ArchiveSyncDirection SyncDirection = "archive"
+)
+
 // BlockHeadInterceptor -
-func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.NetworkID) func(block *types.Block) (*types.Block, error) {
+func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.NetworkID, direction SyncDirection) func(block *types.Block) (*types.Block, error) {
 	return func(block *types.Block) (*types.Block, error) {
 		zap.L().Debug(
 			"Received new blockchain block",
 			zap.Any("network", network),
 			zap.Any("network_id", networkId),
+			zap.Any("direction", direction),
 			zap.Uint64("header_number", block.NumberU64()),
 			zap.String("header_hash", block.Hash().String()),
 		)
@@ -27,10 +39,17 @@ func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.N
 					zap.Error(err),
 					zap.Any("network", network),
 					zap.Any("network_id", networkId),
+					zap.Any("direction", direction),
 					zap.Uint64("header_number", block.NumberU64()),
 					zap.String("header_hash", block.Hash().String()),
 					zap.String("tx_hash", tx.Hash().String()),
 				)
+				continue
+			}
+
+			// We are not interested in transactions that are not related to the smart contracts
+			// themselves. Only new smart contract deployment transactions shall pass...
+			if tx.To() != nil {
 				continue
 			}
 
@@ -64,6 +83,7 @@ func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.N
 						zap.Error(err),
 						zap.Any("network", network),
 						zap.Any("network_id", networkId),
+						zap.Any("direction", direction),
 						zap.Uint64("header_number", entry.Header.Number.Uint64()),
 						zap.String("header_hash", entry.Header.Hash().String()),
 						zap.String("tx_hash", entry.Tx.Hash().String()),
@@ -72,6 +92,17 @@ func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.N
 				}
 
 				entry.Receipt = receipt
+
+				zap.L().Info(
+					"Processing new smart contract",
+					zap.Any("network", network),
+					zap.Any("network_id", networkId),
+					zap.Any("direction", direction),
+					zap.Uint64("header_number", entry.Header.Number.Uint64()),
+					zap.String("header_hash", entry.Header.Hash().String()),
+					zap.String("tx_hash", entry.Tx.Hash().String()),
+					zap.String("address", receipt.ContractAddress.Hex()),
+				)
 			}(srv, entry)
 		}
 

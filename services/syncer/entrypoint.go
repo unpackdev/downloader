@@ -30,3 +30,11 @@ func Run(ctx *cli.Context) error {
 
 	return nil
 }
+
+func New(ctx *cli.Context) (*Service, error) {
+	service, err := NewService(ctx.Context)
+	if err != nil {
+		return nil, err
+	}
+	return service, nil
+}

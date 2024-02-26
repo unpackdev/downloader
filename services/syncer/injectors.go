@@ -8,12 +8,24 @@ import (
 
 var (
 	subsMap = map[subscribers.SubscriberName]func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error){
-		subscribers.BlockSubscriber: func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error) {
+		subscribers.HeadBlockSubscriber: func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error) {
 			hooks := make(map[subscribers.HookType][]subscribers.BlockHookFn)
 			hooks[subscribers.PostHook] = []subscribers.BlockHookFn{
-				BlockHeadInterceptor(srv, network, networkId),
+				BlockHeadInterceptor(srv, network, networkId, HeadSyncDirection),
 			}
-			bs, err := subscribers.NewBlock(srv.ctx, srv.pool, hooks)
+			bs, err := subscribers.NewHeadBlock(srv.ctx, srv.pool, hooks)
+			if err != nil {
+				return nil, err
+			}
+
+			return bs, nil
+		},
+		subscribers.ArchiveBlockSubscriber: func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error) {
+			hooks := make(map[subscribers.HookType][]subscribers.BlockHookFn)
+			hooks[subscribers.PostHook] = []subscribers.BlockHookFn{
+				BlockHeadInterceptor(srv, network, networkId, ArchiveSyncDirection),
+			}
+			bs, err := subscribers.NewArchiveBlock(srv.ctx, srv.pool, hooks)
 			if err != nil {
 				return nil, err
 			}

@@ -1,10 +1,9 @@
 package syncer
 
 import (
-	"context"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/urfave/cli/v2"
 )
 
-func (s *Service) Unpack(ctx context.Context, addr common.Address) error {
+func (s *Service) Unpack(ctx *cli.Context) error {
 	return nil
 }

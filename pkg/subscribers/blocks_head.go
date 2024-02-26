@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	BlockSubscriber SubscriberName = "block"
+	HeadBlockSubscriber SubscriberName = "head"
 )
 
 type Block struct {
@@ -23,7 +23,7 @@ type Block struct {
 	hooks  map[HookType][]BlockHookFn
 }
 
-func NewBlock(ctx context.Context, pool *clients.ClientPool, hooks map[HookType][]BlockHookFn) (*Block, error) {
+func NewHeadBlock(ctx context.Context, pool *clients.ClientPool, hooks map[HookType][]BlockHookFn) (*Block, error) {
 	toReturn := &Block{
 		ctx:   ctx,
 		pool:  pool,
