@@ -6,6 +6,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/unpackdev/downloader/pkg/db"
 	"github.com/unpackdev/downloader/pkg/options"
+	"github.com/unpackdev/downloader/pkg/subscribers"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
@@ -17,6 +18,7 @@ type Service struct {
 	pool     *clients.ClientPool
 	natsConn *nats.Conn
 	db       *db.BadgerDB
+	subs     *subscribers.Manager
 }
 
 func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error {
@@ -26,7 +28,15 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 		zap.Any("network_id", networkId),
 	)
 
+	if err := InjectSubscribers(s, network, networkId); err != nil {
+		return fmt.Errorf("failure to inject subscribers: %w", err)
+	}
+
 	g, ctx := errgroup.WithContext(s.ctx)
+
+	g.Go(func() error {
+		return s.subs.Subscribe()
+	})
 
 	// Wait for goroutines to finish....
 	if err := g.Wait(); err != nil {
@@ -75,11 +85,17 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to open up the badgerdb database: %w", err)
 	}
 
+	subManager, err := subscribers.NewManager(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failure to create new subscriber manager: %w", err)
+	}
+
 	toReturn := &Service{
 		ctx:      ctx,
 		pool:     clientsPool,
 		natsConn: nsConn,
 		db:       bDb,
+		subs:     subManager,
 	}
 
 	return toReturn, nil
