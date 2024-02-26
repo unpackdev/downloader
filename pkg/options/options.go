@@ -56,6 +56,12 @@ func NewDefaultOptions(paths []string) (*Options, error) {
 	return &opts, nil
 }
 
+// Validate goes through the validation of the provided options
+// @TODO: Fix this in the future...
+func (o *Options) Validate() error {
+	return nil
+}
+
 // PathToSlice converts a comma-separated string of paths into a slice of strings.
 // Each path is trimmed of any leading and trailing whitespace characters.
 func PathToSlice(path string) []string {

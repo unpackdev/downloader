@@ -14,11 +14,11 @@ import (
 )
 
 type Service struct {
-	ctx      context.Context
-	pool     *clients.ClientPool
-	natsConn *nats.Conn
-	db       *db.BadgerDB
-	subs     *subscribers.Manager
+	ctx  context.Context
+	pool *clients.ClientPool
+	nats *nats.Conn
+	db   *db.BadgerDB
+	subs *subscribers.Manager
 }
 
 func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error {
@@ -70,17 +70,23 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 }
 
 func NewService(ctx context.Context) (*Service, error) {
-	clientsPool, err := clients.NewClientPool(ctx, options.G().Options)
+	opts := options.G()
+
+	if err := opts.Validate(); err != nil {
+		return nil, fmt.Errorf("failure to validate service options: %w", err)
+	}
+
+	clientsPool, err := clients.NewClientPool(ctx, opts.Options)
 	if err != nil {
 		return nil, fmt.Errorf("failure to create clients pool: %w", err)
 	}
 
-	nsConn, err := nats.Connect(options.G().Nats.Addr)
+	nsConn, err := nats.Connect(opts.Nats.Addr)
 	if err != nil {
 		return nil, fmt.Errorf("failure to connect to the nats server: %w", err)
 	}
 
-	bDb, err := db.NewBadgerDB(db.WithContext(ctx), db.WithDbPath(options.G().Db.Path))
+	bDb, err := db.NewBadgerDB(db.WithContext(ctx), db.WithDbPath(opts.Db.Path))
 	if err != nil {
 		return nil, fmt.Errorf("failure to open up the badgerdb database: %w", err)
 	}
@@ -91,11 +97,11 @@ func NewService(ctx context.Context) (*Service, error) {
 	}
 
 	toReturn := &Service{
-		ctx:      ctx,
-		pool:     clientsPool,
-		natsConn: nsConn,
-		db:       bDb,
-		subs:     subManager,
+		ctx:  ctx,
+		pool: clientsPool,
+		nats: nsConn,
+		db:   bDb,
+		subs: subManager,
 	}
 
 	return toReturn, nil
