@@ -1,5 +1,10 @@
 # Ethereum Smart Contracts Downloader and Storage Manager
 
+**UNDER EARLY DEVELOPMENT**
+
+Currently, nothing works as expected. Going to remove this notice once state of the project changes.
+
+
 ## Overview
 The Ethereum Smart Contracts Downloader and Storage Manager is a high-performance tool tailored for Ethereum smart contracts. Built with [Golang](https://go.dev/) and [BadgerDB](https://github.com/dgraph-io/badger), this application not only ensures efficient and dependable downloading of smart contracts but also provides robust features for pausing and resuming downloads. It facilitates seamless storage of contracts in a local database, simplifying access and retrieval.
 
