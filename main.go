@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/unpackdev/downloader/cmd"
+	app "github.com/unpackdev/downloader/pkg/app"
 	"github.com/unpackdev/downloader/pkg/logger"
 	"github.com/unpackdev/downloader/pkg/options"
 	"os"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 )
 
@@ -40,18 +43,29 @@ func main() {
 		fmt.Printf("version=%s revision=%s\n", cCtx.App.Version, "%s")
 	}
 
-	var commands []cli.Command
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	app := &cli.App{
+	baseApp, _ := app.New(ctx, app.Descriptor{
 		Name:        "(Un)Pack Downloader",
+		Usage:       "Ethereum Smart Contracts Downloader and Storage Manager",
 		Version:     fmt.Sprintf("v%s", Version),
 		HelpName:    "downloader",
 		Description: `Ethereum Smart Contracts Downloader and Storage Manager`,
-		Usage:       "",
-		Commands:    commands,
+	})
+
+	for registry, commands := range cmd.GetCommands() {
+		if err := baseApp.RegisterCommands(commands); err != nil {
+			zap.L().Error(
+				"failure to register application commands",
+				zap.String("registry", registry),
+				zap.Error(err),
+			)
+			os.Exit(1)
+		}
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	if err := baseApp.Run(os.Args); err != nil {
 		zlog.Fatal("failed to run downloader app", zap.Error(err))
 	}
 }

@@ -10,7 +10,7 @@ For now it will be focused only on mainnet contracts. Ethereum is the first one,
 
 ## WARNING
 
-- **Otterscan RPC-JSON api is required.** We use [Erigon](https://github.com/ledgerwatch/erigon)
+- **Otterscan RPC-JSON api is required.** We use [Erigon](https://github.com/ledgerwatch/erigon).
 - This tool is still in development and is not yet ready for production use.
 - This repository is large. It contains gigabytes of data and will take a significant amount of time to clone. Please be mindful of this if you choose to download it.
 - Due to licensing issues, I am not going to provide information that stricly breaks licenses. Instead, I am going to provide you the tools to extract information yourself if you have access to the 3rd party sources, utilising their respective API keys.
