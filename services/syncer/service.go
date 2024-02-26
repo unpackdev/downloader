@@ -6,7 +6,9 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/unpackdev/downloader/pkg/db"
 	"github.com/unpackdev/downloader/pkg/options"
+	"github.com/unpackdev/downloader/pkg/storage"
 	"github.com/unpackdev/downloader/pkg/subscribers"
+	"github.com/unpackdev/downloader/pkg/unpacker"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
@@ -14,11 +16,13 @@ import (
 )
 
 type Service struct {
-	ctx  context.Context
-	pool *clients.ClientPool
-	nats *nats.Conn
-	db   *db.BadgerDB
-	subs *subscribers.Manager
+	ctx      context.Context
+	pool     *clients.ClientPool
+	nats     *nats.Conn
+	db       *db.BadgerDB
+	subs     *subscribers.Manager
+	storage  *storage.Storage
+	unpacker *unpacker.Unpacker
 }
 
 func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error {
@@ -96,12 +100,30 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to create new subscriber manager: %w", err)
 	}
 
+	storageManager, err := storage.New(ctx, nil, bDb)
+	if err != nil {
+		return nil, fmt.Errorf("failure to initiate new downloader storage: %w", err)
+	}
+
+	unpackerOpts := []unpacker.Option{
+		unpacker.WithNats(nsConn),
+		unpacker.WithPool(clientsPool),
+		unpacker.WithStorage(storageManager),
+	}
+
+	unp, err := unpacker.NewUnpacker(ctx, unpackerOpts...)
+	if err != nil {
+		return nil, fmt.Errorf("failure to initiate new unpacker instance: %w", err)
+	}
+
 	toReturn := &Service{
-		ctx:  ctx,
-		pool: clientsPool,
-		nats: nsConn,
-		db:   bDb,
-		subs: subManager,
+		ctx:      ctx,
+		pool:     clientsPool,
+		nats:     nsConn,
+		db:       bDb,
+		subs:     subManager,
+		storage:  storageManager,
+		unpacker: unp,
 	}
 
 	return toReturn, nil
