@@ -8,13 +8,16 @@ import (
 )
 
 type Descriptor struct {
-	unpacker        *Unpacker
-	Network         utils.Network
-	NetworkID       utils.NetworkID
-	Addr            common.Address
-	Header          *types.Header
-	Tx              *types.Transaction
-	Receipt         *types.Receipt
+	unpacker  *Unpacker
+	Network   utils.Network
+	NetworkID utils.NetworkID
+	Addr      common.Address
+	Header    *types.Header
+	Tx        *types.Transaction
+	Receipt   *types.Receipt
+
+	// States...
+	nextState       machine.State
 	completedStates []machine.State
 	failedStates    []machine.State
 }
@@ -58,8 +61,18 @@ func (d *Descriptor) GetReceipt() *types.Receipt {
 	return d.Receipt
 }
 
-func toDescriptor(data machine.Data) *Descriptor {
-	return data.(*Descriptor)
+// STATE MANAGEMENT
+
+func (d *Descriptor) HasNextState() bool {
+	return d.nextState != ""
+}
+
+func (d *Descriptor) GetNextState() machine.State {
+	return d.nextState
+}
+
+func (d *Descriptor) SetNextState(state machine.State) {
+	d.nextState = state
 }
 
 func (d *Descriptor) HasCompletedState(state machine.State) bool {
@@ -136,4 +149,8 @@ func (d *Descriptor) RemoveFailedStates(states []machine.State) {
 	for _, state := range states {
 		d.RemoveFailedState(state)
 	}
+}
+
+func toDescriptor(data machine.Data) *Descriptor {
+	return data.(*Descriptor)
 }
