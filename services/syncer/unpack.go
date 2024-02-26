@@ -9,13 +9,16 @@ import (
 	"go.uber.org/zap"
 )
 
+// Unpack ...
+// @TODO: Implement UnpackFromEntry here with custom Entry... Should reuse code.
 func (s *Service) Unpack(ctx *cli.Context) error {
 	return nil
 }
 
 func (s *Service) UnpackFromEntry(ctx context.Context, entry *entries.Entry, state machine.State) (*unpacker.Descriptor, error) {
-
-	// Defer a function to catch and handle a panic
+	// Basically, SolGo AST parser can panic in time to time...
+	// What we want here is to capture these events and as well to report them as critical later on
+	// with grafana/prom/loki being up...
 	defer func(cloneEntry *entries.Entry) {
 		if r := recover(); r != nil {
 			zap.L().Error(
