@@ -21,7 +21,7 @@ db:
   flattenWorkers: 10
 
 cache:
-  addr: "localhost:6739"
+  addr: "localhost:6379"
   password: ""
   db: 0
   maxRetries: 3
@@ -42,3 +42,6 @@ syncer:
       enabled: true
       startBlockNumber: 0
       endBlockNumber: 19312364
+
+unpacker:
+  otsEnabled: false

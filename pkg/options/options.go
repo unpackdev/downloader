@@ -32,7 +32,8 @@ type Options struct {
 	Storage          Storage            // Storage options.
 	Cache            Cache              // Cache client options (redis).
 	Etherscan        *etherscan.Options // Etherscan client options.
-	Syncer           Syncer             `yaml:"syncer"` // Syncer options.
+	Syncer           Syncer             `yaml:"syncer"`   // Syncer options.
+	Unpacker         Unpacker           `yaml:"unpacker"` // Unpacker options.
 }
 
 // NewDefaultOptions creates a new Options object with the given configuration paths.

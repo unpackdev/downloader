@@ -4,6 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/unpackdev/downloader/pkg/unpacker"
+	"github.com/unpackdev/solgo/contracts"
 	"github.com/unpackdev/solgo/utils"
 )
 
@@ -17,7 +18,7 @@ type Entry struct {
 	ContractAddr common.Address     `json:"contractAddr"`
 }
 
-func (e *Entry) GetDescriptor(u *unpacker.Unpacker) *unpacker.Descriptor {
+func (e *Entry) GetDescriptor(u *unpacker.Unpacker, c *contracts.Contract) *unpacker.Descriptor {
 	toReturn := unpacker.NewDescriptor(
 		u,
 		e.Network,
@@ -27,6 +28,10 @@ func (e *Entry) GetDescriptor(u *unpacker.Unpacker) *unpacker.Descriptor {
 	toReturn.Header = e.Header
 	toReturn.Tx = e.Tx
 	toReturn.Receipt = e.Receipt
+
+	// Set the contract. Not important right now if it's nil or not...
+	toReturn.SetContract(c)
+
 	return toReturn
 }
 

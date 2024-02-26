@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/nats-io/nats.go"
+	"github.com/unpackdev/downloader/pkg/cache"
 	"github.com/unpackdev/downloader/pkg/db"
 	"github.com/unpackdev/downloader/pkg/options"
 	"github.com/unpackdev/downloader/pkg/storage"
 	"github.com/unpackdev/downloader/pkg/subscribers"
 	"github.com/unpackdev/downloader/pkg/unpacker"
+	"github.com/unpackdev/solgo/bindings"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/providers/etherscan"
 	"github.com/unpackdev/solgo/utils"
@@ -17,14 +19,16 @@ import (
 )
 
 type Service struct {
-	ctx       context.Context
-	pool      *clients.ClientPool
-	nats      *nats.Conn
-	db        *db.BadgerDB
-	subs      *subscribers.Manager
-	storage   *storage.Storage
-	unpacker  *unpacker.Unpacker
-	etherscan *etherscan.EtherScanProvider
+	ctx         context.Context
+	pool        *clients.ClientPool
+	nats        *nats.Conn
+	db          *db.BadgerDB
+	subs        *subscribers.Manager
+	storage     *storage.Storage
+	unpacker    *unpacker.Unpacker
+	etherscan   *etherscan.EtherScanProvider
+	bindManager *bindings.Manager
+	cache       *cache.Redis
 }
 
 func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error {
@@ -93,7 +97,7 @@ func NewService(ctx context.Context) (*Service, error) {
 	}
 
 	// Note that there can be only one application accessing specific badgerdb database at the time...
-	// It's fuubar strategy but heck we'll need to build RPC endpoints on top of it.
+	// It's foobar strategy but heck we'll need to build RPC endpoints on top of it.
 	bDb, err := db.NewBadgerDB(db.WithContext(ctx), db.WithDbPath(opts.Storage.DatabasePath))
 	if err != nil {
 		return nil, fmt.Errorf("failure to open up the badgerdb database: %w", err)
@@ -109,10 +113,24 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to initiate new downloader storage: %w", err)
 	}
 
+	bindManager, err := bindings.NewManager(ctx, clientsPool)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create bindings manager: %w", err)
+	}
+
+	cacheClient, err := cache.New(ctx, opts.Cache)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create redis client: %w", err)
+	}
+
+	etherscanProvider := etherscan.NewEtherScanProvider(ctx, cacheClient.GetClient(), opts.Etherscan)
+
 	unpackerOpts := []unpacker.Option{
 		unpacker.WithNats(nsConn),
 		unpacker.WithPool(clientsPool),
 		unpacker.WithStorage(storageManager),
+		unpacker.WithBindingsManager(bindManager),
+		unpacker.WithEtherScanProvider(etherscanProvider),
 	}
 
 	unp, err := unpacker.NewUnpacker(ctx, unpackerOpts...)
@@ -121,13 +139,16 @@ func NewService(ctx context.Context) (*Service, error) {
 	}
 
 	toReturn := &Service{
-		ctx:      ctx,
-		pool:     clientsPool,
-		nats:     nsConn,
-		db:       bDb,
-		subs:     subManager,
-		storage:  storageManager,
-		unpacker: unp,
+		ctx:         ctx,
+		pool:        clientsPool,
+		nats:        nsConn,
+		db:          bDb,
+		subs:        subManager,
+		storage:     storageManager,
+		unpacker:    unp,
+		bindManager: bindManager,
+		cache:       cacheClient,
+		etherscan:   etherscanProvider,
 	}
 
 	return toReturn, nil

@@ -4,11 +4,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/unpackdev/downloader/pkg/machine"
+	"github.com/unpackdev/solgo/contracts"
 	"github.com/unpackdev/solgo/utils"
 )
 
 type Descriptor struct {
 	unpacker  *Unpacker
+	contract  *contracts.Contract
 	Network   utils.Network
 	NetworkID utils.NetworkID
 	Addr      common.Address
@@ -35,6 +37,15 @@ func NewDescriptor(u *Unpacker, network utils.Network, networkId utils.NetworkID
 
 func (d *Descriptor) GetUnpacker() *Unpacker {
 	return d.unpacker
+}
+
+func (d *Descriptor) SetContract(c *contracts.Contract) *contracts.Contract {
+	d.contract = c
+	return d.contract
+}
+
+func (d *Descriptor) GetContract() *contracts.Contract {
+	return d.contract
 }
 
 func (d *Descriptor) GetNetwork() utils.Network {

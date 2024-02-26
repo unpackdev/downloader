@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/nats-io/nats.go"
 	"github.com/unpackdev/downloader/pkg/storage"
+	"github.com/unpackdev/solgo/bindings"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/providers/etherscan"
 )
@@ -12,12 +13,13 @@ import (
 type Option func(*Unpacker) error
 
 type Unpacker struct {
-	ctx       context.Context
-	pool      *clients.ClientPool
-	etherscan *etherscan.EtherScanProvider
-	nats      *nats.Conn
-	js        nats.JetStreamContext
-	storage   *storage.Storage
+	ctx         context.Context
+	pool        *clients.ClientPool
+	etherscan   *etherscan.EtherScanProvider
+	nats        *nats.Conn
+	js          nats.JetStreamContext
+	storage     *storage.Storage
+	bindManager *bindings.Manager
 }
 
 func NewUnpacker(ctx context.Context, opts ...Option) (*Unpacker, error) {
@@ -51,6 +53,17 @@ func WithNats(nsConn *nats.Conn) Option {
 			return fmt.Errorf("NATS connection is nil")
 		}
 		u.nats = nsConn
+		return nil
+	}
+}
+
+// WithBindingsManager sets the bindings manager
+func WithBindingsManager(bindManager *bindings.Manager) Option {
+	return func(u *Unpacker) error {
+		if bindManager == nil {
+			return fmt.Errorf("bindings manager is nil")
+		}
+		u.bindManager = bindManager
 		return nil
 	}
 }
