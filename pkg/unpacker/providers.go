@@ -3,6 +3,8 @@ package unpacker
 import (
 	"context"
 	"github.com/unpackdev/downloader/pkg/machine"
+	"go.uber.org/zap"
+	"strings"
 )
 
 type ProvidersContractHandler struct {
@@ -32,7 +34,31 @@ func (dh *ProvidersContractHandler) Process(data machine.Data) (machine.State, m
 		return DiscoverState, descriptor, nil
 	}
 
-	descriptor.AppendCompletedState(SourceProvidersState)
+	contract := descriptor.GetContract()
+	cdescriptor := contract.GetDescriptor()
+
+	if !cdescriptor.HasSources() {
+		if err := contract.DiscoverSourceCode(dh.ctx); err != nil {
+			if !strings.Contains(err.Error(), "contract source code not verified") {
+				zap.L().Error(
+					"failed to discover source code for contract",
+					zap.Error(err),
+					zap.String("network", descriptor.GetNetwork().String()),
+					zap.Any("network_id", descriptor.GetNetworkID()),
+					zap.String("contract_address", descriptor.GetAddr().Hex()),
+					zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
+					zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
+					zap.String("source_provider", cdescriptor.GetSourcesProvider()),
+				)
+			}
+		}
+
+	}
+
+	if !descriptor.HasFailedState(SourceProvidersState) {
+		descriptor.AppendCompletedState(SourceProvidersState)
+	}
+
 	return SourcesState, descriptor, nil
 }
 
