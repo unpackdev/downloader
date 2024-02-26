@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/unpackdev/downloader/pkg/db"
 	"github.com/unpackdev/downloader/pkg/options"
@@ -32,7 +33,7 @@ func (s *Storage) Get(ctx context.Context, e *Entry) (*Entry, error) {
 	if e == nil {
 		return nil, fmt.Errorf("entry is required")
 	}
-	badgerData, err := s.badgerDB.Get(e.GetPath())
+	badgerData, err := s.badgerDB.Get(e.GetKey())
 	if err != nil {
 		return nil, fmt.Errorf("badgerDB get error: %s", err)
 	}
@@ -48,7 +49,7 @@ func (s *Storage) Exists(ctx context.Context, entry *Entry) (bool, error) {
 	if entry == nil {
 		return false, fmt.Errorf("entry is required")
 	}
-	return s.badgerDB.Exists(entry.GetPath())
+	return s.badgerDB.Exists(entry.GetKey())
 }
 
 // Save writes an Entry and its associated solgo.Sources to the BadgerDB.
@@ -57,11 +58,19 @@ func (s *Storage) Save(ctx context.Context, entry *Entry, sources *solgo.Sources
 	if entry == nil || sources == nil {
 		return fmt.Errorf("entry and sources are required")
 	}
-	if err := sources.WriteToDir(entry.GetPath()); err != nil {
+
+	if err := sources.WriteToDir(s.GetEntryFullPath(entry)); err != nil {
 		return fmt.Errorf("write to dir error: %s", err)
 	}
-	if err := s.badgerDB.Write(entry.GetPath(), entry.ToBytes()); err != nil {
+	if err := s.badgerDB.Write(entry.GetKey(), entry.ToBytes()); err != nil {
 		return fmt.Errorf("badgerDB write error: %s", err)
 	}
 	return nil
+}
+
+func (s *Storage) GetEntryFullPath(entry *Entry) string {
+	return filepath.Join(
+		s.opts.ContractsPath,
+		entry.GetPath(),
+	)
 }

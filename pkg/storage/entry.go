@@ -17,24 +17,24 @@ const ENTRY_KEY_PREFIX = "contract:entry"
 // Entry represents a record of an Ethereum contract with various attributes such as network details,
 // block information, contract address, and metadata.
 type Entry struct {
-	Network              utils.Network   `json:"network"`
-	NetworkID            utils.NetworkID `json:"network_id"`
-	BlockNumber          *big.Int        `json:"block_number"`
-	BlockHash            common.Hash     `json:"block_hash"`
-	TransactionHash      common.Hash     `json:"transaction_hash"`
-	Address              common.Address  `json:"address"`
-	Path                 string          `json:"path"`
-	License              string          `json:"license"`
-	Optimized            bool            `json:"optimized"`
-	OptimizationRuns     uint64          `json:"optimization_runs"`
-	Name                 string          `json:"name"`
-	CompilerVersion      string          `json:"compiler_version"`
-	EVMVersion           string          `json:"evm_version"`
-	ABI                  string          `json:"abi"`
-	SourcesProvider      string          `json:"sources_provider"`
-	Verified             bool            `json:"verified"`
-	VerificationProvider string          `json:"verification_provider"`
-	InsertedAt           time.Time       `json:"inserted_at"`
+	Network              utils.Network         `json:"network"`
+	NetworkID            utils.NetworkID       `json:"network_id"`
+	BlockNumber          *big.Int              `json:"block_number"`
+	BlockHash            common.Hash           `json:"block_hash"`
+	TransactionHash      common.Hash           `json:"transaction_hash"`
+	Address              common.Address        `json:"address"`
+	Path                 string                `json:"path"`
+	License              string                `json:"license"`
+	Optimized            bool                  `json:"optimized"`
+	OptimizationRuns     uint64                `json:"optimization_runs"`
+	Name                 string                `json:"name"`
+	CompilerVersion      utils.SemanticVersion `json:"compiler_version"`
+	EVMVersion           string                `json:"evm_version"`
+	ABI                  string                `json:"abi"`
+	SourcesProvider      string                `json:"sources_provider"`
+	Verified             bool                  `json:"verified"`
+	VerificationProvider string                `json:"verification_provider"`
+	InsertedAt           time.Time             `json:"inserted_at"`
 }
 
 // NewEntry creates and returns a new Entry instance with provided parameters and current UTC time.
