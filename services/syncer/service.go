@@ -94,7 +94,7 @@ func NewService(ctx context.Context) (*Service, error) {
 
 	// Note that there can be only one application accessing specific badgerdb database at the time...
 	// It's fuubar strategy but heck we'll need to build RPC endpoints on top of it.
-	bDb, err := db.NewBadgerDB(db.WithContext(ctx), db.WithDbPath(opts.Db.Path))
+	bDb, err := db.NewBadgerDB(db.WithContext(ctx), db.WithDbPath(opts.Storage.DatabasePath))
 	if err != nil {
 		return nil, fmt.Errorf("failure to open up the badgerdb database: %w", err)
 	}
@@ -104,7 +104,7 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to create new subscriber manager: %w", err)
 	}
 
-	storageManager, err := storage.New(ctx, nil, bDb)
+	storageManager, err := storage.New(ctx, opts.Storage, bDb)
 	if err != nil {
 		return nil, fmt.Errorf("failure to initiate new downloader storage: %w", err)
 	}

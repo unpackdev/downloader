@@ -29,6 +29,7 @@ type Options struct {
 	*clients.Options `yaml:"nodes"`     // Options embeds the client options.
 	Db               Db                 // Database options.
 	Nats             Nats               // Nats client and queues options.
+	Storage          Storage            // Storage options.
 	Cache            Cache              // Cache client options (redis).
 	Etherscan        *etherscan.Options // Etherscan client options.
 }

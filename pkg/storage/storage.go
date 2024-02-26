@@ -13,13 +13,13 @@ import (
 // It provides methods to interact with the database, allowing retrieval and storage of entries.
 type Storage struct {
 	ctx      context.Context
-	opts     *options.Storage
+	opts     options.Storage
 	badgerDB *db.BadgerDB
 }
 
 // New creates a new Storage instance. It requires a context, storage options, and a BadgerDB instance.
 // Returns an error if the provided BadgerDB instance is nil.
-func New(ctx context.Context, opts *options.Storage, badgerDB *db.BadgerDB) (*Storage, error) {
+func New(ctx context.Context, opts options.Storage, badgerDB *db.BadgerDB) (*Storage, error) {
 	if badgerDB == nil {
 		return nil, fmt.Errorf("badgerDB is required")
 	}
