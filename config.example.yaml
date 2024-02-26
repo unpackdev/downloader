@@ -1,3 +1,16 @@
 logger:
   env: development
   level: debug
+
+nodes:
+  - group: "ethereum"
+    type: "mainnet"
+    networkId: 1
+    endpoint: "ws://localhost:8545"
+    concurrentClients: 10
+
+nats:
+  addr: "localhost:4222"
+
+db:
+  path: "/mnt/{disc}/downloader/db"

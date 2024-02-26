@@ -1,3 +1,18 @@
 logger:
   env: development
   level: debug
+
+nodes:
+  - group: "ethereum"
+    type: "mainnet"
+    networkId: 1
+    #endpoint: "ws://localhost:8545"
+    #endpoint: "wss://ethereum-rpc.publicnode.com"
+    endpoint: "wss://ethereum-mainnet.core.chainstack.com/ws/d8142692f4826837a7e946d2c60b4ae5"
+    concurrentClients: 10
+
+nats:
+  addr: "localhost:4222"
+
+db:
+  path: "/mnt/unpdata/downloader/db"

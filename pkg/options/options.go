@@ -26,6 +26,8 @@ type Options struct {
 	OptionsPath      string         `default:"~/.unpack/options.yaml" env:"DOWNLOADER_OPTIONS_PATH"` // OptionsPath defines the path to the configuration file.
 	Logger           Logger         `yaml:"logger" json:"logger"`                                    // Logger specifies the logging configuration.
 	*clients.Options `yaml:"nodes"` // Options embeds the client options.
+	Db               Db             // Database options.
+	Nats             Nats           // Nats client and queues options.
 }
 
 // NewDefaultOptions creates a new Options object with the given configuration paths.
