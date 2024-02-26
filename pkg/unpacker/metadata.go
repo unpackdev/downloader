@@ -59,7 +59,7 @@ func (dh *MetadataContractHandler) Process(data machine.Data) (machine.State, ma
 	if !descriptor.HasFailedState(MetadataState) {
 		descriptor.AppendCompletedState(MetadataState)
 	}
-	
+
 	return SourceProvidersState, descriptor, nil
 }
 

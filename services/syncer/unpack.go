@@ -56,6 +56,10 @@ func (s *Service) Unpack(ctx *cli.Context) error {
 		if err := contract.DiscoverChainInfo(ctx.Context, options.G().Unpacker.OtsEnabled); err != nil {
 			return err
 		}
+	} else {
+		contract.SetBlock(entry.Header)
+		contract.SetTransaction(entry.Tx)
+		contract.SetReceipt(entry.Receipt)
 	}
 
 	// Basically, SolGo AST parser can panic in time to time...
@@ -118,6 +122,10 @@ func (s *Service) UnpackFromEntry(ctx context.Context, entry *entries.Entry, sta
 		if err := contract.DiscoverChainInfo(ctx, options.G().Unpacker.OtsEnabled); err != nil {
 			return nil, err
 		}
+	} else {
+		contract.SetBlock(entry.Header)
+		contract.SetTransaction(entry.Tx)
+		contract.SetReceipt(entry.Receipt)
 	}
 
 	descriptor, err := s.unpacker.Unpack(ctx, entry.GetDescriptor(s.unpacker, contract), state)

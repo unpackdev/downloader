@@ -5,6 +5,7 @@ import (
 	"github.com/unpackdev/downloader/pkg/storage"
 	"github.com/unpackdev/solgo/utils"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -28,6 +29,8 @@ func (d *Descriptor) GetStorageEntry() *storage.Entry {
 		BlockHash:            d.Header.Hash(),
 		TransactionHash:      d.Tx.Hash(),
 		Address:              d.Addr,
+		Proxy:                descriptor.Proxy,
+		ImplementationAddrs:  descriptor.Implementations,
 		Name:                 descriptor.GetName(),
 		License:              descriptor.GetLicense(),
 		Optimized:            descriptor.IsOptimized(),
@@ -36,7 +39,13 @@ func (d *Descriptor) GetStorageEntry() *storage.Entry {
 		SourcesProvider:      descriptor.GetSourcesProvider(),
 		Verified:             descriptor.IsVerified(),
 		VerificationProvider: descriptor.GetVerificationProvider(),
+		EVMVersion:           strings.ToLower(descriptor.GetEVMVersion()),
+		SolgoVersion:         descriptor.GetSolgoVersion(),
 		CompilerVersion:      utils.ParseSemanticVersion(descriptor.CompilerVersion),
+		CreationBytecode:     descriptor.GetRuntimeBytecode(),
+		DeployedBytecode:     descriptor.GetDeployedBytecode(),
+		Metadata:             descriptor.GetMetadata().ToProto(),
+		Constructor:          descriptor.GetConstructor(),
 		InsertedAt:           time.Now().UTC(),
 	}
 }

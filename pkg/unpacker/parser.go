@@ -59,7 +59,7 @@ func (dh *ParserContractHandler) Process(data machine.Data) (machine.State, mach
 		descriptor.AppendCompletedState(ParserState)
 	}
 
-	return FinalState, descriptor, nil
+	return ConstructorState, descriptor, nil
 }
 
 func (dh *ParserContractHandler) Exit(data machine.Data) (machine.Data, error) {

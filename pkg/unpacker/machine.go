@@ -10,6 +10,7 @@ func (u *Unpacker) RegisterMachineStates(sm *machine.StateMachine) error {
 	sm.RegisterState(SourceProvidersState, NewProvidersContractHandler(u.ctx, u))
 	sm.RegisterState(SourcesState, NewSourcesContractHandler(u.ctx, u))
 	sm.RegisterState(ParserState, NewParserContractHandler(u.ctx, u))
+	sm.RegisterState(ConstructorState, NewConstructorContractHandler(u.ctx, u))
 
 	// Special case: ERROR
 	sm.RegisterState(ErrorState, NewErrorContractHandler(u.ctx, u))
