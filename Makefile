@@ -6,6 +6,7 @@ VERSION := 0.1.0
 UNAME_S := $(shell uname -s 2>/dev/null || echo "unknown")
 UNAME_S_LOWERCASE := $(shell echo $(UNAME_S) | tr A-Z a-z)
 BUILD_TARGET := build-$(UNAME_S_LOWERCASE)
+COMMIT_HASH := $(shell git rev-parse HEAD)
 
 .PHONY: help
 help: ## Display this help
@@ -32,15 +33,15 @@ build: $(BUILD_TARGET) ## Build the binary for the current OS/Arch
 
 .PHONY: build-linux
 build-linux: ## Build the binary for Linux
-	GOOS=linux GOARCH=amd64 go build -o ./$(BIN_NAME) -ldflags "-X main.Version=$(VERSION)" .
+	GOOS=linux GOARCH=amd64 go build -o ./$(BIN_NAME) -ldflags "-X main.Version=$(VERSION) -X main.CommitHash=$(COMMIT_HASH)" .
 
 .PHONY: build-darwin
 build-darwin: ## Build the binary for MacOS
-	GOOS=darwin GOARCH=amd64 go build -o ./$(BIN_NAME) -ldflags "-X main.Version=$(VERSION)" .
+	GOOS=darwin GOARCH=amd64 go build -o ./$(BIN_NAME) -ldflags "-X main.Version=$(VERSION) -X main.CommitHash=$(COMMIT_HASH)" .
 
 .PHONY: build-windows
 build-windows: ## Build the binary for Windows
-	GOOS=windows GOARCH=amd64 go build -o ./$(BIN_NAME).exe -ldflags "-X main.Version=$(VERSION)" .
+	GOOS=windows GOARCH=amd64 go build -o ./$(BIN_NAME).exe -ldflags "-X main.Version=$(VERSION) -X main.CommitHash=$(COMMIT_HASH)" .
 
 .PHONY: build-graphql
 build-graphql: ## Generate GraphQL schema

@@ -2,22 +2,39 @@ package main
 
 import (
 	"fmt"
+	"github.com/unpackdev/downloader/pkg/logger"
+	"github.com/unpackdev/downloader/pkg/options"
 	"os"
 
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+)
+
+var (
+	// Version derived from build tags -ldflags "-X main.Version=x.x.x"
+	Version string
 )
 
 func main() {
-	config := zap.NewDevelopmentConfig()
-	config.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	logger, err := config.Build()
+
+	// Let's figure out options, extract them, set them under global scope and
+	// move along with application...
+	optsFiles := os.Getenv("DOWNLOADER_OPTIONS_PATH")
+	if len(optsFiles) < 1 {
+		panic("Options path is not set. You need to set `DOWNLOADER_OPTIONS_PATH` environment variable")
+	}
+
+	opts, err := options.NewDefaultOptions(options.PathToSlice(optsFiles))
 	if err != nil {
 		panic(err)
 	}
-	zap.ReplaceGlobals(logger)
+	options.SetGlobalOptions(opts)
+
+	zlog, err := logger.GetLogger(opts.Logger.Env, opts.Logger.Level)
+	if err != nil {
+		panic(err)
+	}
+	zap.ReplaceGlobals(zlog)
 
 	cli.VersionPrinter = func(cCtx *cli.Context) {
 		fmt.Printf("version=%s revision=%s\n", cCtx.App.Version, "%s")
@@ -27,7 +44,7 @@ func main() {
 
 	app := &cli.App{
 		Name:        "(Un)Pack Downloader",
-		Version:     "v0.1.0",
+		Version:     fmt.Sprintf("v%s", Version),
 		HelpName:    "downloader",
 		Description: `Ethereum Smart Contracts Downloader and Storage Manager`,
 		Usage:       "",
@@ -35,6 +52,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logger.Fatal("failed to run downloader app", zap.Error(err))
+		zlog.Fatal("failed to run downloader app", zap.Error(err))
 	}
 }

@@ -23,3 +23,8 @@ go.work
 # Build output
 build/
 _database.bdb
+
+j/*
+j
+
+config.yaml

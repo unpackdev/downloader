@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -13,8 +14,10 @@ import (
 //
 //	*zap.Logger - The configured zap.Logger for production use.
 //	error       - An error if the logger could not be created.
-func GetProductionLogger() (*zap.Logger, error) {
-	logger, err := zap.NewProduction()
+func GetProductionLogger(level zap.AtomicLevel) (*zap.Logger, error) {
+	config := zap.NewProductionConfig()
+	config.Level = level
+	logger, err := config.Build()
 	return logger, err
 }
 
@@ -31,10 +34,29 @@ func GetProductionLogger() (*zap.Logger, error) {
 //
 //	*zap.Logger - The configured zap.Logger for development use.
 //	error       - An error if the logger could not be created.
-func GetDevelopmentLogger(level zapcore.Level) (*zap.Logger, error) {
+func GetDevelopmentLogger(level zap.AtomicLevel) (*zap.Logger, error) {
 	config := zap.NewDevelopmentConfig()
-	config.Level = zap.NewAtomicLevelAt(level)
+	config.Level = level
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	logger, err := config.Build()
 	return logger, err
+}
+
+func GetLogger(env string, level string) (*zap.Logger, error) {
+	configLevel, err := zap.ParseAtomicLevel(level)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"invalid logger level provided: %s - err: %s",
+			level, err,
+		)
+	}
+
+	switch env {
+	case "development":
+		return GetDevelopmentLogger(configLevel)
+	case "production":
+		return GetProductionLogger(configLevel)
+	default:
+		return nil, fmt.Errorf("failure to construct logger for env: %s", env)
+	}
 }
