@@ -26,6 +26,13 @@ func (dh *SourcesContractHandler) Enter(data machine.Data) (machine.Data, error)
 func (dh *SourcesContractHandler) Process(data machine.Data) (machine.State, machine.Data, error) {
 	descriptor := toDescriptor(data)
 
+	// First we are going to check if dependency states are completed.
+	if !descriptor.HasCompletedState(DiscoverState) {
+		descriptor.SetNextState(MetadataState) // <- come back to this state afterward...
+		return DiscoverState, descriptor, nil
+	}
+
+	descriptor.AppendCompletedState(SourcesState)
 	return FinalState, descriptor, nil
 }
 

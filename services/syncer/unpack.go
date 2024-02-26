@@ -18,6 +18,12 @@ import (
 // Unpack ...
 // @TODO: Implement UnpackFromEntry here with custom Entry... Should reuse code.
 func (s *Service) Unpack(ctx *cli.Context) error {
+	if !common.IsHexAddress(ctx.String("addr")) {
+		return fmt.Errorf(
+			"invalid ethereum hex address provided: %s", ctx.String("addr"),
+		)
+	}
+
 	addr := common.HexToAddress(ctx.String("addr"))
 
 	network, err := utils.GetNetworkFromString(ctx.String("network"))

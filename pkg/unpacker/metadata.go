@@ -3,6 +3,8 @@ package unpacker
 import (
 	"context"
 	"github.com/unpackdev/downloader/pkg/machine"
+	"go.uber.org/zap"
+	"strings"
 )
 
 type MetadataContractHandler struct {
@@ -32,6 +34,29 @@ func (dh *MetadataContractHandler) Process(data machine.Data) (machine.State, ma
 		return DiscoverState, descriptor, nil
 	}
 
+	contract := descriptor.GetContract()
+	cdescriptor := contract.GetDescriptor()
+
+	if cdescriptor != nil && !cdescriptor.HasMetadata() {
+		_, err := contract.DiscoverMetadata(dh.ctx)
+		if err != nil {
+			if !strings.Contains(err.Error(), "provided bytecode slice is smaller than the length") {
+				zap.L().Error(
+					"failed to decode bytecode metadata from contract deployed code",
+					zap.Error(err),
+					zap.String("network", descriptor.GetNetwork().String()),
+					zap.Any("network_id", descriptor.GetNetworkID()),
+					zap.String("contract_address", descriptor.GetAddr().Hex()),
+					zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
+					zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
+					zap.String("source_provider", cdescriptor.GetSourcesProvider()),
+				)
+			}
+			descriptor.AppendFailedState(MetadataState)
+		}
+	}
+
+	descriptor.AppendCompletedState(MetadataState)
 	return SourceProvidersState, descriptor, nil
 }
 
