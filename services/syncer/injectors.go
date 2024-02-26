@@ -11,7 +11,7 @@ var (
 		subscribers.BlockSubscriber: func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error) {
 			hooks := make(map[subscribers.HookType][]subscribers.BlockHookFn)
 			hooks[subscribers.PostHook] = []subscribers.BlockHookFn{
-				BlockInterceptor(srv),
+				BlockHeadInterceptor(srv, network, networkId),
 			}
 			bs, err := subscribers.NewBlock(srv.ctx, srv.pool, hooks)
 			if err != nil {
