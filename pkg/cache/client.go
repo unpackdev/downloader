@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"errors"
+	"github.com/unpackdev/downloader/pkg/options"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -11,13 +12,13 @@ import (
 // Redis is a struct that holds the context, options, and the client for a Redis database.
 type Redis struct {
 	ctx    context.Context
-	opts   Options
+	opts   options.Cache
 	client *redis.Client
 }
 
-// NewRedis creates a new Redis client with the provided context and options.
+// New creates a new Redis client with the provided context and options.
 // It returns a pointer to the Redis struct and an error if any occurred during the creation of the client.
-func NewRedis(ctx context.Context, opts Options) (*Redis, error) {
+func New(ctx context.Context, opts options.Cache) (*Redis, error) {
 	r := &Redis{
 		ctx:  ctx,
 		opts: opts,
@@ -28,9 +29,9 @@ func NewRedis(ctx context.Context, opts Options) (*Redis, error) {
 			MaxRetries:      opts.MaxRetries,
 			MinRetryBackoff: opts.MinRetryBackoff * time.Millisecond,
 			MaxRetryBackoff: opts.MaxRetryBackoff * time.Millisecond,
-			/* 			DialTimeout:     opts.DialTimeout * time.Millisecond,
-			   			ReadTimeout:     opts.ReadTimeout * time.Millisecond,
-			   			WriteTimeout:    opts.WriteTimeout * time.Millisecond, */
+			DialTimeout:     opts.DialTimeout * time.Millisecond,
+			ReadTimeout:     opts.ReadTimeout * time.Millisecond,
+			WriteTimeout:    opts.WriteTimeout * time.Millisecond,
 		}),
 	}
 
