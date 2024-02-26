@@ -42,9 +42,7 @@ For now it will be focused only on mainnet contracts. Ethereum is the first one,
 These notes will be moved into appropriate sections of the README as the project progresses.
 
 - For the best performance, it is recommended to run this project on NVME storage. This is because the database is very large and requires fast read and write to the storage to perform well.
-- The database is currently around 3GB in size. 
-- In the future will figure out better way to store contracts to ensure that this repository stays as clean as possible. Right now I don't want to spend money on S3 storage or any alike.
-
+- The database is currently around 20GB in size. 
 
 ## LICENSE
 
