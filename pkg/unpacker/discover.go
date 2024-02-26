@@ -56,7 +56,7 @@ func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, ma
 
 	zap.L().Debug(
 		"Contract dependencies discovery state completed",
-		zap.String("network", descriptor.GetNetwork().String()),
+		zap.Any("network", descriptor.GetNetwork()),
 		zap.Any("network_id", descriptor.GetNetworkID()),
 		zap.String("contract_address", descriptor.GetAddr().Hex()),
 		zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
