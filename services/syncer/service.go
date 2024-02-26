@@ -115,15 +115,18 @@ func NewService(ctx context.Context) (*Service, error) {
 
 	bindManager, err := bindings.NewManager(ctx, clientsPool)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create bindings manager: %w", err)
+		return nil, fmt.Errorf("failure to create bindings manager: %w", err)
 	}
 
 	cacheClient, err := cache.New(ctx, opts.Cache)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create redis client: %w", err)
+		return nil, fmt.Errorf("failure to create redis client: %w", err)
 	}
 
-	etherscanProvider := etherscan.NewEtherScanProvider(ctx, cacheClient.GetClient(), opts.Etherscan)
+	etherscanProvider, err := etherscan.NewEtherScanProvider(ctx, cacheClient.GetClient(), opts.Etherscan)
+	if err != nil {
+		return nil, fmt.Errorf("failure to create new etherscan provider: %w", err)
+	}
 
 	unpackerOpts := []unpacker.Option{
 		unpacker.WithNats(nsConn),
