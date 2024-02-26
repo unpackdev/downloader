@@ -33,3 +33,12 @@ etherscan:
   endpoint: "https://api.etherscan.io/api"
   keys:
     - "XXXXX"
+
+syncer:
+  subscribers:
+    - type: head
+      enabled: true
+    - type: archive
+      enabled: true
+      startBlockNumber: 0
+      endBlockNumber: 19312364

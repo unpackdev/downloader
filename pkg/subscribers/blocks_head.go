@@ -5,17 +5,19 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/unpackdev/downloader/pkg/options"
 	"github.com/unpackdev/solgo/clients"
 	"go.uber.org/zap"
 	"sync"
 )
 
 var (
-	HeadBlockSubscriber SubscriberName = "head"
+	HeadBlockSubscriber SubscriberType = "head"
 )
 
 type Block struct {
 	ctx    context.Context
+	opts   *options.Subscriber
 	pool   *clients.ClientPool
 	status Status
 	mu     sync.RWMutex
@@ -23,9 +25,10 @@ type Block struct {
 	hooks  map[HookType][]BlockHookFn
 }
 
-func NewHeadBlock(ctx context.Context, pool *clients.ClientPool, hooks map[HookType][]BlockHookFn) (*Block, error) {
+func NewHeadBlock(ctx context.Context, pool *clients.ClientPool, opts *options.Subscriber, hooks map[HookType][]BlockHookFn) (*Block, error) {
 	toReturn := &Block{
 		ctx:   ctx,
+		opts:  opts,
 		pool:  pool,
 		hooks: hooks,
 		mu:    sync.RWMutex{},
@@ -37,7 +40,12 @@ func (b *Block) Start() error {
 	zap.L().Info(
 		"Starting up block subscriber...",
 		zap.Any("direction", HeadBlockSubscriber),
+		zap.Bool("enabled", b.opts.Enabled),
 	)
+
+	if !b.opts.Enabled {
+		return nil
+	}
 
 	client := b.pool.GetClientByGroup("ethereum")
 	if client == nil {
@@ -65,6 +73,7 @@ func (b *Block) Start() error {
 				zap.L().Error(
 					"Failed to get block by hash",
 					zap.Error(err),
+					zap.Any("direction", HeadBlockSubscriber),
 					zap.Uint64("header_number", header.Number.Uint64()),
 					zap.String("header_hash", header.Hash().String()),
 				)
@@ -78,6 +87,7 @@ func (b *Block) Start() error {
 					zap.L().Error(
 						"failure to process post block hook",
 						zap.Error(err),
+						zap.Any("direction", HeadBlockSubscriber),
 						zap.Uint64("header_number", block.NumberU64()),
 						zap.String("header_hash", block.Hash().String()),
 					)

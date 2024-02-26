@@ -1,19 +1,27 @@
 package syncer
 
 import (
+	"github.com/unpackdev/downloader/pkg/options"
 	"github.com/unpackdev/downloader/pkg/subscribers"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
 )
 
 var (
-	subsMap = map[subscribers.SubscriberName]func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error){
+	subsMap = map[subscribers.SubscriberType]func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error){
 		subscribers.HeadBlockSubscriber: func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error) {
 			hooks := make(map[subscribers.HookType][]subscribers.BlockHookFn)
 			hooks[subscribers.PostHook] = []subscribers.BlockHookFn{
 				BlockHeadInterceptor(srv, network, networkId, HeadSyncDirection),
 			}
-			bs, err := subscribers.NewHeadBlock(srv.ctx, srv.pool, hooks)
+
+			// Have to use .String() - otherwise cycle import...
+			opts, err := options.G().Syncer.GetByType(subscribers.HeadBlockSubscriber.String())
+			if err != nil {
+				return nil, err
+			}
+
+			bs, err := subscribers.NewHeadBlock(srv.ctx, srv.pool, opts, hooks)
 			if err != nil {
 				return nil, err
 			}
@@ -25,7 +33,14 @@ var (
 			hooks[subscribers.PostHook] = []subscribers.BlockHookFn{
 				BlockHeadInterceptor(srv, network, networkId, ArchiveSyncDirection),
 			}
-			bs, err := subscribers.NewArchiveBlock(srv.ctx, srv.pool, hooks)
+
+			// Have to use .String() - otherwise cycle import...
+			opts, err := options.G().Syncer.GetByType(subscribers.ArchiveBlockSubscriber.String())
+			if err != nil {
+				return nil, err
+			}
+
+			bs, err := subscribers.NewArchiveBlock(srv.ctx, srv.pool, opts, hooks)
 			if err != nil {
 				return nil, err
 			}

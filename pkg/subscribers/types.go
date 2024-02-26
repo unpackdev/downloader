@@ -1,9 +1,9 @@
 package subscribers
 
-type SubscriberName string
+type SubscriberType string
 
-func (s SubscriberName) String() string {
-	return string(s)
+func (t SubscriberType) String() string {
+	return string(t)
 }
 
 type Status int16

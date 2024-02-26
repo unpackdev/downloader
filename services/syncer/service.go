@@ -130,12 +130,5 @@ func NewService(ctx context.Context) (*Service, error) {
 		unpacker: unp,
 	}
 
-	// Syncer operates under state machine logic, here we're registering available states.
-	if err := RegisterMachineStates(toReturn); err != nil {
-		return nil, fmt.Errorf(
-			"failure to register syncer machine states: %w", err,
-		)
-	}
-
 	return toReturn, nil
 }

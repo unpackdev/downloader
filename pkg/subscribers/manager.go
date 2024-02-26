@@ -9,7 +9,7 @@ import (
 
 type Manager struct {
 	ctx  context.Context
-	subs map[SubscriberName]Subscriber
+	subs map[SubscriberType]Subscriber
 	mu   sync.RWMutex
 }
 
@@ -17,19 +17,19 @@ type Manager struct {
 func NewManager(ctx context.Context) (*Manager, error) {
 	return &Manager{
 		ctx:  ctx,
-		subs: make(map[SubscriberName]Subscriber),
+		subs: make(map[SubscriberType]Subscriber),
 		mu:   sync.RWMutex{},
 	}, nil
 }
 
-func (m *Manager) Exists(name SubscriberName) bool {
+func (m *Manager) Exists(name SubscriberType) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	_, ok := m.subs[name]
 	return ok
 }
 
-func (m *Manager) Register(name SubscriberName, sub Subscriber) error {
+func (m *Manager) Register(name SubscriberType, sub Subscriber) error {
 	if m.Exists(name) {
 		return fmt.Errorf(
 			"rejecting subscriber '%s' registration as it already exists",
@@ -44,7 +44,7 @@ func (m *Manager) Register(name SubscriberName, sub Subscriber) error {
 }
 
 // UnRegister removes a subscriber from the manager
-func (m *Manager) UnRegister(name SubscriberName) error {
+func (m *Manager) UnRegister(name SubscriberType) error {
 	if m.Exists(name) {
 		return fmt.Errorf(
 			"rejecting subscriber '%s' removal as it does not exist",
@@ -59,7 +59,7 @@ func (m *Manager) UnRegister(name SubscriberName) error {
 }
 
 // Get retrieves a subscriber by name
-func (m *Manager) Get(name SubscriberName) (Subscriber, error) {
+func (m *Manager) Get(name SubscriberType) (Subscriber, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -70,11 +70,11 @@ func (m *Manager) Get(name SubscriberName) (Subscriber, error) {
 	return sub, nil
 }
 
-func (m *Manager) List() map[SubscriberName]Subscriber {
+func (m *Manager) List() map[SubscriberType]Subscriber {
 	return m.subs
 }
 
-func (m *Manager) Subscribe(names ...SubscriberName) error {
+func (m *Manager) Subscribe(names ...SubscriberType) error {
 	g, ctx := errgroup.WithContext(m.ctx)
 
 	// Define a helper function to start a subscriber

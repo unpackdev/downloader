@@ -1,11 +1,14 @@
 package syncer
 
 import (
+	"context"
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/unpackdev/downloader/pkg/entries"
+	"github.com/unpackdev/downloader/pkg/unpacker"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
+	"time"
 )
 
 type SyncDirection string
@@ -62,11 +65,11 @@ func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.N
 			}
 
 			entry := &entries.Entry{
-				Network:    network,
-				NetworkID:  networkId,
-				SenderAddr: from,
-				Header:     block.Header(),
-				Tx:         tx,
+				Network:     network,
+				NetworkID:   networkId,
+				CreatorAddr: from,
+				Header:      block.Header(),
+				Tx:          tx,
 			}
 
 			// Passing in all the arguments to the goroutine to ensure there are no shadowing going on
@@ -92,6 +95,7 @@ func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.N
 				}
 
 				entry.Receipt = receipt
+				entry.ContractAddr = receipt.ContractAddress
 
 				zap.L().Info(
 					"Processing new smart contract",
@@ -103,6 +107,40 @@ func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.N
 					zap.String("tx_hash", entry.Tx.Hash().String()),
 					zap.String("address", receipt.ContractAddress.Hex()),
 				)
+
+				// Making sure we don't hang forever in case of hard unpack hangs...
+				ctx, cancel := context.WithTimeout(srv.ctx, 30*time.Second)
+				defer cancel()
+
+				descriptor, err := srv.UnpackFromEntry(ctx, entry, unpacker.DiscoverState)
+				if err != nil {
+					zap.L().Error(
+						"Failed to get unpack contract entry",
+						zap.Error(err),
+						zap.Any("network", network),
+						zap.Any("network_id", networkId),
+						zap.Any("direction", direction),
+						zap.Uint64("header_number", entry.Header.Number.Uint64()),
+						zap.String("header_hash", entry.Header.Hash().String()),
+						zap.String("tx_hash", entry.Tx.Hash().String()),
+						zap.String("address", receipt.ContractAddress.Hex()),
+					)
+					return
+				}
+
+				zap.L().Debug(
+					"Successful new contract entry unpack",
+					zap.Any("network", network),
+					zap.Any("network_id", networkId),
+					zap.Any("direction", direction),
+					zap.Uint64("header_number", entry.Header.Number.Uint64()),
+					zap.String("header_hash", entry.Header.Hash().String()),
+					zap.String("tx_hash", entry.Tx.Hash().String()),
+					zap.String("address", receipt.ContractAddress.Hex()),
+				)
+
+				_ = descriptor
+
 			}(srv, entry)
 		}
 
