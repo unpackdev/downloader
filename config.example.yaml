@@ -10,10 +10,10 @@ networks:
     website: "https://ethereum.org/"
     suspended: false
     maintenance: false
-  - name: "bsc"
+  - name: "binance"
     networkId: 56
     canonicalName: "Binance Smart Chain"
-    symbol: "BSC"
+    symbol: "BNB"
     website: "https://www.bnbchain.org/en/bnb-smart-chain"
     suspended: true
     maintenance: false
