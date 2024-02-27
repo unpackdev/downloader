@@ -38,9 +38,10 @@ syncer:
   subscribers:
     - type: head
       enabled: true
+      network: "ethereum"
     - type: archive
       enabled: true
-      startBlockNumber: 0
+      network: "ethereum"
       endBlockNumber: 19312364
 
 unpacker:

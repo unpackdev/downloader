@@ -7,13 +7,17 @@ import (
 	"sync"
 )
 
+// Manager coordinates subscribers. It supports adding, removing,
+// and notifying subscribers. Operations on Manager are safe for
+// concurrent use by multiple goroutines.
 type Manager struct {
-	ctx  context.Context
-	subs map[SubscriberType]Subscriber
-	mu   sync.RWMutex
+	ctx  context.Context               // Context controls the lifecycle of all subscribers.
+	subs map[SubscriberType]Subscriber // Registered subscribers.
+	mu   sync.RWMutex                  // Mutex to ensure concurrent access to subs is safe.
 }
 
-// TODO: Add validation...
+// NewManager initializes a new Manager with the provided context.
+// The context is used to control the lifecycle of subscribers.
 func NewManager(ctx context.Context) (*Manager, error) {
 	return &Manager{
 		ctx:  ctx,
@@ -22,6 +26,8 @@ func NewManager(ctx context.Context) (*Manager, error) {
 	}, nil
 }
 
+// Exists checks if a subscriber of the given name is already registered.
+// Returns true if the subscriber exists; otherwise, false.
 func (m *Manager) Exists(name SubscriberType) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -29,6 +35,8 @@ func (m *Manager) Exists(name SubscriberType) bool {
 	return ok
 }
 
+// Register adds a new subscriber under the given name. It returns an error
+// if a subscriber with the same name already exists.
 func (m *Manager) Register(name SubscriberType, sub Subscriber) error {
 	if m.Exists(name) {
 		return fmt.Errorf(
@@ -43,9 +51,10 @@ func (m *Manager) Register(name SubscriberType, sub Subscriber) error {
 	return nil
 }
 
-// UnRegister removes a subscriber from the manager
+// UnRegister removes a subscriber identified by name. It returns an error
+// if no subscriber by that name exists.
 func (m *Manager) UnRegister(name SubscriberType) error {
-	if m.Exists(name) {
+	if !m.Exists(name) {
 		return fmt.Errorf(
 			"rejecting subscriber '%s' removal as it does not exist",
 			name,
@@ -58,7 +67,8 @@ func (m *Manager) UnRegister(name SubscriberType) error {
 	return nil
 }
 
-// Get retrieves a subscriber by name
+// Get retrieves a subscriber by name. Returns an error if the subscriber
+// does not exist.
 func (m *Manager) Get(name SubscriberType) (Subscriber, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -70,14 +80,18 @@ func (m *Manager) Get(name SubscriberType) (Subscriber, error) {
 	return sub, nil
 }
 
+// List returns a map of all registered subscribers.
 func (m *Manager) List() map[SubscriberType]Subscriber {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.subs
 }
 
+// Subscribe starts the specified subscribers or all if none are specified.
+// It returns an error if any subscriber fails to start.
 func (m *Manager) Subscribe(names ...SubscriberType) error {
 	g, ctx := errgroup.WithContext(m.ctx)
 
-	// Define a helper function to start a subscriber
 	startSubscriber := func(sub Subscriber) error {
 		select {
 		case <-ctx.Done():
@@ -87,18 +101,15 @@ func (m *Manager) Subscribe(names ...SubscriberType) error {
 		}
 	}
 
-	if len(names) > 0 {
-		// Start only the subscribers with the provided names
-		for _, name := range names {
-			sub, ok := m.subs[name]
-			if ok {
-				g.Go(func() error {
-					return startSubscriber(sub)
-				})
-			}
+	for _, name := range names {
+		if sub, ok := m.subs[name]; ok {
+			g.Go(func() error {
+				return startSubscriber(sub)
+			})
 		}
-	} else {
-		// Start all subscribers
+	}
+
+	if len(names) == 0 {
 		for _, sub := range m.subs {
 			g.Go(func() error {
 				return startSubscriber(sub)
@@ -106,10 +117,10 @@ func (m *Manager) Subscribe(names ...SubscriberType) error {
 		}
 	}
 
-	// Wait for all goroutines to complete
 	return g.Wait()
 }
 
+// Close stops all active subscribers. It ignores subscribers that are not active.
 func (m *Manager) Close() error {
 	g, ctx := errgroup.WithContext(m.ctx)
 

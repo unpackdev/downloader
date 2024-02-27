@@ -62,7 +62,7 @@ func (s *Storage) Save(ctx context.Context, entry *Entry, sources *solgo.Sources
 	if err := sources.WriteToDir(s.GetEntryFullPath(entry)); err != nil {
 		return fmt.Errorf("write to dir error: %s", err)
 	}
-	if err := s.badgerDB.Write(entry.GetKey(), entry.ToBytes()); err != nil {
+	if err := s.badgerDB.Write(ctx, entry.GetKey(), entry.ToBytes()); err != nil {
 		return fmt.Errorf("badgerDB write error: %s", err)
 	}
 	return nil

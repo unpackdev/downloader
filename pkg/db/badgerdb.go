@@ -106,7 +106,7 @@ func (d *BadgerDB) Get(key string) ([]byte, error) {
 // Example usage:
 //
 //	err := db.Write("myKey", []byte("myValue"))
-func (d *BadgerDB) Write(key string, value []byte) error {
+func (d *BadgerDB) Write(ctx context.Context, key string, value []byte) error {
 	err := d.db.Update(func(txn *badger.Txn) error {
 		err := txn.Set([]byte(key), value)
 		return err
