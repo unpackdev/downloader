@@ -7,11 +7,65 @@ package graph
 import (
 	"context"
 	"fmt"
+	"github.com/unpackdev/downloader/pkg/options"
+	"strings"
 )
 
-// Networks is the resolver for the networks field.
+// Networks is the resolver for the networks field. It is deliberately loaded from the configuration
+// as networks change very infrequently, and you'd need to download new release regardless. No need to store them
+// into the database...
+// There is no need for any type of caching for this endpoint.
 func (r *queryResolver) Networks(ctx context.Context, networkID *int, name *string, symbol *string, suspended *bool, maintenance *bool) ([]*Network, error) {
-	panic(fmt.Errorf("not implemented: Networks - networks"))
+	toReturn := make([]*Network, 0)
+
+	for _, network := range options.G().Networks {
+		if networkID != nil {
+			if *networkID != network.NetworkId {
+				continue
+			}
+		}
+
+		if name != nil {
+			networkName := strings.ToLower(network.Name)
+			requestedName := strings.ToLower(*name)
+			if !strings.Contains(networkName, requestedName) {
+				continue
+			}
+		}
+
+		if symbol != nil {
+			networkSymbol := strings.ToLower(network.Symbol)
+			requestedSymbol := strings.ToLower(*symbol)
+			if !strings.Contains(networkSymbol, requestedSymbol) {
+				continue
+			}
+		}
+
+		if suspended != nil {
+			if network.Suspended != *suspended {
+				continue
+			}
+		}
+
+		if maintenance != nil {
+			if network.Maintenance != *maintenance {
+				continue
+			}
+		}
+
+		toReturn = append(toReturn, &Network{
+			Name:          network.Name,
+			NetworkID:     network.NetworkId,
+			Symbol:        network.Symbol,
+			CanonicalName: network.CanonicalName,
+			Website:       network.Website,
+			Suspended:     network.Suspended,
+			Maintenance:   network.Maintenance,
+		})
+
+	}
+
+	return toReturn, nil
 }
 
 // Contracts is the resolver for the contracts field.

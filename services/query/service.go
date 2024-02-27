@@ -38,6 +38,10 @@ func (s *Service) Start() error {
 
 	g, ctx := errgroup.WithContext(s.ctx)
 
+	g.Go(func() error {
+		return s.serveGraphQL()
+	})
+
 	// Wait for goroutines to finish....
 	if err := g.Wait(); err != nil {
 		return err

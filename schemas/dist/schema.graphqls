@@ -58,11 +58,6 @@ A representation of a blockchain smart contract and its associated metadata.
 """
 type Contract {
     """
-    The unique identifier of the contract.
-    """
-    uuid: UUID!
-    
-    """
     The network information associated with this contract.
     """
     network: Network!
@@ -163,12 +158,6 @@ type ContractEdge {
 A representation of a network with its essential details.
 """
 type Network {
-    
-    """
-    Unique identifier of the network.
-    """
-    uuid: UUID!
-
     """
     Official (chain) ID of the network.
     """
@@ -203,16 +192,6 @@ type Network {
     Flag indicating if the network is under maintenance.
     """
     maintenance: Boolean!
-    
-    """
-    Timestamp indicating when the network was created.
-    """
-    createdAt: Time!
-    
-    """
-    Timestamp indicating the last update time for the network.
-    """
-    updatedAt: Time!
 }
 
 

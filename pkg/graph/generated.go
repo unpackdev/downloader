@@ -14,7 +14,6 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/google/uuid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -59,7 +58,6 @@ type ComplexityRoot struct {
 		NextState       func(childComplexity int) int
 		Partial         func(childComplexity int) int
 		SolgoVersion    func(childComplexity int) int
-		UUID            func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
 	}
 
@@ -75,14 +73,11 @@ type ComplexityRoot struct {
 
 	Network struct {
 		CanonicalName func(childComplexity int) int
-		CreatedAt     func(childComplexity int) int
 		Maintenance   func(childComplexity int) int
 		Name          func(childComplexity int) int
 		NetworkID     func(childComplexity int) int
 		Suspended     func(childComplexity int) int
 		Symbol        func(childComplexity int) int
-		UUID          func(childComplexity int) int
-		UpdatedAt     func(childComplexity int) int
 		Website       func(childComplexity int) int
 	}
 
@@ -207,13 +202,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Contract.SolgoVersion(childComplexity), true
 
-	case "Contract.uuid":
-		if e.complexity.Contract.UUID == nil {
-			break
-		}
-
-		return e.complexity.Contract.UUID(childComplexity), true
-
 	case "Contract.updatedAt":
 		if e.complexity.Contract.UpdatedAt == nil {
 			break
@@ -256,13 +244,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Network.CanonicalName(childComplexity), true
 
-	case "Network.createdAt":
-		if e.complexity.Network.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Network.CreatedAt(childComplexity), true
-
 	case "Network.maintenance":
 		if e.complexity.Network.Maintenance == nil {
 			break
@@ -297,20 +278,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Network.Symbol(childComplexity), true
-
-	case "Network.uuid":
-		if e.complexity.Network.UUID == nil {
-			break
-		}
-
-		return e.complexity.Network.UUID(childComplexity), true
-
-	case "Network.updatedAt":
-		if e.complexity.Network.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.Network.UpdatedAt(childComplexity), true
 
 	case "Network.website":
 		if e.complexity.Network.Website == nil {
@@ -520,11 +487,6 @@ A representation of a blockchain smart contract and its associated metadata.
 """
 type Contract {
     """
-    The unique identifier of the contract.
-    """
-    uuid: UUID!
-    
-    """
     The network information associated with this contract.
     """
     network: Network!
@@ -625,12 +587,6 @@ type ContractEdge {
 A representation of a network with its essential details.
 """
 type Network {
-    
-    """
-    Unique identifier of the network.
-    """
-    uuid: UUID!
-
     """
     Official (chain) ID of the network.
     """
@@ -665,16 +621,6 @@ type Network {
     Flag indicating if the network is under maintenance.
     """
     maintenance: Boolean!
-    
-    """
-    Timestamp indicating when the network was created.
-    """
-    createdAt: Time!
-    
-    """
-    Timestamp indicating the last update time for the network.
-    """
-    updatedAt: Time!
 }
 
 
@@ -894,50 +840,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Contract_uuid(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Contract_uuid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UUID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(uuid.UUID)
-	fc.Result = res
-	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Contract_uuid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Contract",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UUID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Contract_network(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Contract_network(ctx, field)
 	if err != nil {
@@ -977,8 +879,6 @@ func (ec *executionContext) fieldContext_Contract_network(ctx context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "uuid":
-				return ec.fieldContext_Network_uuid(ctx, field)
 			case "networkId":
 				return ec.fieldContext_Network_networkId(ctx, field)
 			case "name":
@@ -993,10 +893,6 @@ func (ec *executionContext) fieldContext_Contract_network(ctx context.Context, f
 				return ec.fieldContext_Network_suspended(ctx, field)
 			case "maintenance":
 				return ec.fieldContext_Network_maintenance(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Network_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Network_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Network", field.Name)
 		},
@@ -1669,8 +1565,6 @@ func (ec *executionContext) fieldContext_ContractEdge_node(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "uuid":
-				return ec.fieldContext_Contract_uuid(ctx, field)
 			case "network":
 				return ec.fieldContext_Contract_network(ctx, field)
 			case "address":
@@ -1743,50 +1637,6 @@ func (ec *executionContext) fieldContext_ContractEdge_cursor(ctx context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Network_uuid(ctx context.Context, field graphql.CollectedField, obj *Network) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Network_uuid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UUID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(uuid.UUID)
-	fc.Result = res
-	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Network_uuid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Network",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2100,94 +1950,6 @@ func (ec *executionContext) fieldContext_Network_maintenance(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Network_createdAt(ctx context.Context, field graphql.CollectedField, obj *Network) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Network_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Network_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Network",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Network_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Network) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Network_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Network_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Network",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *PageInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 	if err != nil {
@@ -2403,8 +2165,6 @@ func (ec *executionContext) fieldContext_Query_networks(ctx context.Context, fie
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "uuid":
-				return ec.fieldContext_Network_uuid(ctx, field)
 			case "networkId":
 				return ec.fieldContext_Network_networkId(ctx, field)
 			case "name":
@@ -2419,10 +2179,6 @@ func (ec *executionContext) fieldContext_Query_networks(ctx context.Context, fie
 				return ec.fieldContext_Network_suspended(ctx, field)
 			case "maintenance":
 				return ec.fieldContext_Network_maintenance(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Network_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Network_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Network", field.Name)
 		},
@@ -4423,11 +4179,6 @@ func (ec *executionContext) _Contract(ctx context.Context, sel ast.SelectionSet,
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Contract")
-		case "uuid":
-			out.Values[i] = ec._Contract_uuid(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "network":
 			out.Values[i] = ec._Contract_network(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4609,11 +4360,6 @@ func (ec *executionContext) _Network(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Network")
-		case "uuid":
-			out.Values[i] = ec._Network_uuid(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "networkId":
 			out.Values[i] = ec._Network_networkId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4646,16 +4392,6 @@ func (ec *executionContext) _Network(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "maintenance":
 			out.Values[i] = ec._Network_maintenance(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "createdAt":
-			out.Values[i] = ec._Network_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updatedAt":
-			out.Values[i] = ec._Network_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5382,21 +5118,6 @@ func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v in
 
 func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
 	res := graphql.MarshalTime(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (uuid.UUID, error) {
-	res, err := graphql.UnmarshalUUID(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
-	res := graphql.MarshalUUID(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

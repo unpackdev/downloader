@@ -4,14 +4,10 @@ package graph
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // A representation of a blockchain smart contract and its associated metadata.
 type Contract struct {
-	// The unique identifier of the contract.
-	UUID uuid.UUID `json:"uuid"`
 	// The network information associated with this contract.
 	Network *Network `json:"network"`
 	// The blockchain address of the contract.
@@ -58,8 +54,6 @@ type ContractEdge struct {
 
 // A representation of a network with its essential details.
 type Network struct {
-	// Unique identifier of the network.
-	UUID uuid.UUID `json:"uuid"`
 	// Official (chain) ID of the network.
 	NetworkID int `json:"networkId"`
 	// Name of the network.
@@ -74,10 +68,6 @@ type Network struct {
 	Suspended bool `json:"suspended"`
 	// Flag indicating if the network is under maintenance.
 	Maintenance bool `json:"maintenance"`
-	// Timestamp indicating when the network was created.
-	CreatedAt time.Time `json:"createdAt"`
-	// Timestamp indicating the last update time for the network.
-	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // Information about pagination in a connection.

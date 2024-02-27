@@ -3,11 +3,6 @@ A representation of a blockchain smart contract and its associated metadata.
 """
 type Contract {
     """
-    The unique identifier of the contract.
-    """
-    uuid: UUID!
-    
-    """
     The network information associated with this contract.
     """
     network: Network!

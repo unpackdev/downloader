@@ -2,12 +2,6 @@
 A representation of a network with its essential details.
 """
 type Network {
-    
-    """
-    Unique identifier of the network.
-    """
-    uuid: UUID!
-
     """
     Official (chain) ID of the network.
     """
@@ -42,14 +36,4 @@ type Network {
     Flag indicating if the network is under maintenance.
     """
     maintenance: Boolean!
-    
-    """
-    Timestamp indicating when the network was created.
-    """
-    createdAt: Time!
-    
-    """
-    Timestamp indicating the last update time for the network.
-    """
-    updatedAt: Time!
 }

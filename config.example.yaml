@@ -2,6 +2,22 @@ logger:
   env: development
   level: debug
 
+networks:
+  - name: "ethereum"
+    networkId: 1
+    canonicalName: "Ethereum"
+    symbol: "ETH"
+    website: "https://ethereum.org/"
+    suspended: false
+    maintenance: false
+  - name: "bsc"
+    networkId: 56
+    canonicalName: "Binance Smart Chain"
+    symbol: "BSC"
+    website: "https://www.bnbchain.org/en/bnb-smart-chain"
+    suspended: true
+    maintenance: false
+
 storage:
   enabled: true
   contractsPath: /mnt/{disc}/downloader/
@@ -46,3 +62,20 @@ syncer:
 
 unpacker:
   otsEnabled: false
+
+graphql:
+  addr: 0.0.0.0:8084
+  transports:
+    - http
+    - ws
+  cors:
+    debug: true
+    maxAge: 120
+    allowCredentials: true
+    allowedOrigins:
+      - "*"
+    allowedMethods:
+      - HEAD
+      - GET
+      - POST
+      - PUT
