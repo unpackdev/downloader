@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"github.com/unpackdev/downloader/pkg/options"
 	"strings"
 )
@@ -62,7 +61,6 @@ func (r *queryResolver) Networks(ctx context.Context, networkID *int, name *stri
 			Suspended:     network.Suspended,
 			Maintenance:   network.Maintenance,
 		})
-
 	}
 
 	return toReturn, nil
@@ -70,7 +68,9 @@ func (r *queryResolver) Networks(ctx context.Context, networkID *int, name *stri
 
 // Contracts is the resolver for the contracts field.
 func (r *queryResolver) Contracts(ctx context.Context, networkIds []int, blockNumbers []int, blockHashes []string, transactionHashes []string, addresses []string, limit *int, first *int, after *string) (*ContractConnection, error) {
-	panic(fmt.Errorf("not implemented: Contracts - contracts"))
+	toReturn := &ContractConnection{}
+
+	return toReturn, nil
 }
 
 // Query returns QueryResolver implementation.

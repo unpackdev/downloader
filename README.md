@@ -37,6 +37,11 @@ For now it will be focused only on mainnet contracts. Ethereum is the first one,
 - **High-Performance Backend:** Built with Golang, known for its efficiency and speed.
 
 
+## Demo and Examples
+
+To be defined here. Will be a link with graphql playground, limited to 1req/s including examples in its own directory of
+how to consume this service.
+
 ## Notes
 
 These notes will be moved into appropriate sections of the README as the project progresses.
