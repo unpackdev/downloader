@@ -7,7 +7,10 @@ import "github.com/urfave/cli/v2"
 // Currently, it includes commands for the "downloader" module.
 var (
 	registry = map[string][]*cli.Command{
-		"downloader": GetDownloaderCommands(),
+		"syncer":      GetSyncerCommands(),
+		"query":       GetQueryCommands(),
+		"compression": GetCompressionCommands(),
+		"runner":      GetRunnerCommands(),
 	}
 )
 

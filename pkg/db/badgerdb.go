@@ -3,7 +3,6 @@ package db
 
 import (
 	"context"
-
 	"github.com/dgraph-io/badger/v4"
 )
 
@@ -14,54 +13,22 @@ type BadgerDB struct {
 	db     *badger.DB      // The Badger DB instance
 }
 
-// Option is a function that applies a configuration option to a BadgerDB.
-type Option func(*BadgerDB)
-
-// WithDbPath is an Option to set the path of the BadgerDB.
-//
-// Example usage:
-//
-//	db, err := NewBadgerDB(WithDbPath("/tmp/mydb"))
-func WithDbPath(dbpath string) Option {
-	return func(p *BadgerDB) {
-		p.dbPath = dbpath
-	}
-}
-
-// WithContext is an Option to set the context of the BadgerDB.
-//
-// Example usage:
-//
-//	ctx := context.Background()
-//	db, err := NewBadgerDB(WithContext(ctx))
-func WithContext(ctx context.Context) Option {
-	return func(p *BadgerDB) {
-		p.ctx = ctx
-	}
-}
-
 // NewBadgerDB creates a new BadgerDB instance with the provided Options.
 // It defaults to using a background context if no context is provided.
 //
 // Example usage:
 //
 //	ctx := context.Background()
-//	db, err := NewBadgerDB(WithContext(ctx), WithDbPath("/tmp/mydb"))
-func NewBadgerDB(opts ...Option) (*BadgerDB, error) {
+//	db, err := NewBadgerDB(ctx, "/tmp/mydb", opts...)
+func NewBadgerDB(ctx context.Context, opts badger.Options) (*BadgerDB, error) {
 	bdb := &BadgerDB{
-		ctx: context.Background(), // Default value
+		ctx:    ctx,
+		dbPath: opts.Dir,
 	}
-
-	// Apply the provided options
-	for _, opt := range opts {
-		opt(bdb)
-	}
-
-	bopts := badger.DefaultOptions(bdb.dbPath)
 
 	// Open the Badger database located in the dbPath directory.
 	// It will be created if it doesn't exist.
-	db, err := badger.Open(bopts)
+	db, err := badger.Open(opts)
 	if err != nil {
 		return nil, err
 	}

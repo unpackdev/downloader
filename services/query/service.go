@@ -1,4 +1,4 @@
-package syncer
+package query
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 	"github.com/unpackdev/solgo/bindings"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/providers/etherscan"
-	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -32,22 +31,12 @@ type Service struct {
 	cache       *cache.Redis
 }
 
-func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error {
+func (s *Service) Start() error {
 	zap.L().Info(
-		"Starting up syncer service",
-		zap.Any("network", network),
-		zap.Any("network_id", networkId),
+		"Starting up query service",
 	)
 
-	if err := InjectSubscribers(s, network, networkId); err != nil {
-		return fmt.Errorf("failure to inject subscribers: %w", err)
-	}
-
 	g, ctx := errgroup.WithContext(s.ctx)
-
-	g.Go(func() error {
-		return s.subs.Subscribe()
-	})
 
 	// Wait for goroutines to finish....
 	if err := g.Wait(); err != nil {
@@ -57,24 +46,7 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 	select {
 	case <-ctx.Done():
 		zap.L().Info(
-			"Flattening badger db database...",
-			zap.Any("network", network),
-			zap.Any("network_id", networkId),
-		)
-
-		if err := s.db.DB().Flatten(options.G().Db.FlattenWorkers); err != nil {
-			zap.L().Error(
-				"failure to flatten badger db database on service shutdown",
-				zap.Error(err),
-				zap.Any("network", network),
-				zap.Any("network_id", networkId),
-			)
-		}
-
-		zap.L().Info(
-			"Stopped syncer service",
-			zap.Any("network", network),
-			zap.Any("network_id", networkId),
+			"Stopped query service",
 		)
 		return nil
 	}
@@ -99,7 +71,23 @@ func NewService(ctx context.Context) (*Service, error) {
 
 	// Note that there can be only one application accessing specific badgerdb database at the time...
 	// It's foobar strategy but heck we'll need to build RPC endpoints on top of it.
+
 	bOpts := badger.DefaultOptions(opts.Storage.DatabasePath)
+
+	// ----------------------------------------------------------------------------------
+	// @WARN: Read only and bypass lock will ensure we cannot write but in general,
+	// query service SHOULD NEVER EVER attempt to write as it would produce a corruption in the
+	// dataset.
+
+	// Enabling ReadOnly results in following error on 4.2.0 -> WTF...
+	// failure to open up the badgerdb database: while opening memtables error: while opening fid: 126 error: while updating
+	// skiplist error: end offset: 20 < size: 134217728 error: Log truncate required to run DB.
+	// This might result in data loss
+	// bOpts = bOpts.WithReadOnly(true)
+
+	bOpts = bOpts.WithBypassLockGuard(true)
+	// ----------------------------------------------------------------------------------
+
 	bDb, err := db.NewBadgerDB(ctx, bOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failure to open up the badgerdb database: %w", err)

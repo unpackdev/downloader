@@ -6,7 +6,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func GetDownloaderCommands() []*cli.Command {
+func GetSyncerCommands() []*cli.Command {
 	return []*cli.Command{
 		&cli.Command{
 			Name:  "syncer",

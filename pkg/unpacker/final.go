@@ -37,7 +37,6 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 	entry := descriptor.GetStorageEntry()
 
 	if cdescriptor.HasSources() {
-
 		if err := dh.u.storage.Save(dh.ctx, entry, descriptor.GetContract().GetDescriptor().GetSources()); err != nil {
 			zap.L().Error(
 				"failed to parse contract",
