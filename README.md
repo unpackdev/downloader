@@ -33,7 +33,10 @@ Initially I wanted to go with [BadgerDB](https://github.com/dgraph-io/badger) ho
 Sqlite3. Sqlite is much better at filtering while still having a filesystem in use instead of huge systems such as Postgres or Clickhouse.
 
 Sqlite supports up to 140TB of data. We won't have more than few TB at maximum. In our case, even disk capacity is not an issue really.
-We will be using cgo-free port of the [SQLite](https://gitlab.com/cznic/sqlite/), so it's fast.
+We will be using cgo-free port of the [SQLite](https://gitlab.com/cznic/sqlite/), so it will be fast, especially because ORMs are forbidden
+and will not be used in this project.
+
+This project is not a new blockchain, due to it key-value storage is not needed. Even more, it's a problem.
 
 ## Features
 - **Efficient Contract Downloading:** Streamlined process for downloading Ethereum smart contracts.
