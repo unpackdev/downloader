@@ -54,7 +54,7 @@ To be defined here. Will be a link with graphql playground, limited to 1req/s in
 how to consume this service. Additional note is that demo will go down and up as I work on it, served from my own datacenter. 
 I am not promising any availability.
 
-You can access demo at [Downloader](https://downloader.playground.unpack.dev) **<< NOT ONLINE!**
+You can access demo at [Inspector](https://inspector.playground.unpack.dev) **<< NOT ONLINE!**
 
 ## Notes
 
