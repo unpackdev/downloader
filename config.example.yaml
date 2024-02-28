@@ -81,3 +81,7 @@ graphql:
       - GET
       - POST
       - PUT
+
+pprof:
+  enabled: true
+  addr: "0.0.0.0:7599"

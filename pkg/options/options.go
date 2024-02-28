@@ -36,6 +36,7 @@ type Options struct {
 	Syncer           Syncer             `yaml:"syncer"`   // Syncer options.
 	Unpacker         Unpacker           `yaml:"unpacker"` // Unpacker options.
 	Graphql          GraphQL            `yaml:"graphql"`
+	Pprof            Pprof              `yaml:"pprof"`
 }
 
 // NewDefaultOptions creates a new Options object with the given configuration paths.

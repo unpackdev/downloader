@@ -7,6 +7,7 @@ import (
 	"github.com/unpackdev/inspector/pkg/cache"
 	"github.com/unpackdev/inspector/pkg/db"
 	"github.com/unpackdev/inspector/pkg/options"
+	"github.com/unpackdev/inspector/pkg/pprof"
 	"github.com/unpackdev/inspector/pkg/subscribers"
 	"github.com/unpackdev/inspector/pkg/unpacker"
 	"github.com/unpackdev/solgo/bindings"
@@ -27,6 +28,7 @@ type Service struct {
 	etherscan   *etherscan.EtherScanProvider
 	bindManager *bindings.Manager
 	cache       *cache.Redis
+	pprof       *pprof.Pprof
 }
 
 func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error {
@@ -35,6 +37,8 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 		zap.Any("network", network),
 		zap.Any("network_id", networkId),
 	)
+
+	opts := options.G()
 
 	if err := InjectSubscribers(s, network, networkId); err != nil {
 		return fmt.Errorf("failure to inject subscribers: %w", err)
@@ -45,6 +49,12 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 	g.Go(func() error {
 		return s.subs.Subscribe()
 	})
+
+	if opts.Pprof.Enabled {
+		g.Go(func() error {
+			return s.pprof.Start()
+		})
+	}
 
 	// Wait for goroutines to finish....
 	if err := g.Wait(); err != nil {
@@ -127,6 +137,7 @@ func NewService(ctx context.Context) (*Service, error) {
 		bindManager: bindManager,
 		cache:       cacheClient,
 		etherscan:   etherscanProvider,
+		pprof:       pprof.New(ctx, opts.Pprof),
 	}
 
 	return toReturn, nil
