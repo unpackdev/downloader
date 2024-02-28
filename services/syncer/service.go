@@ -3,7 +3,6 @@ package syncer
 import (
 	"context"
 	"fmt"
-	"github.com/dgraph-io/badger/v4"
 	"github.com/nats-io/nats.go"
 	"github.com/unpackdev/inspector/pkg/cache"
 	"github.com/unpackdev/inspector/pkg/db"
@@ -23,7 +22,7 @@ type Service struct {
 	ctx         context.Context
 	pool        *clients.ClientPool
 	nats        *nats.Conn
-	db          *db.BadgerDB
+	db          *db.Db
 	subs        *subscribers.Manager
 	storage     *storage.Storage
 	unpacker    *unpacker.Unpacker
@@ -82,12 +81,9 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to connect to the nats server: %w", err)
 	}
 
-	// Note that there can be only one application accessing specific badgerdb database at the time...
-	// It's foobar strategy but heck we'll need to build RPC endpoints on top of it.
-	bOpts := badger.DefaultOptions(opts.Storage.DatabasePath)
-	bDb, err := db.NewBadgerDB(ctx, bOpts)
+	dDb, err := db.NewDB(ctx, opts)
 	if err != nil {
-		return nil, fmt.Errorf("failure to open up the badgerdb database: %w", err)
+		return nil, fmt.Errorf("failure to open up the sqlite database: %w", err)
 	}
 
 	subManager, err := subscribers.NewManager(ctx)
@@ -95,9 +91,9 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to create new subscriber manager: %w", err)
 	}
 
-	storageManager, err := storage.New(ctx, opts.Storage, bDb)
+	storageManager, err := storage.New(ctx, opts.Storage, dDb)
 	if err != nil {
-		return nil, fmt.Errorf("failure to initiate new downloader storage: %w", err)
+		return nil, fmt.Errorf("failure to initiate new storage: %w", err)
 	}
 
 	bindManager, err := bindings.NewManager(ctx, clientsPool)
@@ -132,7 +128,7 @@ func NewService(ctx context.Context) (*Service, error) {
 		ctx:         ctx,
 		pool:        clientsPool,
 		nats:        nsConn,
-		db:          bDb,
+		db:          dDb,
 		subs:        subManager,
 		storage:     storageManager,
 		unpacker:    unp,

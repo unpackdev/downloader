@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/dgraph-io/badger/v4"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -41,7 +40,7 @@ func (s *Storage) FindContractByAddress(ctx context.Context, network utils.Netwo
 // It accepts a context for operation cancellation and a function to process each Entry.
 // The processing function should return a boolean indicating if the iteration should continue.
 func (s *Storage) Seek(ctx context.Context, process func(entry *Entry) (bool, error)) error {
-	return s.badgerDB.DB().View(func(txn *badger.Txn) error {
+	/*	return s.badgerDB.DB().View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchValues = true
 		it := txn.NewIterator(opts)
@@ -77,5 +76,6 @@ func (s *Storage) Seek(ctx context.Context, process func(entry *Entry) (bool, er
 			}
 		}
 		return nil
-	})
+	})*/
+	return nil
 }

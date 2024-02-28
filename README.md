@@ -6,7 +6,7 @@ Currently, nothing works as expected. Going to remove this notice once state of 
 
 
 ## Overview
-The Ethereum Smart Contracts Downloader and Storage Manager is a high-performance tool tailored for Ethereum smart contracts. Built with [Golang](https://go.dev/) and [BadgerDB](https://github.com/dgraph-io/badger), this application not only ensures efficient and dependable downloading of smart contracts but also provides robust features for pausing and resuming downloads. It facilitates seamless storage of contracts in a local database, simplifying access and retrieval.
+The Ethereum Smart Contracts Downloader and Storage Manager is a high-performance tool tailored for Ethereum smart contracts. Built with [Golang](https://go.dev/) and Sqlite3 this application not only ensures efficient and dependable downloading of smart contracts but also provides robust features for pausing and resuming downloads. It facilitates seamless storage of contracts in a local database, simplifying access and retrieval.
 
 Key capabilities include easy retrieval of contract metadata and source code, especially for contracts verified on [Etherscan](https://etherscan.io/). This makes it an indispensable tool for developers working with Ethereum smart contracts.
 
@@ -27,10 +27,18 @@ For now it will be focused only on mainnet contracts. Ethereum is the first one,
 - From the IPFS and deployed bytecode I am able to extract information such as if it's optimized or not, which compiler version, and so forth.
 
 
+## Storage Decisions
+
+Initially I wanted to go with [BadgerDB](https://github.com/dgraph-io/badger) however, as time processed, I've decided to ditch the BadgerDB and move ahead with
+Sqlite3. Sqlite is much better at filtering while still having a filesystem in use instead of huge systems such as Postgres or Clickhouse.
+
+Sqlite supports up to 140TB of data. We won't have more than few TB at maximum. In our case, even disk capacity is not an issue really.
+We will be using cgo-free port of the [SQLite](https://gitlab.com/cznic/sqlite/), so it's fast.
+
 ## Features
 - **Efficient Contract Downloading:** Streamlined process for downloading Ethereum smart contracts.
 - **Download Resumption:** Capability to pause and resume downloads, ensuring progress isn't lost.
-- **Local Storage Management:** Stores contracts in BadgerDB for quick access and efficient retrieval.
+- **Local Storage Management:** Stores contracts in Sqlite3 for quick access and efficient retrieval.
 - **Contract Metadata Access:** Easy access to essential contract metadata.
 - **Bytecode Retrieval:** Simplifies the process of obtaining contract bytecode.
 - **Source Code Access:** Provides easy access to the source code of verified contracts on Etherscan.

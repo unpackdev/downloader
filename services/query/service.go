@@ -3,7 +3,6 @@ package query
 import (
 	"context"
 	"fmt"
-	"github.com/dgraph-io/badger/v4"
 	"github.com/nats-io/nats.go"
 	"github.com/unpackdev/inspector/pkg/cache"
 	"github.com/unpackdev/inspector/pkg/db"
@@ -22,7 +21,7 @@ type Service struct {
 	ctx         context.Context
 	pool        *clients.ClientPool
 	nats        *nats.Conn
-	db          *db.BadgerDB
+	db          *db.Db
 	subs        *subscribers.Manager
 	storage     *storage.Storage
 	unpacker    *unpacker.Unpacker
@@ -76,25 +75,9 @@ func NewService(ctx context.Context) (*Service, error) {
 	// Note that there can be only one application accessing specific badgerdb database at the time...
 	// It's foobar strategy but heck we'll need to build RPC endpoints on top of it.
 
-	bOpts := badger.DefaultOptions(opts.Storage.DatabasePath)
-
-	// ----------------------------------------------------------------------------------
-	// @WARN: Read only and bypass lock will ensure we cannot write but in general,
-	// query service SHOULD NEVER EVER attempt to write as it would produce a corruption in the
-	// dataset.
-
-	// Enabling ReadOnly results in following error on 4.2.0 -> WTF...
-	// failure to open up the badgerdb database: while opening memtables error: while opening fid: 126 error: while updating
-	// skiplist error: end offset: 20 < size: 134217728 error: Log truncate required to run DB.
-	// This might result in data loss
-	// bOpts = bOpts.WithReadOnly(true)
-
-	bOpts = bOpts.WithBypassLockGuard(true)
-	// ----------------------------------------------------------------------------------
-
-	bDb, err := db.NewBadgerDB(ctx, bOpts)
+	dDb, err := db.NewDB(ctx, opts)
 	if err != nil {
-		return nil, fmt.Errorf("failure to open up the badgerdb database: %w", err)
+		return nil, fmt.Errorf("failure to open up the sqlite database: %w", err)
 	}
 
 	subManager, err := subscribers.NewManager(ctx)
@@ -102,7 +85,7 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to create new subscriber manager: %w", err)
 	}
 
-	storageManager, err := storage.New(ctx, opts.Storage, bDb)
+	storageManager, err := storage.New(ctx, opts.Storage, dDb)
 	if err != nil {
 		return nil, fmt.Errorf("failure to initiate new downloader storage: %w", err)
 	}
@@ -139,7 +122,7 @@ func NewService(ctx context.Context) (*Service, error) {
 		ctx:         ctx,
 		pool:        clientsPool,
 		nats:        nsConn,
-		db:          bDb,
+		db:          dDb,
 		subs:        subManager,
 		storage:     storageManager,
 		unpacker:    unp,
