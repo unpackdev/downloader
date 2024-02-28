@@ -57,21 +57,6 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 	select {
 	case <-ctx.Done():
 		zap.L().Info(
-			"Flattening badger db database...",
-			zap.Any("network", network),
-			zap.Any("network_id", networkId),
-		)
-
-		if err := s.db.DB().Flatten(options.G().Db.FlattenWorkers); err != nil {
-			zap.L().Error(
-				"failure to flatten badger db database on service shutdown",
-				zap.Error(err),
-				zap.Any("network", network),
-				zap.Any("network_id", networkId),
-			)
-		}
-
-		zap.L().Info(
 			"Stopped syncer service",
 			zap.Any("network", network),
 			zap.Any("network_id", networkId),

@@ -1,6 +1,15 @@
 package options
 
+import "path/filepath"
+
 type Db struct {
-	Path           string `yaml:"path"`
-	FlattenWorkers int    `yaml:"flattenWorkers"`
+	Dialect      string `yaml:"dialect"`
+	Datasource   string `yaml:"datasource"`
+	MigrationDir string `yaml:"migrationDir"`
+}
+
+func (o *Options) GetSqliteDbPath() string {
+	return filepath.Join(
+		o.Storage.DatabasePath, o.Db.Datasource,
+	)
 }

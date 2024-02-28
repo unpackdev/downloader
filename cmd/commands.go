@@ -11,6 +11,7 @@ var (
 		"query":       GetQueryCommands(),
 		"compression": GetCompressionCommands(),
 		"runner":      GetRunnerCommands(),
+		"migrations":  GetMigrationCommands(),
 	}
 )
 

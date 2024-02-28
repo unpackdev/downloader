@@ -65,6 +65,6 @@ func main() {
 	}
 
 	if err := baseApp.Run(os.Args); err != nil {
-		zlog.Fatal("failed to run downloader app", zap.Error(err))
+		zlog.Fatal("failed to run inspector service", zap.Error(err))
 	}
 }
