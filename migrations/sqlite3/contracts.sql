@@ -3,6 +3,7 @@ CREATE TABLE contracts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     network_id INTEGER NOT NULL,
     block_number INTEGER NOT NULL,
+    block_hash TEXT NOT NULL,
     transaction_hash TEXT NOT NULL,
     address TEXT NOT NULL,
     name TEXT NOT NULL,

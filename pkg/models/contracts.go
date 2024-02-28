@@ -20,6 +20,7 @@ type Contract struct {
 	Id                   int64
 	NetworkId            *big.Int
 	BlockNumber          *big.Int
+	BlockHash            common.Hash
 	TransactionHash      common.Hash
 	Address              common.Address
 	Name                 string
@@ -63,11 +64,12 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 
 	networkIdStr := networkId.Uint64()
 	blockNumberStr := blockNumber.Uint64()
+	var blockHash string
 	var txHash string
 
 	query := `
 	SELECT 
-	    id, network_id, block_number, transaction_hash, address, name, license, 
+	    id, network_id, block_number, block_hash, transaction_hash, address, name, license, 
 	    compiler_version, solgo_version, optimized, optimization_runs, evm_version, 
 	    abi, verified, verification_provider, processed, partial, created_at, updated_at
 	FROM contracts 
@@ -75,7 +77,7 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 
 	row := db.QueryRow(query, networkIdStr, blockNumberStr, address)
 
-	err := row.Scan(&contract.Id, &networkIdStr, &blockNumberStr, &txHash, &contract.Address, &contract.Name, &contract.License, &contract.CompilerVersion, &contract.SolgoVersion, &contract.Optimized, &contract.OptimizationRuns, &contract.EVMVersion, &contract.ABI, &contract.Verified, &contract.VerificationProvider, &contract.Processed, &contract.Partial, &contract.CreatedAt, &contract.UpdatedAt)
+	err := row.Scan(&contract.Id, &networkIdStr, &blockNumberStr, &blockHash, &txHash, &contract.Address, &contract.Name, &contract.License, &contract.CompilerVersion, &contract.SolgoVersion, &contract.Optimized, &contract.OptimizationRuns, &contract.EVMVersion, &contract.ABI, &contract.Verified, &contract.VerificationProvider, &contract.Processed, &contract.Partial, &contract.CreatedAt, &contract.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -86,6 +88,7 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 	// Convert the retrieved values back to their specific types
 	contract.NetworkId = new(big.Int).SetUint64(networkIdStr)
 	contract.BlockNumber = new(big.Int).SetUint64(blockNumberStr)
+	contract.BlockHash = common.HexToHash(blockHash)
 	contract.TransactionHash = common.HexToHash(txHash)
 
 	return &contract, nil
@@ -95,10 +98,10 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 func SaveContract(db *sql.DB, contract *Contract) error {
 	// Prepare SQL insert statement
 	stmt, err := db.Prepare(`INSERT INTO contracts(
-		network_id, block_number, transaction_hash, address, name, 
+		network_id, block_number, block_hash, transaction_hash, address, name, 
 		license, compiler_version, solgo_version, optimized, optimization_runs, 
 		evm_version, abi, verified, verification_provider, 
-		processed, partial, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+		processed, partial, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
 	if err != nil {
 		return fmt.Errorf("error preparing insert statement: %v", err)
 	}
@@ -108,7 +111,8 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 	_, err = stmt.Exec(
 		contract.NetworkId.Uint64(),
 		contract.BlockNumber.Uint64(),
-		contract.TransactionHash.Hex(), // Convert common.Hash to hex string
+		contract.BlockHash.Hex(),
+		contract.TransactionHash.Hex(),
 		contract.Address,
 		contract.Name,
 		contract.License,
@@ -138,6 +142,7 @@ func UpdateContract(db *sql.DB, contract *Contract) error {
 	stmt, err := db.Prepare(`UPDATE contracts SET 
         network_id=?, 
         block_number=?, 
+        block_hash=?, 
         transaction_hash=?, 
         address=?, 
         name=?, 
@@ -164,6 +169,7 @@ func UpdateContract(db *sql.DB, contract *Contract) error {
 	_, err = stmt.Exec(
 		contract.NetworkId.Uint64(),
 		contract.BlockNumber.Uint64(),
+		contract.BlockHash.Hex(),
 		contract.TransactionHash.Hex(),
 		contract.Address,
 		contract.Name,
@@ -180,7 +186,7 @@ func UpdateContract(db *sql.DB, contract *Contract) error {
 		contract.Partial,
 		contract.CreatedAt,
 		contract.UpdatedAt,
-		contract.Id, // Make sure to pass the contract ID as the last parameter to match the WHERE clause.
+		contract.Id,
 	)
 	if err != nil {
 		return fmt.Errorf("error executing update statement: %v", err)

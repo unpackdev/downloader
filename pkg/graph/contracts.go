@@ -2,6 +2,11 @@ package graph
 
 import (
 	"context"
+	"fmt"
+	"github.com/unpackdev/inspector/pkg/models"
+	"github.com/unpackdev/inspector/pkg/options"
+	"math/big"
+	"strings"
 )
 
 func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, blockNumbers []int, blockHashes []string, transactionHashes []string, addresses []string, limit *int, first *int, after *string) (*ContractConnection, error) {
@@ -11,80 +16,105 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 		PageInfo: &PageInfo{},
 	}
 
-	/*	var actualLimit int
-		if limit != nil {
-			actualLimit = *limit
-		} else {
-			actualLimit = 10
-		}
+	var actualLimit int
+	if limit != nil {
+		actualLimit = *limit
+	} else {
+		actualLimit = 10 // Default limit value
+	}
 
-		var startAfter *big.Int
-		var err error
-		if after != nil {
-			startAfter, err = storage.DecodeCursor(*after)
-			if err != nil {
-				return nil, fmt.Errorf("cannot decode after into its appropriate representation: %s", err)
-			}
-		} else {
-			// If `after` is not provided, start from the beginning
-			startAfter = big.NewInt(0) // or use nil and later check for nil before comparison
-		}
-
-		// Counter to keep track of the number of collected entries
-		count := 0
-
-		err = r.Storage.Seek(ctx, func(entry *storage.Entry) (bool, error) {
-			// Implement your filtering logic here based on networkIds, blockNumbers, etc.
-
-			if (startAfter == nil || entry.ID.Cmp(startAfter) > 0) && count < actualLimit {
-				// No need to parse error as we won't discover unsupported networks inside.
-				// Network needs to be resolved to write record in the first place...
-				network, _ := options.G().GetNetworkById(entry.NetworkID.Uint64())
-
-				toReturn.Edges = append(toReturn.Edges, &ContractEdge{
-					Node: &Contract{
-						Network: &Network{
-							Name:          network.Name,
-							NetworkID:     network.NetworkId,
-							Symbol:        network.Symbol,
-							CanonicalName: network.CanonicalName,
-							Website:       network.Website,
-							Suspended:     network.Suspended,
-							Maintenance:   network.Maintenance,
-						},
-						Address:          entry.Address.Hex(),
-						Name:             entry.Name,
-						BlockNumber:      int(entry.BlockNumber.Uint64()),
-						BlockHash:        entry.BlockHash.Hex(),
-						TransactionHash:  entry.TransactionHash.Hex(),
-						License:          &entry.License,
-						Optimized:        entry.Optimized,
-						OptimizationRuns: int(entry.OptimizationRuns),
-						Proxy:            entry.Proxy,
-						//Implementations:  entry.ImplementationAddrs,
-						SolgoVersion: &entry.SolgoVersion,
-					},
-					Cursor: entry.EncodeCursor(),
-				})
-				count++
-			}
-
-			// Continue seeking if we haven't reached the limit yet
-			return count < actualLimit, nil
-		})
-
+	var startAfter *big.Int
+	var err error
+	if after != nil {
+		startAfter, err = models.DecodeCursor(*after)
 		if err != nil {
-			zap.L().Error("failure to seek the storage", zap.Error(err))
-			return nil, err
+			return nil, fmt.Errorf("cannot decode 'after' into its appropriate representation: %s", err)
+		}
+	} else {
+		startAfter = big.NewInt(0) // Start from the beginning if 'after' is not provided
+	}
+
+	// Construct the query dynamically based on provided filters
+	var queryBuilder strings.Builder
+	queryBuilder.WriteString("SELECT id, network_id, block_number, block_hash, transaction_hash, address, name, created_at, updated_at FROM contracts WHERE id > ? ")
+	args := []interface{}{startAfter.Int64()}
+
+	// Add filters to the query
+	if len(networkIds) > 0 {
+		queryBuilder.WriteString("AND network_id IN (")
+		for i, id := range networkIds {
+			if i > 0 {
+				queryBuilder.WriteString(",")
+			}
+			queryBuilder.WriteString("?")
+			args = append(args, id)
+		}
+		queryBuilder.WriteString(") ")
+	}
+
+	// Repeat similar blocks for other filters like blockNumbers, blockHashes, transactionHashes, and addresses
+
+	queryBuilder.WriteString("ORDER BY id ASC LIMIT ?")
+	args = append(args, actualLimit)
+
+	// Execute the query
+	rows, err := r.Db.GetDB().QueryContext(ctx, queryBuilder.String(), args...)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var edge ContractEdge
+		var contract models.Contract
+		var networkId uint64
+		var blockNumber uint64
+		var txHash string
+		var blockHash string
+
+		err := rows.Scan(&contract.Id, &networkId, &blockNumber, &blockHash, &txHash, &contract.Address, &contract.Name, &contract.CreatedAt, &contract.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		// Set PageInfo based on the collected entries
-		if len(toReturn.Edges) > 0 {
-			toReturn.PageInfo.StartCursor = toReturn.Edges[0].Cursor
-			toReturn.PageInfo.EndCursor = toReturn.Edges[len(toReturn.Edges)-1].Cursor
-			toReturn.PageInfo.HasNextPage = count == actualLimit
-			// HasPreviousPage can be set based on the presence of an "after" cursor, but accurate determination may require additional checks
-		}*/
+		network, _ := options.G().GetNetworkById(networkId)
+
+		edge.Node = &Contract{
+			Network: &Network{
+				Name:          network.Name,
+				NetworkID:     network.NetworkId,
+				Symbol:        network.Symbol,
+				CanonicalName: network.CanonicalName,
+				Website:       network.Website,
+				Suspended:     network.Suspended,
+				Maintenance:   network.Maintenance,
+			},
+			Address:          contract.Address.Hex(),
+			Name:             contract.Name,
+			BlockNumber:      int(blockNumber),
+			BlockHash:        blockHash,
+			TransactionHash:  txHash,
+			License:          &contract.License,
+			Optimized:        contract.Optimized,
+			OptimizationRuns: int(contract.OptimizationRuns),
+			//Proxy:            contract.Proxy,
+			//Implementations:  entry.ImplementationAddrs,
+			SolgoVersion: &contract.SolgoVersion,
+		}
+
+		edge.Cursor = contract.EncodeCursor()
+		toReturn.Edges = append(toReturn.Edges, &edge)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	// Set PageInfo based on the results
+	if len(toReturn.Edges) > 0 {
+		toReturn.PageInfo.StartCursor = toReturn.Edges[0].Cursor
+		toReturn.PageInfo.EndCursor = toReturn.Edges[len(toReturn.Edges)-1].Cursor
+		toReturn.PageInfo.HasNextPage = len(toReturn.Edges) == actualLimit
+	}
 
 	return toReturn, nil
 }

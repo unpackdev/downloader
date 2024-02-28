@@ -22,9 +22,9 @@ func (d *Descriptor) GetContractEntry() *models.Contract {
 	descriptor := d.GetContract().GetDescriptor()
 
 	toReturn := &models.Contract{
-		NetworkId:   d.NetworkID.ToBig(),
-		BlockNumber: d.Header.Number,
-		//BlockHash:            d.Header.Hash(),
+		NetworkId:       d.NetworkID.ToBig(),
+		BlockNumber:     d.Header.Number,
+		BlockHash:       d.Header.Hash(),
 		TransactionHash: d.Tx.Hash(),
 		Address:         d.Addr,
 		//Proxy:                descriptor.Proxy,
