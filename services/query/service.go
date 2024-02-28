@@ -7,9 +7,7 @@ import (
 	"github.com/unpackdev/inspector/pkg/cache"
 	"github.com/unpackdev/inspector/pkg/db"
 	"github.com/unpackdev/inspector/pkg/options"
-	"github.com/unpackdev/inspector/pkg/storage"
 	"github.com/unpackdev/inspector/pkg/subscribers"
-	"github.com/unpackdev/inspector/pkg/unpacker"
 	"github.com/unpackdev/solgo/bindings"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/providers/etherscan"
@@ -23,8 +21,6 @@ type Service struct {
 	nats        *nats.Conn
 	db          *db.Db
 	subs        *subscribers.Manager
-	storage     *storage.Storage
-	unpacker    *unpacker.Unpacker
 	etherscan   *etherscan.EtherScanProvider
 	bindManager *bindings.Manager
 	cache       *cache.Redis
@@ -85,11 +81,6 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to create new subscriber manager: %w", err)
 	}
 
-	storageManager, err := storage.New(ctx, opts.Storage, dDb)
-	if err != nil {
-		return nil, fmt.Errorf("failure to initiate new downloader storage: %w", err)
-	}
-
 	bindManager, err := bindings.NewManager(ctx, clientsPool)
 	if err != nil {
 		return nil, fmt.Errorf("failure to create bindings manager: %w", err)
@@ -105,27 +96,12 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to create new etherscan provider: %w", err)
 	}
 
-	unpackerOpts := []unpacker.Option{
-		unpacker.WithNats(nsConn),
-		unpacker.WithPool(clientsPool),
-		unpacker.WithStorage(storageManager),
-		unpacker.WithBindingsManager(bindManager),
-		unpacker.WithEtherScanProvider(etherscanProvider),
-	}
-
-	unp, err := unpacker.NewUnpacker(ctx, unpackerOpts...)
-	if err != nil {
-		return nil, fmt.Errorf("failure to initiate new unpacker instance: %w", err)
-	}
-
 	toReturn := &Service{
 		ctx:         ctx,
 		pool:        clientsPool,
 		nats:        nsConn,
 		db:          dDb,
 		subs:        subManager,
-		storage:     storageManager,
-		unpacker:    unp,
 		bindManager: bindManager,
 		cache:       cacheClient,
 		etherscan:   etherscanProvider,

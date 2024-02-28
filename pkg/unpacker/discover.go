@@ -2,8 +2,11 @@ package unpacker
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/unpackdev/inspector/pkg/machine"
+	"github.com/unpackdev/inspector/pkg/models"
 	"go.uber.org/zap"
 )
 
@@ -48,6 +51,25 @@ func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, ma
 			descriptor.GetAddr().Hex(),
 		)
 	}
+
+	// Now it's time to attempt to discover contract from the storage
+	contract, err := models.GetContractByUniqueIndex(dh.u.db.GetDB(), descriptor.NetworkID.ToBig(), descriptor.GetHeader().Number, descriptor.GetAddr())
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			zap.L().Error(
+				"failed to fetch contract from the storage",
+				zap.Error(err),
+				zap.String("network", descriptor.GetNetwork().String()),
+				zap.Any("network_id", descriptor.GetNetworkID()),
+				zap.String("contract_address", descriptor.GetAddr().Hex()),
+				zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
+				zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
+				zap.String("source_provider", descriptor.GetContract().GetDescriptor().GetSourcesProvider()),
+			)
+			return ErrorState, descriptor, err
+		}
+	}
+	descriptor.SetContractModel(contract)
 
 	// Append completed state, so we can on easy way figure out if we need to process this state or not in the future...
 	// It's used when accessed state directly without first reaching discovery state.

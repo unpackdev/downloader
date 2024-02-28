@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nats-io/nats.go"
-	"github.com/unpackdev/inspector/pkg/storage"
+	"github.com/unpackdev/inspector/pkg/db"
 	"github.com/unpackdev/solgo/bindings"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/providers/etherscan"
@@ -18,7 +18,7 @@ type Unpacker struct {
 	etherscan   *etherscan.EtherScanProvider
 	nats        *nats.Conn
 	js          nats.JetStreamContext
-	storage     *storage.Storage
+	db          *db.Db
 	bindManager *bindings.Manager
 }
 
@@ -86,12 +86,12 @@ func WithEtherScanProvider(etherscan *etherscan.EtherScanProvider) Option {
 	}
 }
 
-func WithStorage(stor *storage.Storage) Option {
+func WithDb(d *db.Db) Option {
 	return func(u *Unpacker) error {
-		if stor == nil {
-			return fmt.Errorf("storage is nil")
+		if d == nil {
+			return fmt.Errorf("database is nil")
 		}
-		u.storage = stor
+		u.db = d
 		return nil
 	}
 }

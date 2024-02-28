@@ -7,7 +7,6 @@ import (
 	"github.com/unpackdev/inspector/pkg/cache"
 	"github.com/unpackdev/inspector/pkg/db"
 	"github.com/unpackdev/inspector/pkg/options"
-	"github.com/unpackdev/inspector/pkg/storage"
 	"github.com/unpackdev/inspector/pkg/subscribers"
 	"github.com/unpackdev/inspector/pkg/unpacker"
 	"github.com/unpackdev/solgo/bindings"
@@ -24,7 +23,6 @@ type Service struct {
 	nats        *nats.Conn
 	db          *db.Db
 	subs        *subscribers.Manager
-	storage     *storage.Storage
 	unpacker    *unpacker.Unpacker
 	etherscan   *etherscan.EtherScanProvider
 	bindManager *bindings.Manager
@@ -91,11 +89,6 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to create new subscriber manager: %w", err)
 	}
 
-	storageManager, err := storage.New(ctx, opts.Storage, dDb)
-	if err != nil {
-		return nil, fmt.Errorf("failure to initiate new storage: %w", err)
-	}
-
 	bindManager, err := bindings.NewManager(ctx, clientsPool)
 	if err != nil {
 		return nil, fmt.Errorf("failure to create bindings manager: %w", err)
@@ -114,7 +107,7 @@ func NewService(ctx context.Context) (*Service, error) {
 	unpackerOpts := []unpacker.Option{
 		unpacker.WithNats(nsConn),
 		unpacker.WithPool(clientsPool),
-		unpacker.WithStorage(storageManager),
+		unpacker.WithDb(dDb),
 		unpacker.WithBindingsManager(bindManager),
 		unpacker.WithEtherScanProvider(etherscanProvider),
 	}
@@ -130,7 +123,6 @@ func NewService(ctx context.Context) (*Service, error) {
 		nats:        nsConn,
 		db:          dDb,
 		subs:        subManager,
-		storage:     storageManager,
 		unpacker:    unp,
 		bindManager: bindManager,
 		cache:       cacheClient,

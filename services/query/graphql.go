@@ -44,8 +44,7 @@ func (s *Service) serveGraphQL() error {
 	})
 
 	gqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Db:      s.db,
-		Storage: s.storage,
+		Db: s.db,
 	}}))
 
 	if opts.TransportEnabled("ws") {

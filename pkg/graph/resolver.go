@@ -3,7 +3,6 @@ package graph
 
 import (
 	"github.com/unpackdev/inspector/pkg/db"
-	"github.com/unpackdev/inspector/pkg/storage"
 )
 
 // This file will not be regenerated automatically.
@@ -11,6 +10,5 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	Db      *db.Db
-	Storage *storage.Storage
+	Db *db.Db
 }

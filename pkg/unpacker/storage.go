@@ -2,8 +2,7 @@ package unpacker
 
 import (
 	"fmt"
-	"github.com/unpackdev/inspector/pkg/storage"
-	"github.com/unpackdev/solgo/utils"
+	"github.com/unpackdev/inspector/pkg/models"
 	"path/filepath"
 	"strings"
 	"time"
@@ -19,33 +18,40 @@ func (d *Descriptor) GetStorageCachePath() string {
 	)
 }
 
-func (d *Descriptor) GetStorageEntry() *storage.Entry {
+func (d *Descriptor) GetContractEntry() *models.Contract {
 	descriptor := d.GetContract().GetDescriptor()
-	return &storage.Entry{
-		Path:                 d.GetStorageCachePath(),
-		Network:              d.Network,
-		NetworkID:            d.NetworkID,
-		BlockNumber:          d.Header.Number,
-		BlockHash:            d.Header.Hash(),
-		TransactionHash:      d.Tx.Hash(),
-		Address:              d.Addr,
-		Proxy:                descriptor.Proxy,
-		ImplementationAddrs:  descriptor.Implementations,
-		Name:                 descriptor.GetName(),
-		License:              descriptor.GetLicense(),
-		Optimized:            descriptor.IsOptimized(),
-		OptimizationRuns:     descriptor.GetOptimizationRuns(),
-		ABI:                  descriptor.GetABI(),
-		SourcesProvider:      descriptor.GetSourcesProvider(),
+
+	toReturn := &models.Contract{
+		NetworkId:   d.NetworkID.ToBig(),
+		BlockNumber: d.Header.Number,
+		//BlockHash:            d.Header.Hash(),
+		TransactionHash: d.Tx.Hash(),
+		Address:         d.Addr,
+		//Proxy:                descriptor.Proxy,
+		//ImplementationAddrs:  descriptor.Implementations,
+		Name:             descriptor.GetName(),
+		License:          descriptor.GetLicense(),
+		Optimized:        descriptor.IsOptimized(),
+		OptimizationRuns: descriptor.GetOptimizationRuns(),
+		ABI:              descriptor.GetABI(),
+		//SourcesProvider:      descriptor.GetSourcesProvider(),
 		Verified:             descriptor.IsVerified(),
 		VerificationProvider: descriptor.GetVerificationProvider(),
 		EVMVersion:           strings.ToLower(descriptor.GetEVMVersion()),
 		SolgoVersion:         descriptor.GetSolgoVersion(),
-		CompilerVersion:      utils.ParseSemanticVersion(descriptor.CompilerVersion),
-		CreationBytecode:     descriptor.GetRuntimeBytecode(),
-		DeployedBytecode:     descriptor.GetDeployedBytecode(),
-		Metadata:             descriptor.GetMetadata().ToProto(),
-		Constructor:          descriptor.GetConstructor(),
-		InsertedAt:           time.Now().UTC(),
+		CompilerVersion:      descriptor.CompilerVersion,
+		/*		CreationBytecode:     descriptor.GetRuntimeBytecode(),
+				DeployedBytecode:     descriptor.GetDeployedBytecode(),
+				Metadata:             descriptor.GetMetadata().ToProto(),
+				Constructor:          descriptor.GetConstructor(),*/
+		CreatedAt: time.Now().UTC(),
 	}
+
+	if d.GetContractModel() != nil {
+		toReturn.CreatedAt = d.GetContractModel().CreatedAt
+		toReturn.Id = d.GetContractModel().Id
+		toReturn.UpdatedAt = time.Now().UTC()
+	}
+
+	return toReturn
 }
