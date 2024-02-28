@@ -1,4 +1,4 @@
-module github.com/unpackdev/downloader
+module github.com/unpackdev/inspector
 
 go 1.22
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nats-io/nats.go"
-	"github.com/unpackdev/downloader/pkg/storage"
+	"github.com/unpackdev/inspector/pkg/storage"
 	"github.com/unpackdev/solgo/bindings"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/providers/etherscan"

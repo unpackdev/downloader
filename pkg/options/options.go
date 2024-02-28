@@ -24,8 +24,8 @@ type Logger struct {
 // Options contains all the configuration options for the downloader application.
 // It includes settings for logger and other components of the application.
 type Options struct {
-	OptionsPath      string             `default:"~/.unpack/options.yaml" env:"DOWNLOADER_OPTIONS_PATH"` // OptionsPath defines the path to the configuration file.
-	Logger           Logger             `yaml:"logger" json:"logger"`                                    // Logger specifies the logging configuration.
+	OptionsPath      string             `default:"~/.unpack/inspector/options.yaml" env:"INSPECTOR_OPTIONS_PATH"` // OptionsPath defines the path to the configuration file.
+	Logger           Logger             `yaml:"logger" json:"logger"`                                             // Logger specifies the logging configuration.
 	Networks         []Network          `yaml:"networks" json:"networks"`
 	*clients.Options `yaml:"nodes"`     // Options embeds the client options.
 	Db               Db                 // Database options.
@@ -46,8 +46,8 @@ func NewDefaultOptions(paths []string) (*Options, error) {
 	loader := aconfig.LoaderFor(&opts, aconfig.Config{
 		AllowUnknownEnvs:   false,
 		AllowUnknownFields: false,
-		EnvPrefix:          "DOWNLOADER_",
-		FlagPrefix:         "downloader",
+		EnvPrefix:          "INSPECTOR_",
+		FlagPrefix:         "inspector",
 		Files:              paths,
 		FileDecoders: map[string]aconfig.FileDecoder{
 			".yaml": aconfigyaml.New(),

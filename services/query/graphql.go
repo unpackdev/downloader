@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
-	"github.com/unpackdev/downloader/pkg/graph"
-	"github.com/unpackdev/downloader/pkg/options"
+	"github.com/unpackdev/inspector/pkg/graph"
+	"github.com/unpackdev/inspector/pkg/options"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -44,7 +44,8 @@ func (s *Service) serveGraphQL() error {
 	})
 
 	gqlHandler := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Db: s.db,
+		Db:      s.db,
+		Storage: s.storage,
 	}}))
 
 	if opts.TransportEnabled("ws") {

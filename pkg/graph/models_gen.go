@@ -13,7 +13,15 @@ type Contract struct {
 	// The blockchain address of the contract.
 	Address string `json:"address"`
 	// The name of the contract.
-	Name string `json:"name"`
+	Name             string   `json:"name"`
+	BlockNumber      int      `json:"blockNumber"`
+	BlockHash        string   `json:"blockHash"`
+	TransactionHash  string   `json:"transactionHash"`
+	License          *string  `json:"license,omitempty"`
+	Optimized        bool     `json:"optimized"`
+	OptimizationRuns int      `json:"optimizationRuns"`
+	Proxy            bool     `json:"proxy"`
+	Implementations  []string `json:"implementations,omitempty"`
 	// The version of the Solidity compiler used.
 	SolgoVersion *string `json:"solgoVersion,omitempty"`
 	// The current processing state of the contract.

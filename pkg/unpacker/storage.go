@@ -2,7 +2,7 @@ package unpacker
 
 import (
 	"fmt"
-	"github.com/unpackdev/downloader/pkg/storage"
+	"github.com/unpackdev/inspector/pkg/storage"
 	"github.com/unpackdev/solgo/utils"
 	"path/filepath"
 	"strings"

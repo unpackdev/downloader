@@ -1,7 +1,7 @@
 package unpacker
 
 import (
-	"github.com/unpackdev/downloader/pkg/machine"
+	"github.com/unpackdev/inspector/pkg/machine"
 )
 
 func (u *Unpacker) RegisterMachineStates(sm *machine.StateMachine) error {

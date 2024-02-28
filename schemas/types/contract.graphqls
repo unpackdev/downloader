@@ -16,12 +16,22 @@ type Contract {
     The name of the contract.
     """
     name: String!
-    
+
+    blockNumber: Int!
+    blockHash: String!
+    transactionHash: String!
+
+    license: String
+    optimized: Boolean!
+    optimizationRuns: Int!
+    proxy: Boolean!
+    implementations: [String!]
+
     """
     The version of the Solidity compiler used.
     """
     solgoVersion: String
-    
+
     """
     The current processing state of the contract.
     """

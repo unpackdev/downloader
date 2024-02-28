@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 	"errors"
-	"github.com/unpackdev/downloader/pkg/options"
+	"github.com/unpackdev/inspector/pkg/options"
 	"time"
 
 	"github.com/redis/go-redis/v9"

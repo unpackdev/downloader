@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/unpackdev/downloader/cmd"
-	app "github.com/unpackdev/downloader/pkg/app"
-	"github.com/unpackdev/downloader/pkg/logger"
-	"github.com/unpackdev/downloader/pkg/options"
+	"github.com/unpackdev/inspector/cmd"
+	app "github.com/unpackdev/inspector/pkg/app"
+	"github.com/unpackdev/inspector/pkg/logger"
+	"github.com/unpackdev/inspector/pkg/options"
 	"os"
 
 	"github.com/urfave/cli/v2"
@@ -22,9 +22,9 @@ func main() {
 
 	// Let's figure out options, extract them, set them under global scope and
 	// move along with application...
-	optsFiles := os.Getenv("DOWNLOADER_OPTIONS_PATH")
+	optsFiles := os.Getenv("INSPECTOR_OPTIONS_PATH")
 	if len(optsFiles) < 1 {
-		panic("Options path is not set. You need to set `DOWNLOADER_OPTIONS_PATH` environment variable")
+		panic("Options path is not set. You need to set `INSPECTOR_OPTIONS_PATH` environment variable")
 	}
 
 	opts, err := options.NewDefaultOptions(options.PathToSlice(optsFiles))
@@ -47,11 +47,10 @@ func main() {
 	defer cancel()
 
 	baseApp, _ := app.New(ctx, app.Descriptor{
-		Name:        "(Un)Pack Downloader",
-		Usage:       "Ethereum Smart Contracts Downloader and Storage Manager",
-		Version:     fmt.Sprintf("v%s", Version),
-		HelpName:    "downloader",
-		Description: `Ethereum Smart Contracts Downloader and Storage Manager`,
+		Name:     "(Un)Pack Inspector",
+		Usage:    "Ethereum Smart Contracts Downloader and Storage Manager",
+		Version:  fmt.Sprintf("v%s", Version),
+		HelpName: "inspector",
 	})
 
 	for registry, commands := range cmd.GetCommands() {

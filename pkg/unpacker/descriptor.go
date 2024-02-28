@@ -3,7 +3,7 @@ package unpacker
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/unpackdev/downloader/pkg/machine"
+	"github.com/unpackdev/inspector/pkg/machine"
 	"github.com/unpackdev/solgo/contracts"
 	"github.com/unpackdev/solgo/utils"
 )

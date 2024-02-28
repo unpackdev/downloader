@@ -2,8 +2,9 @@ package unpacker
 
 import (
 	"context"
-	"github.com/unpackdev/downloader/pkg/machine"
+	"github.com/unpackdev/inspector/pkg/machine"
 	"go.uber.org/zap"
+	"math/big"
 )
 
 type FinalContractHandler struct {
@@ -35,6 +36,9 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 	}
 
 	entry := descriptor.GetStorageEntry()
+	if entry.ID == nil {
+		entry.ID = big.NewInt(1)
+	}
 
 	if cdescriptor.HasSources() {
 		if err := dh.u.storage.Save(dh.ctx, entry, descriptor.GetContract().GetDescriptor().GetSources()); err != nil {

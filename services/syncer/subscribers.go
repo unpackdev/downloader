@@ -1,8 +1,8 @@
 package syncer
 
 import (
-	"github.com/unpackdev/downloader/pkg/options"
-	"github.com/unpackdev/downloader/pkg/subscribers"
+	"github.com/unpackdev/inspector/pkg/options"
+	"github.com/unpackdev/inspector/pkg/subscribers"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
 )

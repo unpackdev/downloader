@@ -46,19 +46,27 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Contract struct {
-		Address         func(childComplexity int) int
-		Completed       func(childComplexity int) int
-		CompletedStates func(childComplexity int) int
-		Corrupted       func(childComplexity int) int
-		CorruptedReason func(childComplexity int) int
-		CreatedAt       func(childComplexity int) int
-		CurrentState    func(childComplexity int) int
-		Name            func(childComplexity int) int
-		Network         func(childComplexity int) int
-		NextState       func(childComplexity int) int
-		Partial         func(childComplexity int) int
-		SolgoVersion    func(childComplexity int) int
-		UpdatedAt       func(childComplexity int) int
+		Address          func(childComplexity int) int
+		BlockHash        func(childComplexity int) int
+		BlockNumber      func(childComplexity int) int
+		Completed        func(childComplexity int) int
+		CompletedStates  func(childComplexity int) int
+		Corrupted        func(childComplexity int) int
+		CorruptedReason  func(childComplexity int) int
+		CreatedAt        func(childComplexity int) int
+		CurrentState     func(childComplexity int) int
+		Implementations  func(childComplexity int) int
+		License          func(childComplexity int) int
+		Name             func(childComplexity int) int
+		Network          func(childComplexity int) int
+		NextState        func(childComplexity int) int
+		OptimizationRuns func(childComplexity int) int
+		Optimized        func(childComplexity int) int
+		Partial          func(childComplexity int) int
+		Proxy            func(childComplexity int) int
+		SolgoVersion     func(childComplexity int) int
+		TransactionHash  func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
 	}
 
 	ContractConnection struct {
@@ -125,6 +133,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Contract.Address(childComplexity), true
 
+	case "Contract.blockHash":
+		if e.complexity.Contract.BlockHash == nil {
+			break
+		}
+
+		return e.complexity.Contract.BlockHash(childComplexity), true
+
+	case "Contract.blockNumber":
+		if e.complexity.Contract.BlockNumber == nil {
+			break
+		}
+
+		return e.complexity.Contract.BlockNumber(childComplexity), true
+
 	case "Contract.completed":
 		if e.complexity.Contract.Completed == nil {
 			break
@@ -167,6 +189,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Contract.CurrentState(childComplexity), true
 
+	case "Contract.implementations":
+		if e.complexity.Contract.Implementations == nil {
+			break
+		}
+
+		return e.complexity.Contract.Implementations(childComplexity), true
+
+	case "Contract.license":
+		if e.complexity.Contract.License == nil {
+			break
+		}
+
+		return e.complexity.Contract.License(childComplexity), true
+
 	case "Contract.name":
 		if e.complexity.Contract.Name == nil {
 			break
@@ -188,6 +224,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Contract.NextState(childComplexity), true
 
+	case "Contract.optimizationRuns":
+		if e.complexity.Contract.OptimizationRuns == nil {
+			break
+		}
+
+		return e.complexity.Contract.OptimizationRuns(childComplexity), true
+
+	case "Contract.optimized":
+		if e.complexity.Contract.Optimized == nil {
+			break
+		}
+
+		return e.complexity.Contract.Optimized(childComplexity), true
+
 	case "Contract.partial":
 		if e.complexity.Contract.Partial == nil {
 			break
@@ -195,12 +245,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Contract.Partial(childComplexity), true
 
+	case "Contract.proxy":
+		if e.complexity.Contract.Proxy == nil {
+			break
+		}
+
+		return e.complexity.Contract.Proxy(childComplexity), true
+
 	case "Contract.solgoVersion":
 		if e.complexity.Contract.SolgoVersion == nil {
 			break
 		}
 
 		return e.complexity.Contract.SolgoVersion(childComplexity), true
+
+	case "Contract.transactionHash":
+		if e.complexity.Contract.TransactionHash == nil {
+			break
+		}
+
+		return e.complexity.Contract.TransactionHash(childComplexity), true
 
 	case "Contract.updatedAt":
 		if e.complexity.Contract.UpdatedAt == nil {
@@ -500,12 +564,22 @@ type Contract {
     The name of the contract.
     """
     name: String!
-    
+
+    blockNumber: Int!
+    blockHash: String!
+    transactionHash: String!
+
+    license: String
+    optimized: Boolean!
+    optimizationRuns: Int!
+    proxy: Boolean!
+    implementations: [String!]
+
     """
     The version of the Solidity compiler used.
     """
     solgoVersion: String
-    
+
     """
     The current processing state of the contract.
     """
@@ -976,6 +1050,352 @@ func (ec *executionContext) _Contract_name(ctx context.Context, field graphql.Co
 }
 
 func (ec *executionContext) fieldContext_Contract_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_blockNumber(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_blockNumber(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BlockNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_blockNumber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_blockHash(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_blockHash(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BlockHash, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_blockHash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_transactionHash(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_transactionHash(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TransactionHash, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_transactionHash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_license(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_license(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.License, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_license(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_optimized(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_optimized(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Optimized, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_optimized(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_optimizationRuns(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_optimizationRuns(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OptimizationRuns, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_optimizationRuns(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_proxy(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_proxy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Proxy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_proxy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_implementations(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_implementations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Implementations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_implementations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Contract",
 		Field:      field,
@@ -1571,6 +1991,22 @@ func (ec *executionContext) fieldContext_ContractEdge_node(ctx context.Context, 
 				return ec.fieldContext_Contract_address(ctx, field)
 			case "name":
 				return ec.fieldContext_Contract_name(ctx, field)
+			case "blockNumber":
+				return ec.fieldContext_Contract_blockNumber(ctx, field)
+			case "blockHash":
+				return ec.fieldContext_Contract_blockHash(ctx, field)
+			case "transactionHash":
+				return ec.fieldContext_Contract_transactionHash(ctx, field)
+			case "license":
+				return ec.fieldContext_Contract_license(ctx, field)
+			case "optimized":
+				return ec.fieldContext_Contract_optimized(ctx, field)
+			case "optimizationRuns":
+				return ec.fieldContext_Contract_optimizationRuns(ctx, field)
+			case "proxy":
+				return ec.fieldContext_Contract_proxy(ctx, field)
+			case "implementations":
+				return ec.fieldContext_Contract_implementations(ctx, field)
 			case "solgoVersion":
 				return ec.fieldContext_Contract_solgoVersion(ctx, field)
 			case "currentState":
@@ -4194,6 +4630,40 @@ func (ec *executionContext) _Contract(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "blockNumber":
+			out.Values[i] = ec._Contract_blockNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "blockHash":
+			out.Values[i] = ec._Contract_blockHash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "transactionHash":
+			out.Values[i] = ec._Contract_transactionHash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "license":
+			out.Values[i] = ec._Contract_license(ctx, field, obj)
+		case "optimized":
+			out.Values[i] = ec._Contract_optimized(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "optimizationRuns":
+			out.Values[i] = ec._Contract_optimizationRuns(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proxy":
+			out.Values[i] = ec._Contract_proxy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "implementations":
+			out.Values[i] = ec._Contract_implementations(ctx, field, obj)
 		case "solgoVersion":
 			out.Values[i] = ec._Contract_solgoVersion(ctx, field, obj)
 		case "currentState":

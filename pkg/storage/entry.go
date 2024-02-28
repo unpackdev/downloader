@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/unpackdev/solgo/bytecode"
 	"math/big"
@@ -19,6 +20,7 @@ const ENTRY_KEY_PREFIX = "contract:entry"
 // Entry represents a record of an Ethereum contract with various attributes such as network details,
 // block information, contract address, and metadata.
 type Entry struct {
+	ID                   *big.Int                      `json:"id"`
 	Network              utils.Network                 `json:"network"`
 	NetworkID            utils.NetworkID               `json:"network_id"`
 	BlockNumber          *big.Int                      `json:"block_number"`
@@ -61,6 +63,26 @@ func NewEntry(
 		Path:            path,
 		InsertedAt:      time.Now().UTC(),
 	}
+}
+
+func (e *Entry) EncodeCursor() string {
+	by, _ := e.ID.GobEncode()
+	return base64.URLEncoding.EncodeToString(by)
+}
+
+func DecodeCursor(encodedCursor string) (*big.Int, error) {
+	decodedBytes, err := base64.URLEncoding.DecodeString(encodedCursor)
+	if err != nil {
+		return nil, err // Return an error if the cursor can't be decoded
+	}
+
+	// Create a big.Int instance and attempt to decode the bytes into it
+	decoded := new(big.Int)
+	if err := decoded.GobDecode(decodedBytes); err != nil {
+		return nil, err // Return an error if GobDecode fails
+	}
+
+	return decoded, nil
 }
 
 // GetKey constructs and returns a unique key for the entry combining the prefix, network, networkID, and address.

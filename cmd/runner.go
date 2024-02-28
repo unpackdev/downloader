@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/unpackdev/downloader/services/syncer"
+	"github.com/unpackdev/inspector/services/syncer"
 	"github.com/unpackdev/solgo/utils"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/sync/errgroup"

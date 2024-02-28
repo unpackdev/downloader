@@ -12,9 +12,9 @@ type Network struct {
 	Maintenance   bool   `yaml:"maintenance"`
 }
 
-func (o *Options) GetNetworkById(id int) (*Network, error) {
+func (o *Options) GetNetworkById(id uint64) (*Network, error) {
 	for _, network := range o.Networks {
-		if network.NetworkId == id {
+		if network.NetworkId == int(id) {
 			return &network, nil
 		}
 	}

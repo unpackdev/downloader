@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
-BIN_NAME := build/downloader
-PKG := downloader
+BIN_NAME := build/inspector
+PKG := inspector
 VERSION := 0.1.0
 UNAME_S := $(shell uname -s 2>/dev/null || echo "unknown")
 UNAME_S_LOWERCASE := $(shell echo $(UNAME_S) | tr A-Z a-z)

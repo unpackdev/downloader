@@ -3,7 +3,7 @@ package unpacker
 import (
 	"fmt"
 
-	"github.com/unpackdev/downloader/pkg/machine"
+	"github.com/unpackdev/inspector/pkg/machine"
 )
 
 const (

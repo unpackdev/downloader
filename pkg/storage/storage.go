@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/unpackdev/downloader/pkg/db"
-	"github.com/unpackdev/downloader/pkg/options"
+	"github.com/unpackdev/inspector/pkg/db"
+	"github.com/unpackdev/inspector/pkg/options"
 	"github.com/unpackdev/solgo"
 )
 

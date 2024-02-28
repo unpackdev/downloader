@@ -2,7 +2,7 @@ package unpacker
 
 import (
 	"context"
-	"github.com/unpackdev/downloader/pkg/machine"
+	"github.com/unpackdev/inspector/pkg/machine"
 	"go.uber.org/zap"
 	"strings"
 )

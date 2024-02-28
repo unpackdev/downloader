@@ -20,8 +20,8 @@ networks:
 
 storage:
   enabled: true
-  contractsPath: /mnt/{disc}/downloader/
-  databasePath: /mnt/{disc}/downloader/db
+  contractsPath: /mnt/{disc}/inspector/
+  databasePath: /mnt/{disc}/inspector/db
 
 nodes:
   - group: "ethereum"

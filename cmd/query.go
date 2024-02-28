@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/unpackdev/downloader/services/query"
+	"github.com/unpackdev/inspector/services/query"
 	"github.com/urfave/cli/v2"
 )
 
