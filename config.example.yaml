@@ -34,7 +34,9 @@ nats:
   addr: "localhost:4222"
 
 db:
-  flattenWorkers: 10
+  dialect: "sqlite3"
+  datasource: sqlite/inspector.db
+  migrationDir: migrations/sqlite3
 
 cache:
   addr: "localhost:6379"

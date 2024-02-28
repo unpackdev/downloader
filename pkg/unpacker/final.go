@@ -4,7 +4,9 @@ import (
 	"context"
 	"github.com/unpackdev/inspector/pkg/machine"
 	"github.com/unpackdev/inspector/pkg/models"
+	"github.com/unpackdev/inspector/pkg/options"
 	"go.uber.org/zap"
+	"path/filepath"
 )
 
 type FinalContractHandler struct {
@@ -67,6 +69,32 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 				descriptor.AppendFailedState(FinalState)
 			}
 		}
+
+		// A hack so we can continue with inserts in case that database is successfully updated
+		if !descriptor.HasFailedState(FinalState) {
+			detector := descriptor.GetContract().GetDescriptor().GetDetector()
+
+			sourcesPath := filepath.Join(
+				options.G().Storage.ContractsPath,
+				descriptor.GetStorageCachePath(),
+			)
+
+			if err := detector.GetSources().WriteToDir(sourcesPath); err != nil {
+				zap.L().Error(
+					"failed to save contract sources to path",
+					zap.Error(err),
+					zap.String("destination_path", sourcesPath),
+					zap.String("network", descriptor.GetNetwork().String()),
+					zap.Any("network_id", descriptor.GetNetworkID()),
+					zap.String("contract_address", descriptor.GetAddr().Hex()),
+					zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
+					zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
+					zap.String("source_provider", cdescriptor.GetSourcesProvider()),
+				)
+				descriptor.AppendFailedState(FinalState)
+			}
+		}
+
 	}
 
 	if !descriptor.HasFailedState(FinalState) {
