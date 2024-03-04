@@ -70,6 +70,9 @@ graphql:
   transports:
     - http
     - ws
+  cache:
+    adapter: redis
+    queryCacheDuration: 24h
   cors:
     debug: true
     maxAge: 120

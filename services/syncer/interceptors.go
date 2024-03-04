@@ -97,7 +97,7 @@ func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.N
 				entry.Receipt = receipt
 				entry.ContractAddr = receipt.ContractAddress
 
-				zap.L().Info(
+				zap.L().Debug(
 					"Processing new smart contract",
 					zap.Any("network", network),
 					zap.Any("network_id", networkId),

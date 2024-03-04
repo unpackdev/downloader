@@ -8,6 +8,7 @@ import (
 )
 
 type Cache struct {
+	ctx    context.Context
 	client redis.UniversalClient
 	ttl    time.Duration
 }
@@ -15,7 +16,7 @@ type Cache struct {
 const apqPrefix = "unpack:apq:"
 
 func NewCache(ctx context.Context, client *redis.Client, ttl time.Duration) (*Cache, error) {
-	return &Cache{client: client, ttl: ttl}, nil
+	return &Cache{ctx: ctx, client: client, ttl: ttl}, nil
 }
 
 func (c *Cache) Add(ctx context.Context, key string, value interface{}) {

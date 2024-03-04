@@ -18,12 +18,28 @@ type Db struct {
 // NewDB ...
 // TODO: Add support for multiple dialects... For now only Sqlite3
 func NewDB(ctx context.Context, opts *options.Options) (*Db, error) {
-	db, err := sql.Open("sqlite", opts.GetSqliteDbPath())
+	dbPath := opts.GetSqliteDbPath() + "?cache=shared"
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failure to open database path: %s - err: %w", opts.GetSqliteDbPath(), err,
 		)
 	}
+
+	// DEFAULT - HAND-CODED CONFIGURATION ------------------------------------
+	// WARN: DO NOT MODIFY!!
+	// There can be only one connection to the sqlite database.
+	// WAL mode must be present, so we can read regardless of the writing.
+	// Otherwise, if not present you will start getting `database is locked (5) (SQLITE_BUSY)`
+	// Do not alter, do not modify and just leave it alone unless you wish to see the error yourself.
+	db.SetMaxOpenConns(1)
+
+	if _, err = db.Exec(`PRAGMA journal_mode=WAL;`); err != nil {
+		return nil, fmt.Errorf(
+			"failed to set database to WAL mode: %w", err,
+		)
+	}
+	// -----------------------------------------------------------------------
 
 	toReturn := &Db{
 		ctx:  ctx,

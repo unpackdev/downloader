@@ -22,8 +22,9 @@ func (s *Service) serveGraphQL() error {
 	)
 
 	router := chi.NewRouter()
+	opts := options.G().Graphql
 
-	cache, err := graph.NewCache(s.ctx, s.cache.GetClient(), 24*time.Hour)
+	cache, err := graph.NewCache(s.ctx, s.cache.GetClient(), opts.Cache.QueryCacheDuration)
 	if err != nil {
 		zap.L().Info(
 			"failure to instantiate new APQ cache instance",
@@ -32,8 +33,7 @@ func (s *Service) serveGraphQL() error {
 		return err
 	}
 
-	opts := options.G().Graphql
-	c := cors.New(cors.Options{
+	corsManager := cors.New(cors.Options{
 		AllowedOrigins:     opts.Cors.AllowedOrigins,
 		AllowCredentials:   opts.Cors.AllowCredentials,
 		Debug:              opts.Cors.Debug,
@@ -77,8 +77,8 @@ func (s *Service) serveGraphQL() error {
 
 	//router.Use(middlewares.DatabaseMiddleware(s.dbAdapter, gqlHandler))
 
-	router.Handle("/", playground.Handler("(Un)pack Downloader GraphQL Playground", "/query"))
-	router.Handle("/query", c.Handler(gqlHandler))
+	router.Handle("/", playground.Handler("(Un)pack Inspector GraphQL Playground", "/query"))
+	router.Handle("/query", corsManager.Handler(gqlHandler))
 
 	zap.L().Sugar().Infof("Connect to http://localhost:%s/ for GraphQL playground", opts.Addr)
 	return http.ListenAndServe(opts.Addr, router)
