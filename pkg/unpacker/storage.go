@@ -25,7 +25,6 @@ func (d *Descriptor) GetStorageCachePath() string {
 func (d *Descriptor) GetContractEntry() *models.Contract {
 	descriptor := d.GetContract().GetDescriptor()
 
-	fmt.Println(descriptor.HasSources())
 	toReturn := &models.Contract{
 		NetworkId:            d.NetworkID.ToBig(),
 		BlockNumber:          d.Header.Number,
@@ -54,7 +53,9 @@ func (d *Descriptor) GetContractEntry() *models.Contract {
 		SourceAvailable:      descriptor.HasSources(),
 		SelfDestructed:       d.SelfDestructed,
 		ProxyImplementations: descriptor.Implementations,
-		Partial:              d.Partial,
+		CompletedStates:      d.GetCompletedStates(),
+		FailedStates:         d.GetFailedStates(),
+		Partial:              len(d.GetFailedStates()) > 0,
 		Processed:            d.Processed,
 		CreatedAt:            time.Now().UTC(),
 	}

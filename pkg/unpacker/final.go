@@ -2,7 +2,6 @@ package unpacker
 
 import (
 	"context"
-	"fmt"
 	"github.com/unpackdev/inspector/pkg/machine"
 	"github.com/unpackdev/inspector/pkg/models"
 	"github.com/unpackdev/inspector/pkg/options"
@@ -38,41 +37,43 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 		return DiscoverState, descriptor, nil
 	}
 
-	fmt.Printf("Final state: %s \n", descriptor.GetAddr().Hex())
+	// At this point we are going to mark that contract is in fact processed...
+	// Is the contract partial or not that's another story...
+	descriptor.Processed = true
 
 	entry := descriptor.GetContractEntry()
 
-	if cdescriptor.HasSources() {
-		if descriptor.GetContractModel() == nil {
-			if err := models.SaveContract(dh.u.db.GetDB(), entry); err != nil {
-				zap.L().Error(
-					"failure to save database contract entry",
-					zap.Error(err),
-					zap.String("network", descriptor.GetNetwork().String()),
-					zap.Any("network_id", descriptor.GetNetworkID()),
-					zap.String("contract_address", descriptor.GetAddr().Hex()),
-					zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
-					zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
-					zap.String("source_provider", cdescriptor.GetSourcesProvider()),
-				)
-				descriptor.AppendFailedState(FinalState)
-			}
-		} else {
-			if err := models.UpdateContract(dh.u.db.GetDB(), entry); err != nil {
-				zap.L().Error(
-					"failure to update database contract entry",
-					zap.Error(err),
-					zap.String("network", descriptor.GetNetwork().String()),
-					zap.Any("network_id", descriptor.GetNetworkID()),
-					zap.String("contract_address", descriptor.GetAddr().Hex()),
-					zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
-					zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
-					zap.String("source_provider", cdescriptor.GetSourcesProvider()),
-				)
-				descriptor.AppendFailedState(FinalState)
-			}
+	if descriptor.GetContractModel() == nil {
+		if err := models.SaveContract(dh.u.db.GetDB(), entry); err != nil {
+			zap.L().Error(
+				"failure to save database contract entry",
+				zap.Error(err),
+				zap.String("network", descriptor.GetNetwork().String()),
+				zap.Any("network_id", descriptor.GetNetworkID()),
+				zap.String("contract_address", descriptor.GetAddr().Hex()),
+				zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
+				zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
+				zap.String("source_provider", cdescriptor.GetSourcesProvider()),
+			)
+			descriptor.AppendFailedState(FinalState)
 		}
+	} else {
+		if err := models.UpdateContract(dh.u.db.GetDB(), entry); err != nil {
+			zap.L().Error(
+				"failure to update database contract entry",
+				zap.Error(err),
+				zap.String("network", descriptor.GetNetwork().String()),
+				zap.Any("network_id", descriptor.GetNetworkID()),
+				zap.String("contract_address", descriptor.GetAddr().Hex()),
+				zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
+				zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
+				zap.String("source_provider", cdescriptor.GetSourcesProvider()),
+			)
+			descriptor.AppendFailedState(FinalState)
+		}
+	}
 
+	if cdescriptor.HasSources() {
 		// A hack so we can continue with inserts in case that database is successfully updated
 		if !descriptor.HasFailedState(FinalState) {
 			detector := descriptor.GetContract().GetDescriptor().GetDetector()

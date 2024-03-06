@@ -25,6 +25,8 @@ CREATE TABLE contracts (
     safety_state TEXT NOT NULL,
     self_destructed BOOLEAN NOT NULL DEFAULT FALSE,
     proxy_implementations TEXT,
+    completed_states TEXT,
+    failed_states TEXT,
     processed BOOLEAN NOT NULL DEFAULT FALSE,
     partial BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

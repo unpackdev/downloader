@@ -76,6 +76,8 @@ func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, ma
 			return ErrorState, descriptor, err
 		}
 	}
+
+	// Set the contract model and propagate descriptor information...
 	descriptor.SetContractModel(contract)
 
 	// Now we want to make sure that we're not processing again contracts that are
@@ -83,7 +85,6 @@ func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, ma
 	// regardless of their state...
 	if contract != nil && contract.IsCompleted() {
 		if !options.G().Unpacker.ForceReprocess {
-			zap.L().Warn("Contract already processed....")
 			return DoneState, descriptor, nil
 		}
 	}

@@ -4,14 +4,13 @@
 
 Currently, nothing works as expected. Going to remove this notice once state of the project changes.
 
-
 ## Overview
 The Ethereum Smart Contracts Downloader and Storage Manager is a high-performance tool tailored for Ethereum smart contracts. Built with [Golang](https://go.dev/) and Sqlite3 this application not only ensures efficient and dependable downloading of smart contracts but also provides robust features for pausing and resuming downloads. It facilitates seamless storage of contracts in a local database, simplifying access and retrieval.
 
 Key capabilities include easy retrieval of contract metadata and source code, especially for contracts verified on [Etherscan](https://etherscan.io/). This makes it an indispensable tool for developers working with Ethereum smart contracts.
 
 This project is inspired from [Smart Contract Sanctuary](https://github.com/tintinweb/smart-contract-sanctuary).
-For now it will be focused only on mainnet contracts. Ethereum is the first one, Binance Smart Chain and Polygon will be added later including others.
+For now, it will be focused only on mainnet contracts. Ethereum is the first one, Binance Smart Chain and Polygon will be added later including others.
 
 ## WARNING
 

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/unpackdev/inspector/pkg/machine"
 	"github.com/unpackdev/solgo/standards"
 	"github.com/unpackdev/solgo/utils"
 	"math/big"
@@ -42,6 +43,8 @@ type Contract struct {
 	SourceAvailable      bool
 	SelfDestructed       bool
 	ProxyImplementations []common.Address
+	CompletedStates      []machine.State
+	FailedStates         []machine.State
 	Processed            bool
 	Partial              bool
 	CreatedAt            time.Time
@@ -82,6 +85,8 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 	var bytecode string
 	var safetyState string
 	var proxyImplementations string
+	var completedStates string
+	var failedStates string
 
 	query := `
 	SELECT 
@@ -89,7 +94,7 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 		standards, proxy, license, compiler_version, solgo_version, optimized, optimization_runs, 
 		evm_version, abi, verified, sources_provider, verification_provider,
 	    execution_bytecode, bytecode, source_available, safety_state, self_destructed, 
-	    proxy_implementations, processed, partial, created_at, updated_at
+	    proxy_implementations, completed_states, failed_states, processed, partial, created_at, updated_at
 	FROM contracts 
 	WHERE network_id = ? AND block_number = ? AND address = ?`
 
@@ -102,7 +107,7 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 		&contract.OptimizationRuns, &contract.EVMVersion, &contract.ABI,
 		&contract.Verified, &contract.SourcesProvider, &contract.VerificationProvider,
 		&executionBytecode, &bytecode, &contract.SourceAvailable, &safetyState,
-		&contract.SelfDestructed, &proxyImplementations, &contract.Processed,
+		&contract.SelfDestructed, &proxyImplementations, &completedStates, &failedStates, &contract.Processed,
 		&contract.Partial, &contract.CreatedAt, &contract.UpdatedAt,
 	)
 	if err != nil {
@@ -133,6 +138,18 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 		)
 	}
 
+	if err := utils.FromJSON([]byte(completedStates), &contract.CompletedStates); err != nil {
+		return nil, fmt.Errorf(
+			"failure to decode completed states into contract: %w", err,
+		)
+	}
+
+	if err := utils.FromJSON([]byte(failedStates), &contract.FailedStates); err != nil {
+		return nil, fmt.Errorf(
+			"failure to decode completed states into contract: %w", err,
+		)
+	}
+
 	return &contract, nil
 }
 
@@ -145,9 +162,9 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 		standards, proxy, license, compiler_version, solgo_version, optimized, optimization_runs, 
 		evm_version, abi, verified, sources_provider, verification_provider,
 	    execution_bytecode, bytecode, source_available, safety_state, self_destructed, proxy_implementations,
-		processed, partial, created_at, updated_at
+		completed_states, failed_states, processed, partial, created_at, updated_at
 	) VALUES(
-		?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+		?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
 	)`)
 	if err != nil {
 		return fmt.Errorf("error preparing insert statement: %v", err)
@@ -156,6 +173,8 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 
 	standardsJson, _ := utils.ToJSON(contract.Standards)
 	proxyImplementationJson, _ := utils.ToJSON(contract.ProxyImplementations)
+	completedStates, _ := utils.ToJSON(contract.CompletedStates)
+	failedStates, _ := utils.ToJSON(contract.FailedStates)
 
 	// Execute SQL statement
 	_, err = stmt.Exec(
@@ -183,6 +202,8 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 		contract.SafetyState.String(),
 		contract.SelfDestructed,
 		string(proxyImplementationJson),
+		string(completedStates),
+		string(failedStates),
 		contract.Processed,
 		contract.Partial,
 		contract.CreatedAt,
