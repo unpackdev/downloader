@@ -58,6 +58,10 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 		})
 	}
 
+	g.Go(func() error {
+		return s.state.Monitor(ctx)
+	})
+
 	// Wait for goroutines to finish....
 	if err := g.Wait(); err != nil {
 		return err

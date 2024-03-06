@@ -4,26 +4,33 @@ import (
 	"context"
 	"github.com/unpackdev/inspector/pkg/cache"
 	"math/big"
+	"sync"
 )
 
 // State encapsulates the application's state with context awareness and caching capabilities.
 // It integrates with a Redis cache to store arbitrary large numbers, commonly used for storing
 // and retrieving blockchain-related numeric data.
 type State struct {
-	ctx   context.Context // Context for cancellation and deadline control.
-	cache *cache.Redis    // Redis cache for state persistence.
+	ctx        context.Context // Context for cancellation and deadline control.
+	cache      *cache.Redis    // Redis cache for state persistence.
+	mu         sync.RWMutex
+	descriptor *Descriptor
 }
 
 // New initializes a new State instance with a given context and cache.
 // It returns a pointer to the created State and any error encountered during its creation.
 func New(ctx context.Context, cache *cache.Redis) (*State, error) {
-	toReturn := &State{ctx: ctx, cache: cache}
+	toReturn := &State{ctx: ctx, cache: cache, mu: sync.RWMutex{}, descriptor: &Descriptor{}}
 	return toReturn, nil
 }
 
 // Set stores a value associated with a key within the state cache.
 // It converts the value to a byte slice before writing to the cache for flexibility and efficiency.
 func (s *State) Set(ctx context.Context, key Key, value *big.Int) error {
+	if err := s.SetDescriptorKey(key, value); err != nil {
+		return err
+	}
+
 	return s.cache.Write(ctx, key.String(), value.Bytes(), 0)
 }
 

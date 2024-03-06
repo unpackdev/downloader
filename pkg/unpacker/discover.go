@@ -11,11 +11,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// DiscoverContractHandler handles the discovery phase of the contract processing workflow.
+// It implements the machine.Handler interface.
 type DiscoverContractHandler struct {
-	ctx context.Context
-	u   *Unpacker
+	ctx context.Context // Context for managing the handler's lifetime.
+	u   *Unpacker       // Reference to the Unpacker instance.
 }
 
+// NewDiscoverContractHandler creates a new instance of DiscoverContractHandler.
+// It sets up the handler with the provided context and Unpacker instance, and returns it as a machine.Handler.
 func NewDiscoverContractHandler(ctx context.Context, u *Unpacker) machine.Handler {
 	bh := &DiscoverContractHandler{ctx: ctx, u: u}
 	return machine.Handler{
@@ -25,10 +29,14 @@ func NewDiscoverContractHandler(ctx context.Context, u *Unpacker) machine.Handle
 	}
 }
 
+// Enter is the initial state of the handler. It performs any setup required before processing.
+// Currently, it simply passes through the data without modification.
 func (dh *DiscoverContractHandler) Enter(data machine.Data) (machine.Data, error) {
 	return data, nil
 }
 
+// Process handles the main logic of discovering contract details and dependencies.
+// It validates contract information and updates the contract's state based on discovery outcomes.
 func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, machine.Data, error) {
 	descriptor := toDescriptor(data)
 
@@ -77,7 +85,8 @@ func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, ma
 		}
 	}
 
-	// Set the contract model and propagate descriptor information...
+	// Set the contract model which will later on, if all data available, used to replace
+	// 3rd party source calls if necessary.
 	descriptor.SetContractModel(contract)
 
 	// Now we want to make sure that we're not processing again contracts that are
@@ -118,6 +127,8 @@ func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, ma
 	return MetadataState, descriptor, nil
 }
 
+// Exit is the final state of the handler. It performs any cleanup required after processing.
+// Currently, it simply passes through the data without modification.
 func (dh *DiscoverContractHandler) Exit(data machine.Data) (machine.Data, error) {
 	return data, nil
 }

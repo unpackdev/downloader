@@ -72,6 +72,31 @@ func (b *Block) Start() error {
 		return fmt.Errorf("failure to get '%s' client from client pool", network.String())
 	}
 
+	chCtx, chCancel := context.WithTimeout(b.ctx, 10*time.Second)
+	defer chCancel()
+
+	currentHead, err := client.BlockByNumber(chCtx, nil)
+	if err != nil {
+		return fmt.Errorf(
+			"failure to fetch current head from the client: %w",
+			err,
+		)
+	}
+
+	if err := b.state.Set(chCtx, state.CurrentBlockHead, currentHead.Header().Number); err != nil {
+		zap.L().Error(
+			"failure to set current block head state",
+			zap.Error(err),
+			zap.Any("direction", HeadBlockSubscriber),
+			zap.Uint64("header_number", currentHead.NumberU64()),
+			zap.String("header_hash", currentHead.Hash().String()),
+		)
+		return fmt.Errorf(
+			"failure to set current block head state: %w",
+			err,
+		)
+	}
+
 	headCh := make(chan *types.Header, 1)
 	sub, err := client.SubscribeNewHead(b.ctx, headCh)
 	if err != nil {

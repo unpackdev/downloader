@@ -139,6 +139,10 @@ func BlockInterceptor(srv *Service, network utils.Network, networkId utils.Netwo
 					zap.String("address", receipt.ContractAddress.Hex()),
 				)
 
+				// @TODO: Peer to Peer delivery should be potentially executed here...
+				// Basically if one peer handles it, it can send it to the "sequencer"
+				// that is going to save the data into the database...
+				// No public nodes for now which makes things easier to deal with.
 				_ = descriptor
 
 			}(srv, entry)
