@@ -66,7 +66,7 @@ func (c *Contract) GetKey() string {
 }
 
 func (c *Contract) IsCompleted() bool {
-	return c.Processed
+	return c.Processed && !c.Partial
 }
 
 // GetContractByUniqueIndex retrieves a single contract from the database based on a unique combination of network_id, block_number, and address.
@@ -77,18 +77,34 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 	blockNumberStr := blockNumber.Uint64()
 	var blockHash string
 	var txHash string
+	var standardsModel string
+	var executionBytecode string
+	var bytecode string
+	var safetyState string
+	var proxyImplementations string
 
 	query := `
 	SELECT 
-	    id, network_id, block_number, block_hash, transaction_hash, address, name, license, 
-	    compiler_version, solgo_version, optimized, optimization_runs, evm_version, 
-	    abi, verified, verification_provider, processed, partial, created_at, updated_at
+	    id, network_id, block_number, block_hash, transaction_hash, address, name, 
+		standards, proxy, license, compiler_version, solgo_version, optimized, optimization_runs, 
+		evm_version, abi, verified, sources_provider, verification_provider,
+	    execution_bytecode, bytecode, source_available, safety_state, self_destructed, 
+	    proxy_implementations, processed, partial, created_at, updated_at
 	FROM contracts 
 	WHERE network_id = ? AND block_number = ? AND address = ?`
 
 	row := db.QueryRow(query, networkIdStr, blockNumberStr, address)
 
-	err := row.Scan(&contract.Id, &networkIdStr, &blockNumberStr, &blockHash, &txHash, &contract.Address, &contract.Name, &contract.License, &contract.CompilerVersion, &contract.SolgoVersion, &contract.Optimized, &contract.OptimizationRuns, &contract.EVMVersion, &contract.ABI, &contract.Verified, &contract.VerificationProvider, &contract.Processed, &contract.Partial, &contract.CreatedAt, &contract.UpdatedAt)
+	err := row.Scan(
+		&contract.Id, &networkIdStr, &blockNumberStr, &blockHash, &txHash,
+		&contract.Address, &contract.Name, &standardsModel, &contract.Proxy, &contract.License,
+		&contract.CompilerVersion, &contract.SolgoVersion, &contract.Optimized,
+		&contract.OptimizationRuns, &contract.EVMVersion, &contract.ABI,
+		&contract.Verified, &contract.SourcesProvider, &contract.VerificationProvider,
+		&executionBytecode, &bytecode, &contract.SourceAvailable, &safetyState,
+		&contract.SelfDestructed, &proxyImplementations, &contract.Processed,
+		&contract.Partial, &contract.CreatedAt, &contract.UpdatedAt,
+	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -101,6 +117,21 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 	contract.BlockNumber = new(big.Int).SetUint64(blockNumberStr)
 	contract.BlockHash = common.HexToHash(blockHash)
 	contract.TransactionHash = common.HexToHash(txHash)
+	contract.ExecutionBytecode = common.Hex2Bytes(executionBytecode)
+	contract.Bytecode = common.Hex2Bytes(bytecode)
+	contract.SafetyState = utils.SafetyStateType(safetyState)
+
+	if err := utils.FromJSON([]byte(standardsModel), &contract.Standards); err != nil {
+		return nil, fmt.Errorf(
+			"failure to decode standards into contract: %w", err,
+		)
+	}
+
+	if err := utils.FromJSON([]byte(proxyImplementations), &contract.ProxyImplementations); err != nil {
+		return nil, fmt.Errorf(
+			"failure to decode proxy implementations into contract: %w", err,
+		)
+	}
 
 	return &contract, nil
 }
@@ -113,10 +144,10 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 		network_id, block_number, block_hash, transaction_hash, address, name, 
 		standards, proxy, license, compiler_version, solgo_version, optimized, optimization_runs, 
 		evm_version, abi, verified, sources_provider, verification_provider,
-	    execution_bytecode, bytecode, safety_state, self_destructed, proxy_implementations,
+	    execution_bytecode, bytecode, source_available, safety_state, self_destructed, proxy_implementations,
 		processed, partial, created_at, updated_at
 	) VALUES(
-		?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+		?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
 	)`)
 	if err != nil {
 		return fmt.Errorf("error preparing insert statement: %v", err)
@@ -148,6 +179,7 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 		contract.VerificationProvider,
 		common.Bytes2Hex(contract.ExecutionBytecode),
 		common.Bytes2Hex(contract.Bytecode),
+		contract.SourceAvailable,
 		contract.SafetyState.String(),
 		contract.SelfDestructed,
 		string(proxyImplementationJson),

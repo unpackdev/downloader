@@ -25,6 +25,7 @@ func (d *Descriptor) GetStorageCachePath() string {
 func (d *Descriptor) GetContractEntry() *models.Contract {
 	descriptor := d.GetContract().GetDescriptor()
 
+	fmt.Println(descriptor.HasSources())
 	toReturn := &models.Contract{
 		NetworkId:            d.NetworkID.ToBig(),
 		BlockNumber:          d.Header.Number,
