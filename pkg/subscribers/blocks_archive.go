@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum"
 	"github.com/unpackdev/inspector/pkg/options"
+	"github.com/unpackdev/inspector/pkg/state"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
@@ -21,6 +22,7 @@ type ArchiveBlock struct {
 	ctx    context.Context            // Context for managing the lifecycle of the subscription.
 	opts   *options.Subscriber        // Options defining the range of blocks to subscribe to.
 	pool   *clients.ClientPool        // Client pool for Ethereum blockchain interaction.
+	state  *state.State               // State
 	status Status                     // Current status of the subscription.
 	mu     sync.RWMutex               // Mutex to protect access to the status field.
 	sub    ethereum.Subscription      // Ethereum subscription object (unused in the archive context but available for future use).
@@ -30,7 +32,7 @@ type ArchiveBlock struct {
 // NewArchiveBlock initializes a new subscription for Ethereum archive blocks
 // using the provided context, client pool, subscription options, and hooks.
 // It returns an initialized ArchiveBlock object or an error if initialization fails.
-func NewArchiveBlock(ctx context.Context, pool *clients.ClientPool, opts *options.Subscriber, hooks map[HookType][]BlockHookFn) (*ArchiveBlock, error) {
+func NewArchiveBlock(ctx context.Context, pool *clients.ClientPool, sm *state.State, opts *options.Subscriber, hooks map[HookType][]BlockHookFn) (*ArchiveBlock, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf(
 			"faulure to validate archive block subscriber options: %w", err,
@@ -43,6 +45,7 @@ func NewArchiveBlock(ctx context.Context, pool *clients.ClientPool, opts *option
 		pool:  pool,
 		hooks: hooks,
 		mu:    sync.RWMutex{},
+		state: sm,
 	}, nil
 }
 

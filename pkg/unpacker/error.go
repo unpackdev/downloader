@@ -3,6 +3,7 @@ package unpacker
 import (
 	"context"
 	"github.com/unpackdev/inspector/pkg/machine"
+	"go.uber.org/zap"
 )
 
 type ErrorContractHandler struct {
@@ -25,7 +26,7 @@ func (dh *ErrorContractHandler) Enter(data machine.Data) (machine.Data, error) {
 
 func (dh *ErrorContractHandler) Process(data machine.Data) (machine.State, machine.Data, error) {
 	descriptor := toDescriptor(data)
-
+	zap.L().Warn("Yesam te uhvatio tu...")
 	return DoneState, descriptor, nil
 }
 

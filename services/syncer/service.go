@@ -8,6 +8,7 @@ import (
 	"github.com/unpackdev/inspector/pkg/db"
 	"github.com/unpackdev/inspector/pkg/options"
 	"github.com/unpackdev/inspector/pkg/pprof"
+	"github.com/unpackdev/inspector/pkg/state"
 	"github.com/unpackdev/inspector/pkg/subscribers"
 	"github.com/unpackdev/inspector/pkg/unpacker"
 	"github.com/unpackdev/solgo/bindings"
@@ -29,6 +30,7 @@ type Service struct {
 	bindManager *bindings.Manager
 	cache       *cache.Redis
 	pprof       *pprof.Pprof
+	state       *state.State
 }
 
 func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error {
@@ -109,6 +111,11 @@ func NewService(ctx context.Context) (*Service, error) {
 		return nil, fmt.Errorf("failure to create redis client: %w", err)
 	}
 
+	stateManager, err := state.New(ctx, cacheClient)
+	if err != nil {
+		return nil, fmt.Errorf("failure to create state manager: %w", err)
+	}
+
 	etherscanProvider, err := etherscan.NewEtherScanProvider(ctx, cacheClient.GetClient(), opts.Etherscan)
 	if err != nil {
 		return nil, fmt.Errorf("failure to create new etherscan provider: %w", err)
@@ -120,6 +127,7 @@ func NewService(ctx context.Context) (*Service, error) {
 		unpacker.WithDb(dDb),
 		unpacker.WithBindingsManager(bindManager),
 		unpacker.WithEtherScanProvider(etherscanProvider),
+		unpacker.WithStateManager(stateManager),
 	}
 
 	unp, err := unpacker.NewUnpacker(ctx, unpackerOpts...)
@@ -138,6 +146,7 @@ func NewService(ctx context.Context) (*Service, error) {
 		cache:       cacheClient,
 		etherscan:   etherscanProvider,
 		pprof:       pprof.New(ctx, opts.Pprof),
+		state:       stateManager,
 	}
 
 	return toReturn, nil

@@ -2,6 +2,7 @@ package unpacker
 
 import (
 	"context"
+	"fmt"
 	"github.com/unpackdev/inspector/pkg/machine"
 	"github.com/unpackdev/inspector/pkg/models"
 	"github.com/unpackdev/inspector/pkg/options"
@@ -37,13 +38,15 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 		return DiscoverState, descriptor, nil
 	}
 
+	fmt.Printf("Final state: %s \n", descriptor.GetAddr().Hex())
+
 	entry := descriptor.GetContractEntry()
 
 	if cdescriptor.HasSources() {
 		if descriptor.GetContractModel() == nil {
 			if err := models.SaveContract(dh.u.db.GetDB(), entry); err != nil {
 				zap.L().Error(
-					"failed to parse contract",
+					"failure to save database contract entry",
 					zap.Error(err),
 					zap.String("network", descriptor.GetNetwork().String()),
 					zap.Any("network_id", descriptor.GetNetworkID()),
@@ -57,7 +60,7 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 		} else {
 			if err := models.UpdateContract(dh.u.db.GetDB(), entry); err != nil {
 				zap.L().Error(
-					"failed to parse contract",
+					"failure to update database contract entry",
 					zap.Error(err),
 					zap.String("network", descriptor.GetNetwork().String()),
 					zap.Any("network_id", descriptor.GetNetworkID()),
@@ -81,7 +84,7 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 
 			if err := detector.GetSources().WriteToDir(sourcesPath); err != nil {
 				zap.L().Error(
-					"failed to save contract sources to path",
+					"failure to save contract sources to local directory",
 					zap.Error(err),
 					zap.String("destination_path", sourcesPath),
 					zap.String("network", descriptor.GetNetwork().String()),
@@ -94,7 +97,6 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 				descriptor.AppendFailedState(FinalState)
 			}
 		}
-
 	}
 
 	if !descriptor.HasFailedState(FinalState) {

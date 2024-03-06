@@ -37,6 +37,7 @@ type Options struct {
 	Unpacker         Unpacker           `yaml:"unpacker"` // Unpacker options.
 	Graphql          GraphQL            `yaml:"graphql"`
 	Pprof            Pprof              `yaml:"pprof"`
+	Ipfs             Ipfs               `yaml:"ipfs"`
 }
 
 // NewDefaultOptions creates a new Options object with the given configuration paths.

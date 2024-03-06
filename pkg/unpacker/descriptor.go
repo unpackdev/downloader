@@ -24,6 +24,10 @@ type Descriptor struct {
 	nextState       machine.State
 	completedStates []machine.State
 	failedStates    []machine.State
+
+	SelfDestructed bool
+	Partial        bool
+	Processed      bool
 }
 
 func NewDescriptor(u *Unpacker, network utils.Network, networkId utils.NetworkID, addr common.Address) *Descriptor {

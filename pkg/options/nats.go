@@ -7,8 +7,9 @@ type Queue struct {
 }
 
 type Nats struct {
-	Addr   string  `yaml:"addr"`
-	Queues []Queue `yaml:"queues"`
+	Enabled bool    `yaml:"enabled"`
+	Addr    string  `yaml:"addr"`
+	Queues  []Queue `yaml:"queues"`
 }
 
 func (n *Nats) GetQueueByName(name string) (*Queue, bool) {

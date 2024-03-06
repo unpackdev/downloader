@@ -12,7 +12,7 @@ var (
 		subscribers.HeadBlockSubscriber: func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error) {
 			hooks := make(map[subscribers.HookType][]subscribers.BlockHookFn)
 			hooks[subscribers.PostHook] = []subscribers.BlockHookFn{
-				BlockHeadInterceptor(srv, network, networkId, HeadSyncDirection),
+				BlockInterceptor(srv, network, networkId, HeadSyncDirection),
 			}
 
 			// Have to use .String() - otherwise cycle import...
@@ -21,7 +21,7 @@ var (
 				return nil, err
 			}
 
-			bs, err := subscribers.NewHeadBlock(srv.ctx, srv.pool, opts, hooks)
+			bs, err := subscribers.NewHeadBlock(srv.ctx, srv.pool, srv.state, opts, hooks)
 			if err != nil {
 				return nil, err
 			}
@@ -31,7 +31,7 @@ var (
 		subscribers.ArchiveBlockSubscriber: func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error) {
 			hooks := make(map[subscribers.HookType][]subscribers.BlockHookFn)
 			hooks[subscribers.PostHook] = []subscribers.BlockHookFn{
-				BlockHeadInterceptor(srv, network, networkId, ArchiveSyncDirection),
+				BlockInterceptor(srv, network, networkId, ArchiveSyncDirection),
 			}
 
 			// Have to use .String() - otherwise cycle import...
@@ -40,7 +40,7 @@ var (
 				return nil, err
 			}
 
-			bs, err := subscribers.NewArchiveBlock(srv.ctx, srv.pool, opts, hooks)
+			bs, err := subscribers.NewArchiveBlock(srv.ctx, srv.pool, srv.state, opts, hooks)
 			if err != nil {
 				return nil, err
 			}

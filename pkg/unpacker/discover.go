@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/unpackdev/inspector/pkg/machine"
 	"github.com/unpackdev/inspector/pkg/models"
+	"github.com/unpackdev/inspector/pkg/options"
 	"go.uber.org/zap"
 )
 
@@ -52,6 +53,12 @@ func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, ma
 		)
 	}
 
+	descriptorContract := descriptor.GetContract()
+	if descriptorContract != nil {
+		valid, _ := descriptorContract.IsValid()
+		descriptor.SelfDestructed = valid == false
+	}
+
 	// Now it's time to attempt to discover contract from the storage
 	contract, err := models.GetContractByUniqueIndex(dh.u.db.GetDB(), descriptor.NetworkID.ToBig(), descriptor.GetHeader().Number, descriptor.GetAddr())
 	if err != nil {
@@ -70,6 +77,16 @@ func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, ma
 		}
 	}
 	descriptor.SetContractModel(contract)
+
+	// Now we want to make sure that we're not processing again contracts that are
+	// already processed unless configuration is set to reprocess all the contracts
+	// regardless of their state...
+	if contract != nil && contract.IsCompleted() {
+		if !options.G().Unpacker.ForceReprocess {
+			zap.L().Warn("Contract already processed....")
+			return DoneState, descriptor, nil
+		}
+	}
 
 	// Append completed state, so we can on easy way figure out if we need to process this state or not in the future...
 	// It's used when accessed state directly without first reaching discovery state.

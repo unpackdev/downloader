@@ -22,8 +22,8 @@ var (
 	ArchiveSyncDirection SyncDirection = "archive"
 )
 
-// BlockHeadInterceptor -
-func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.NetworkID, direction SyncDirection) func(block *types.Block) (*types.Block, error) {
+// BlockInterceptor -
+func BlockInterceptor(srv *Service, network utils.Network, networkId utils.NetworkID, direction SyncDirection) func(block *types.Block) (*types.Block, error) {
 	return func(block *types.Block) (*types.Block, error) {
 		zap.L().Debug(
 			"Received new blockchain block",
@@ -115,7 +115,7 @@ func BlockHeadInterceptor(srv *Service, network utils.Network, networkId utils.N
 				descriptor, err := srv.UnpackFromEntry(ctx, entry, unpacker.DiscoverState)
 				if err != nil {
 					zap.L().Error(
-						"Failed to get unpack contract entry",
+						"failure to unpack contract entry",
 						zap.Error(err),
 						zap.Any("network", network),
 						zap.Any("network_id", networkId),

@@ -37,7 +37,7 @@ func (dh *MetadataContractHandler) Process(data machine.Data) (machine.State, ma
 	contract := descriptor.GetContract()
 	cdescriptor := contract.GetDescriptor()
 
-	if cdescriptor != nil && !cdescriptor.HasMetadata() {
+	if cdescriptor != nil && !descriptor.SelfDestructed && !cdescriptor.HasMetadata() {
 		_, err := contract.DiscoverMetadata(dh.ctx)
 		if err != nil {
 			if !strings.Contains(err.Error(), "provided bytecode slice is smaller than the length") {

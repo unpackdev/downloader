@@ -6,10 +6,12 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/unpackdev/inspector/pkg/options"
+	"github.com/unpackdev/inspector/pkg/state"
 	"github.com/unpackdev/solgo/clients"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
 	"sync"
+	"time"
 )
 
 // HeadBlockSubscriber defines the subscriber type for new head blocks.
@@ -21,6 +23,7 @@ type Block struct {
 	ctx    context.Context            // Context for managing the lifecycle of the subscription.
 	opts   *options.Subscriber        // Subscription options.
 	pool   *clients.ClientPool        // Pool of Ethereum clients for blockchain interaction.
+	state  *state.State               // State to keep track of the current blockchain state
 	status Status                     // Current status of the subscription.
 	mu     sync.RWMutex               // Mutex to protect access to the status field.
 	sub    ethereum.Subscription      // Ethereum's subscription object for new head blocks.
@@ -30,7 +33,7 @@ type Block struct {
 // NewHeadBlock initializes a new head block subscription using the provided context,
 // client pool, subscription options, and hooks. It returns an initialized Block object
 // or an error if initialization fails.
-func NewHeadBlock(ctx context.Context, pool *clients.ClientPool, opts *options.Subscriber, hooks map[HookType][]BlockHookFn) (*Block, error) {
+func NewHeadBlock(ctx context.Context, pool *clients.ClientPool, sm *state.State, opts *options.Subscriber, hooks map[HookType][]BlockHookFn) (*Block, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf(
 			"faulure to validate head block subscriber options: %w", err,
@@ -42,6 +45,7 @@ func NewHeadBlock(ctx context.Context, pool *clients.ClientPool, opts *options.S
 		pool:  pool,
 		hooks: hooks,
 		mu:    sync.RWMutex{},
+		state: sm,
 	}, nil
 }
 
@@ -90,11 +94,32 @@ func (b *Block) Start() error {
 				continue
 			}
 
+			ctx, cancel := context.WithTimeout(b.ctx, 10*time.Second)
+			if err := b.state.Set(ctx, state.CurrentBlockHead, block.Header().Number); err != nil {
+				cancel()
+				zap.L().Error(
+					"failure to set current block head state",
+					zap.Error(err),
+					zap.Any("direction", HeadBlockSubscriber),
+					zap.Uint64("header_number", block.NumberU64()),
+					zap.String("header_hash", block.Hash().String()),
+				)
+				continue
+			}
+
+			// Cancel the context for the state... We cannot use defer...
+			cancel()
+
 			// Execute post hooks on the block.
 			for _, hook := range b.hooks[PostHook] {
 				block, err := hook(block)
 				if err != nil {
-					zap.L().Error("failure to process post block hook", zap.Error(err), zap.Any("direction", HeadBlockSubscriber), zap.Uint64("header_number", block.NumberU64()), zap.String("header_hash", block.Hash().String()))
+					zap.L().Error("failure to process post block hook",
+						zap.Error(err),
+						zap.Any("direction", HeadBlockSubscriber),
+						zap.Uint64("header_number", block.NumberU64()),
+						zap.String("header_hash", block.Hash().String()),
+					)
 					continue
 				}
 			}

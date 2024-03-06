@@ -37,6 +37,13 @@ func (dh *ProvidersContractHandler) Process(data machine.Data) (machine.State, m
 	contract := descriptor.GetContract()
 	cdescriptor := contract.GetDescriptor()
 
+	// We're now going to look through local source code cache.
+	// This is a way of not going to any 3rd party discovery service and use locally what
+	// we have. Unless it's partial. In that case, we want to ensure we use discovery again.
+	if !cdescriptor.HasSources() {
+		//dh.u.
+	}
+
 	if !cdescriptor.HasSources() {
 		if err := contract.DiscoverSourceCode(dh.ctx); err != nil {
 			if !strings.Contains(err.Error(), "contract source code not verified") {
@@ -69,6 +76,10 @@ func (dh *ProvidersContractHandler) Process(data machine.Data) (machine.State, m
 	if !descriptor.HasFailedState(SourceProvidersState) {
 		descriptor.AppendCompletedState(SourceProvidersState)
 	}
+
+	/*	fmt.Println("Here...")
+		os.Exit(1)
+		return DoneState, descriptor, nil*/
 
 	return SourcesState, descriptor, nil
 }

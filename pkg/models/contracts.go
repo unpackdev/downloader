@@ -25,6 +25,7 @@ type Contract struct {
 	Address              common.Address
 	Name                 string
 	Standards            []standards.Standard
+	Proxy                bool
 	License              string
 	CompilerVersion      string
 	SolgoVersion         string
@@ -33,8 +34,14 @@ type Contract struct {
 	EVMVersion           string
 	ABI                  string
 	Verified             bool
+	SourcesProvider      string
 	VerificationProvider string
+	ExecutionBytecode    []byte
+	Bytecode             []byte
 	SafetyState          utils.SafetyStateType
+	SourceAvailable      bool
+	SelfDestructed       bool
+	ProxyImplementations []common.Address
 	Processed            bool
 	Partial              bool
 	CreatedAt            time.Time
@@ -56,6 +63,10 @@ func (c *Contract) GetKey() string {
 		},
 		"-",
 	)
+}
+
+func (c *Contract) IsCompleted() bool {
+	return c.Processed
 }
 
 // GetContractByUniqueIndex retrieves a single contract from the database based on a unique combination of network_id, block_number, and address.
@@ -97,15 +108,23 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 // SaveContract saves a Contract instance to the SQLite database.
 func SaveContract(db *sql.DB, contract *Contract) error {
 	// Prepare SQL insert statement
-	stmt, err := db.Prepare(`INSERT INTO contracts(
+	stmt, err := db.Prepare(`
+	INSERT INTO contracts(
 		network_id, block_number, block_hash, transaction_hash, address, name, 
-		license, compiler_version, solgo_version, optimized, optimization_runs, 
-		evm_version, abi, verified, verification_provider, 
-		processed, partial, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+		standards, proxy, license, compiler_version, solgo_version, optimized, optimization_runs, 
+		evm_version, abi, verified, sources_provider, verification_provider,
+	    execution_bytecode, bytecode, safety_state, self_destructed, proxy_implementations,
+		processed, partial, created_at, updated_at
+	) VALUES(
+		?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+	)`)
 	if err != nil {
 		return fmt.Errorf("error preparing insert statement: %v", err)
 	}
 	defer stmt.Close()
+
+	standardsJson, _ := utils.ToJSON(contract.Standards)
+	proxyImplementationJson, _ := utils.ToJSON(contract.ProxyImplementations)
 
 	// Execute SQL statement
 	_, err = stmt.Exec(
@@ -115,6 +134,8 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 		contract.TransactionHash.Hex(),
 		contract.Address,
 		contract.Name,
+		string(standardsJson),
+		contract.Proxy,
 		contract.License,
 		contract.CompilerVersion,
 		contract.SolgoVersion,
@@ -123,7 +144,13 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 		contract.EVMVersion,
 		contract.ABI,
 		contract.Verified,
+		contract.SourcesProvider,
 		contract.VerificationProvider,
+		common.Bytes2Hex(contract.ExecutionBytecode),
+		common.Bytes2Hex(contract.Bytecode),
+		contract.SafetyState.String(),
+		contract.SelfDestructed,
+		string(proxyImplementationJson),
 		contract.Processed,
 		contract.Partial,
 		contract.CreatedAt,
