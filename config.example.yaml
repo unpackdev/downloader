@@ -56,9 +56,11 @@ syncer:
   subscribers:
     - type: head
       enabled: true
+      resumption: false
       network: "ethereum"
     - type: archive
       enabled: true
+      resumption: true
       network: "ethereum"
       endBlockNumber: 19312364
 
