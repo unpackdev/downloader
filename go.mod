@@ -56,6 +56,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.0.2 // indirect
+	github.com/essentialkaos/zip7 v1.0.4 // indirect
 	github.com/ethereum/c-kzg-4844 v0.3.1 // indirect
 	github.com/fogleman/gg v1.3.0 // indirect
 	github.com/friendsofgo/errors v0.9.2 // indirect

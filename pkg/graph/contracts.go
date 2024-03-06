@@ -36,10 +36,15 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 
 	// Construct the query dynamically based on provided filters
 	var queryBuilder strings.Builder
-	queryBuilder.WriteString("SELECT id, network_id, block_number, block_hash, transaction_hash, address, name, created_at, updated_at FROM contracts WHERE id > ? ")
+	queryBuilder.WriteString(
+		`SELECT 
+    			id, network_id, block_number, block_hash, transaction_hash,
+    			address, name, license, optimized, optimization_runs, proxy,
+    			created_at, updated_at 
+			FROM contracts WHERE id > ?`,
+	)
 	args := []interface{}{startAfter.Int64()}
 
-	// Add filters to the query
 	if len(networkIds) > 0 {
 		queryBuilder.WriteString("AND network_id IN (")
 		for i, id := range networkIds {
@@ -52,10 +57,22 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 		queryBuilder.WriteString(") ")
 	}
 
-	// Repeat similar blocks for other filters like blockNumbers, blockHashes, transactionHashes, and addresses
+	if len(addresses) > 0 {
+		queryBuilder.WriteString("AND address IN (")
+		for i, addr := range addresses {
+			if i > 0 {
+				queryBuilder.WriteString(",")
+			}
+			queryBuilder.WriteString("?")
+			args = append(args, addr)
+		}
+		queryBuilder.WriteString(") ")
+	}
 
 	queryBuilder.WriteString("ORDER BY id ASC LIMIT ?")
 	args = append(args, actualLimit)
+
+	fmt.Println(args)
 
 	// Execute the query
 	rows, err := r.Db.GetDB().QueryContext(ctx, queryBuilder.String(), args...)
@@ -72,7 +89,11 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 		var txHash string
 		var blockHash string
 
-		err := rows.Scan(&contract.Id, &networkId, &blockNumber, &blockHash, &txHash, &contract.Address, &contract.Name, &contract.CreatedAt, &contract.UpdatedAt)
+		err := rows.Scan(
+			&contract.Id, &networkId, &blockNumber, &blockHash, &txHash, &contract.Address,
+			&contract.Name, &contract.License, &contract.Optimized, &contract.OptimizationRuns,
+			&contract.Proxy, &contract.CreatedAt, &contract.UpdatedAt,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}

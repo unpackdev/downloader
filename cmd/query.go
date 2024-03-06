@@ -14,13 +14,7 @@ func GetQueryCommands() []*cli.Command {
 				{
 					Name:  "start",
 					Usage: "Starts the query service",
-					Flags: []cli.Flag{
-						/*						&cli.StringFlag{
-												Name:     "network",
-												Required: true,
-												Value:    utils.Ethereum.String(),
-											},*/
-					},
+					Flags: []cli.Flag{},
 					Action: func(cCtx *cli.Context) error {
 						return query.Run(cCtx)
 					},

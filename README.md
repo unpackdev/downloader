@@ -43,7 +43,7 @@ This project is not a new blockchain, due to it key-value storage is not needed.
 - **Local Storage Management:** Stores contracts in Sqlite3 for quick access and efficient retrieval.
 - **Contract Metadata Access:** Easy access to essential contract metadata.
 - **Bytecode Retrieval:** Simplifies the process of obtaining contract bytecode.
-- **Source Code Access:** Provides easy access to the source code of verified contracts on Etherscan.
+- **Source Code Access:** Provides easy access to the source code of verified contracts on Etherscan, Sourcify.dev and internal Solgo.
 - **High-Performance Backend:** Built with Golang, known for its efficiency and speed.
 
 
