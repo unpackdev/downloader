@@ -7,6 +7,7 @@ import (
 type Subscriber struct {
 	Enabled          bool   `yaml:"enabled"`
 	Network          string `yaml:"network"`
+	Resumption       bool   `yaml:"resumption"`
 	Type             string `yaml:"type"`
 	StartBlockNumber int    `yaml:"startBlockNumber"`
 	EndBlockNumber   int    `yaml:"endBlockNumber"`

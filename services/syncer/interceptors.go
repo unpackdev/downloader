@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/unpackdev/inspector/pkg/entries"
+	"github.com/unpackdev/inspector/pkg/state"
 	"github.com/unpackdev/inspector/pkg/unpacker"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
@@ -73,7 +74,7 @@ func BlockInterceptor(srv *Service, network utils.Network, networkId utils.Netwo
 			}
 
 			// Passing in all the arguments to the goroutine to ensure there are no shadowing going on
-			go func(srv *Service, entry *entries.Entry) {
+			go func(srv *Service, direction SyncDirection, entry *entries.Entry) {
 				// Alright, lets grab all the receipts... As it's local erigon it will be fast.
 				// Not really the best solution ATM as better would be to spawn goroutines handling
 				// all the receipts but heck...
@@ -139,13 +140,23 @@ func BlockInterceptor(srv *Service, network utils.Network, networkId utils.Netwo
 					zap.String("address", receipt.ContractAddress.Hex()),
 				)
 
+				stateKey, _ := state.GetHeadBlockKeyByDirection(direction.String())
+				if err := srv.state.Set(srv.ctx, stateKey, descriptor.Header.Number); err != nil {
+					zap.L().Error(
+						"failure to set current block head state",
+						zap.Error(err),
+						zap.Any("direction", direction),
+						zap.Uint64("header_number", descriptor.Header.Number.Uint64()),
+						zap.String("header_hash", descriptor.Header.Hash().String()),
+					)
+					return
+				}
+
 				// @TODO: Peer to Peer delivery should be potentially executed here...
 				// Basically if one peer handles it, it can send it to the "sequencer"
 				// that is going to save the data into the database...
 				// No public nodes for now which makes things easier to deal with.
-				_ = descriptor
-
-			}(srv, entry)
+			}(srv, direction, entry)
 		}
 
 		return block, nil

@@ -42,6 +42,10 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 
 	opts := options.G()
 
+	if err := s.state.Load(); err != nil {
+		return fmt.Errorf("failure to load synchronization state: %w", err)
+	}
+
 	if err := InjectSubscribers(s, network, networkId); err != nil {
 		return fmt.Errorf("failure to inject subscribers: %w", err)
 	}

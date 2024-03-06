@@ -8,8 +8,8 @@ import (
 
 func (s *State) Monitor(ctx context.Context) error {
 	zap.L().Info("Starting up state monitoring package...")
-
-	ticker := time.NewTicker(3 * time.Second)
+	tickDuration := time.Duration(10 * time.Second)
+	ticker := time.NewTicker(tickDuration)
 	defer ticker.Stop()
 
 	for {
@@ -21,8 +21,13 @@ func (s *State) Monitor(ctx context.Context) error {
 			zap.L().Info(
 				"Synchronization state report",
 				zap.Any("current_head_block_number", currentState.CurrentBlockHeadNumber),
+				zap.Any("latest_inspected_head_block_number", currentState.LatestInspectedHeadBlock),
+				zap.Any("start_archive_block", currentState.StartBlockNumber),
+				zap.Any("current_archive_block", currentState.LatestInspectedArchiveBlock),
+				zap.Any("end_archive_block", currentState.EndBlockNumber),
+				zap.Any("percentage_completed", currentState.PercentageCompleted),
 			)
-			ticker.Reset(3 * time.Second)
+			ticker.Reset(tickDuration)
 		}
 	}
 }
