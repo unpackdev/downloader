@@ -8,7 +8,6 @@ import (
 
 	"github.com/99designs/gqlgen/api"
 	"github.com/99designs/gqlgen/codegen/config"
-	"github.com/99designs/gqlgen/plugin/modelgen"
 	"github.com/unpackdev/inspector/schemas"
 )
 
@@ -40,9 +39,9 @@ func main() {
 	}
 
 	// Attaching the mutation function onto modelgen plugin
-	p := modelgen.Plugin{}
+	//p := modelgen.Plugin{}
 
-	err = api.Generate(cfg, api.ReplacePlugin(&p))
+	err = api.Generate(cfg)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())

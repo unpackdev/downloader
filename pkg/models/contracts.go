@@ -22,7 +22,7 @@ type Contract struct {
 	BlockNumber          *types.BigInt
 	BlockHash            types.Hash
 	TransactionHash      types.Hash
-	Address              common.Address
+	Address              types.Address
 	Name                 string
 	Standards            types.Standards
 	Proxy                bool
@@ -167,7 +167,13 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 	standardsJson, _ := utils.ToJSON(contract.Standards)
 	proxyImplementationJson, _ := utils.ToJSON(contract.ProxyImplementations)
 	completedStates, _ := utils.ToJSON(contract.CompletedStates)
-	failedStates, _ := utils.ToJSON(contract.FailedStates)
+
+	failedStates, fsErr := utils.ToJSON(contract.FailedStates)
+	if fsErr != nil {
+		return fmt.Errorf(
+			"error casting failed states to json: %w", fsErr,
+		)
+	}
 
 	// Execute SQL statement
 	_, err = stmt.Exec(
@@ -175,7 +181,7 @@ func SaveContract(db *sql.DB, contract *Contract) error {
 		contract.BlockNumber.Uint64(),
 		contract.BlockHash.Hex(),
 		contract.TransactionHash.Hex(),
-		contract.Address,
+		contract.Address.Hex(),
 		contract.Name,
 		string(standardsJson),
 		contract.Proxy,

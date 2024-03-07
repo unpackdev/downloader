@@ -47,6 +47,25 @@ var (
 
 			return bs, nil
 		},
+		subscribers.UnpackerSubscriber: func(srv *Service, network utils.Network, networkId utils.NetworkID) (subscribers.Subscriber, error) {
+			hooks := make(map[subscribers.HookType][]subscribers.UnpackerHookFn)
+			hooks[subscribers.PostHook] = []subscribers.UnpackerHookFn{
+				UnpackerInterceptor(srv),
+			}
+
+			// Have to use .String() - otherwise cycle import...
+			opts, err := options.G().Syncer.GetByType(subscribers.UnpackerSubscriber.String())
+			if err != nil {
+				return nil, err
+			}
+
+			bs, err := subscribers.NewUnpacker(srv.ctx, srv.pool, srv.state, srv.nats, opts, hooks)
+			if err != nil {
+				return nil, err
+			}
+
+			return bs, nil
+		},
 	}
 )
 

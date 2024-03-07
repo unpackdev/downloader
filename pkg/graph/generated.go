@@ -38,6 +38,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Mutations() MutationsResolver
 	Query() QueryResolver
 }
 
@@ -54,8 +55,6 @@ type ComplexityRoot struct {
 		CompilerVersion      func(childComplexity int) int
 		Completed            func(childComplexity int) int
 		CompletedStates      func(childComplexity int) int
-		Corrupted            func(childComplexity int) int
-		CorruptedReason      func(childComplexity int) int
 		CreatedAt            func(childComplexity int) int
 		CurrentState         func(childComplexity int) int
 		EvmVersion           func(childComplexity int) int
@@ -91,6 +90,10 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	Mutations struct {
+		Unpack func(childComplexity int, contract ContractUnpackRequest) int
+	}
+
 	Network struct {
 		CanonicalName func(childComplexity int) int
 		Maintenance   func(childComplexity int) int
@@ -114,6 +117,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type MutationsResolver interface {
+	Unpack(ctx context.Context, contract ContractUnpackRequest) (*Contract, error)
+}
 type QueryResolver interface {
 	Networks(ctx context.Context, networkID *int, name *string, symbol *string, suspended *bool, maintenance *bool) ([]*Network, error)
 	Contracts(ctx context.Context, networkIds []int, blockNumbers []int, blockHashes []string, transactionHashes []string, addresses []string, limit *int, first *int, after *string) (*ContractConnection, error)
@@ -193,20 +199,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Contract.CompletedStates(childComplexity), true
-
-	case "Contract.corrupted":
-		if e.complexity.Contract.Corrupted == nil {
-			break
-		}
-
-		return e.complexity.Contract.Corrupted(childComplexity), true
-
-	case "Contract.corruptedReason":
-		if e.complexity.Contract.CorruptedReason == nil {
-			break
-		}
-
-		return e.complexity.Contract.CorruptedReason(childComplexity), true
 
 	case "Contract.createdAt":
 		if e.complexity.Contract.CreatedAt == nil {
@@ -397,6 +389,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ContractEdge.Node(childComplexity), true
 
+	case "Mutations.unpack":
+		if e.complexity.Mutations.Unpack == nil {
+			break
+		}
+
+		args, err := ec.field_Mutations_unpack_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutations.Unpack(childComplexity, args["contract"].(ContractUnpackRequest)), true
+
 	case "Network.canonicalName":
 		if e.complexity.Network.CanonicalName == nil {
 			break
@@ -505,7 +509,9 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap()
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputContractUnpackRequest,
+	)
 	first := true
 
 	switch rc.Operation.Operation {
@@ -538,6 +544,21 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			}
 
 			return &response
+		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			data := ec._Mutations(ctx, rc.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
 		}
 
 	default:
@@ -640,6 +661,7 @@ type Query {
 
 schema {
     query: Query
+    mutation: Mutations
 }
 
 """
@@ -647,98 +669,157 @@ A representation of a blockchain smart contract and its associated metadata.
 """
 type Contract {
     """
-    The network information associated with this contract.
+    The network information associated with this contract, detailing on which blockchain network the contract resides.
     """
     network: Network!
-    
+
     """
-    The blockchain address of the contract.
+    The blockchain address of the contract, serving as a unique identifier on the blockchain.
     """
     address: String!
 
     """
-    The name of the contract.
+    The name of the contract, providing a human-readable identifier.
     """
     name: String!
 
+    """
+    The block number where the contract was deployed.
+    """
     blockNumber: Int!
+
+    """
+    The hash of the block where the contract was deployed.
+    """
     blockHash: String!
+
+    """
+    The hash of the transaction through which the contract was deployed.
+    """
     transactionHash: String!
+
+    """
+    A list of standards that the contract claims to implement, e.g., ERC20, ERC721.
+    """
     standards: [String!]
+
+    """
+    The software license of the contract source code, if available.
+    """
     license: String
+
+    """
+    Indicates whether optimization was enabled during the contract's compilation.
+    """
     optimized: Boolean!
+
+    """
+    The number of optimization runs performed if optimization was enabled.
+    """
     optimizationRuns: Int!
+
+    """
+    Indicates if the contract is a proxy contract.
+    """
     proxy: Boolean!
+
+    """
+    A list of addresses for contracts that are implementations of this proxy, if applicable.
+    """
     implementations: [String!]
 
+    """
+    The contract's ABI (Application Binary Interface) as a JSON string.
+    """
     abi: String
+
+    """
+    The bytecode executed during contract creation.
+    """
     executionBytecode: String
+
+    """
+    The bytecode of the contract as deployed on the blockchain.
+    """
     bytecode: String
+
+    """
+    The EVM (Ethereum Virtual Machine) version the contract was compiled for.
+    """
     evmVersion: String
+
+    """
+    Indicates if the contract's source code has been verified.
+    """
     verified: Boolean!
+
+    """
+    Indicates if the source code for the contract is available.
+    """
     sourceAvailable: Boolean!
+
+    """
+    The provider from which the contract's sources were obtained, if available.
+    """
     sourcesProvider: String
+
+    """
+    The provider used for verifying the contract's source code, if verification was performed.
+    """
     verificationProvider: String
+
+    """
+    Indicates if the contract has been self-destructed.
+    """
     selfDestructed: Boolean!
 
     """
-    The version of the Solidity compiler used.
+    The version of the Solidity compiler used to compile this contract.
     """
     compilerVersion: String
 
     """
-    The version of the Solgo compiler used.
+    The version of the Solgo compiler used, if applicable.
     """
     solgoVersion: String
 
     """
-    The current processing state of the contract.
+    The current processing state of the contract, indicating the stage in the contract's lifecycle.
     """
     currentState: String!
-    
+
     """
-    The next expected processing state of the contract.
+    The next expected processing state of the contract, indicating the anticipated next step in processing.
     """
     nextState: String!
-    
+
     """
-    The states that have been completed in processing the contract.
+    A list of states that have been completed in the processing of the contract, showing progress.
     """
     completedStates: [String!]!
 
     """
-    The states that have been failed in processing the contract.
+    A list of states that have failed during the processing of the contract, indicating errors or issues.
     """
     failedStates: [String!]!
 
-
     """
-    Indicates if the contract processing has been completed.
+    Indicates if the processing of the contract has been completed.
     """
     completed: Boolean!
-    
+
     """
-    Indicates if the contract is only partially processed.
+    Indicates if the contract has been only partially processed, potentially due to errors or interruptions.
     """
     partial: Boolean!
-    
+
     """
-    Indicates if the contract has been corrupted.
-    """
-    corrupted: Boolean!
-    
-    """
-    The reason for the contract being marked as corrupted.
-    """
-    corruptedReason: String
-    
-    """
-    The timestamp indicating when the contract data was created in the database.
+    The timestamp indicating when the contract data was initially created in the database.
     """
     createdAt: Time!
-    
+
     """
-    The timestamp indicating the last update time for the contract data in the database.
+    The timestamp indicating the last time the contract data was updated in the database.
     """
     updatedAt: Time!
 }
@@ -773,6 +854,33 @@ type ContractEdge {
     cursor: String!
 }
 
+
+"""
+Request Input type for specifying a contract address and its corresponding network ID for unpacking.
+"""
+input ContractUnpackRequest {
+    """
+    The blockchain address of the contract to be unpacked.
+    """
+    address: String!
+
+    """
+    The ID of the network where the contract resides.
+    """
+    networkId: Int!
+}
+
+"""
+Mutation to submit one or more contracts for unpacking based on their addresses and network IDs.
+After unpacking, it returns a connection to the affected or related contracts, allowing for pagination and further inspection.
+"""
+type Mutations {
+    """
+    Submits a list of contracts identified by their addresses and network IDs for unpacking.
+    After the process, it provides access to a paginated list of contracts that were impacted or are relevant to the unpacking operation.
+    """
+    unpack(contract: ContractUnpackRequest!): Contract!
+}
 
 """
 A representation of a network with its essential details.
@@ -848,6 +956,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutations_unpack_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 ContractUnpackRequest
+	if tmp, ok := rawArgs["contract"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contract"))
+		arg0, err = ec.unmarshalNContractUnpackRequest2githubᚗcomᚋunpackdevᚋinspectorᚋpkgᚋgraphᚐContractUnpackRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["contract"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -2290,91 +2413,6 @@ func (ec *executionContext) fieldContext_Contract_partial(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Contract_corrupted(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Contract_corrupted(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Corrupted, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Contract_corrupted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Contract",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Contract_corruptedReason(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Contract_corruptedReason(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CorruptedReason, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Contract_corruptedReason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Contract",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Contract_createdAt(ctx context.Context, field graphql.CollectedField, obj *Contract) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Contract_createdAt(ctx, field)
 	if err != nil {
@@ -2664,10 +2702,6 @@ func (ec *executionContext) fieldContext_ContractEdge_node(ctx context.Context, 
 				return ec.fieldContext_Contract_completed(ctx, field)
 			case "partial":
 				return ec.fieldContext_Contract_partial(ctx, field)
-			case "corrupted":
-				return ec.fieldContext_Contract_corrupted(ctx, field)
-			case "corruptedReason":
-				return ec.fieldContext_Contract_corruptedReason(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Contract_createdAt(ctx, field)
 			case "updatedAt":
@@ -2719,6 +2753,125 @@ func (ec *executionContext) fieldContext_ContractEdge_cursor(ctx context.Context
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutations_unpack(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutations_unpack(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutations().Unpack(rctx, fc.Args["contract"].(ContractUnpackRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*Contract)
+	fc.Result = res
+	return ec.marshalNContract2ᚖgithubᚗcomᚋunpackdevᚋinspectorᚋpkgᚋgraphᚐContract(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutations_unpack(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutations",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "network":
+				return ec.fieldContext_Contract_network(ctx, field)
+			case "address":
+				return ec.fieldContext_Contract_address(ctx, field)
+			case "name":
+				return ec.fieldContext_Contract_name(ctx, field)
+			case "blockNumber":
+				return ec.fieldContext_Contract_blockNumber(ctx, field)
+			case "blockHash":
+				return ec.fieldContext_Contract_blockHash(ctx, field)
+			case "transactionHash":
+				return ec.fieldContext_Contract_transactionHash(ctx, field)
+			case "standards":
+				return ec.fieldContext_Contract_standards(ctx, field)
+			case "license":
+				return ec.fieldContext_Contract_license(ctx, field)
+			case "optimized":
+				return ec.fieldContext_Contract_optimized(ctx, field)
+			case "optimizationRuns":
+				return ec.fieldContext_Contract_optimizationRuns(ctx, field)
+			case "proxy":
+				return ec.fieldContext_Contract_proxy(ctx, field)
+			case "implementations":
+				return ec.fieldContext_Contract_implementations(ctx, field)
+			case "abi":
+				return ec.fieldContext_Contract_abi(ctx, field)
+			case "executionBytecode":
+				return ec.fieldContext_Contract_executionBytecode(ctx, field)
+			case "bytecode":
+				return ec.fieldContext_Contract_bytecode(ctx, field)
+			case "evmVersion":
+				return ec.fieldContext_Contract_evmVersion(ctx, field)
+			case "verified":
+				return ec.fieldContext_Contract_verified(ctx, field)
+			case "sourceAvailable":
+				return ec.fieldContext_Contract_sourceAvailable(ctx, field)
+			case "sourcesProvider":
+				return ec.fieldContext_Contract_sourcesProvider(ctx, field)
+			case "verificationProvider":
+				return ec.fieldContext_Contract_verificationProvider(ctx, field)
+			case "selfDestructed":
+				return ec.fieldContext_Contract_selfDestructed(ctx, field)
+			case "compilerVersion":
+				return ec.fieldContext_Contract_compilerVersion(ctx, field)
+			case "solgoVersion":
+				return ec.fieldContext_Contract_solgoVersion(ctx, field)
+			case "currentState":
+				return ec.fieldContext_Contract_currentState(ctx, field)
+			case "nextState":
+				return ec.fieldContext_Contract_nextState(ctx, field)
+			case "completedStates":
+				return ec.fieldContext_Contract_completedStates(ctx, field)
+			case "failedStates":
+				return ec.fieldContext_Contract_failedStates(ctx, field)
+			case "completed":
+				return ec.fieldContext_Contract_completed(ctx, field)
+			case "partial":
+				return ec.fieldContext_Contract_partial(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Contract_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Contract_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Contract", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutations_unpack_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -5241,6 +5394,40 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputContractUnpackRequest(ctx context.Context, obj interface{}) (ContractUnpackRequest, error) {
+	var it ContractUnpackRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"address", "networkId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "address":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Address = data
+		case "networkId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkId"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkID = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -5372,13 +5559,6 @@ func (ec *executionContext) _Contract(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "corrupted":
-			out.Values[i] = ec._Contract_corrupted(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "corruptedReason":
-			out.Values[i] = ec._Contract_corruptedReason(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Contract_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5474,6 +5654,55 @@ func (ec *executionContext) _ContractEdge(ctx context.Context, sel ast.Selection
 			}
 		case "cursor":
 			out.Values[i] = ec._ContractEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var mutationsImplementors = []string{"Mutations"}
+
+func (ec *executionContext) _Mutations(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationsImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutations",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
+			Object: field.Name,
+			Field:  field,
+		})
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutations")
+		case "unpack":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutations_unpack(ctx, field)
+			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6058,6 +6287,10 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNContract2githubᚗcomᚋunpackdevᚋinspectorᚋpkgᚋgraphᚐContract(ctx context.Context, sel ast.SelectionSet, v Contract) graphql.Marshaler {
+	return ec._Contract(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNContract2ᚖgithubᚗcomᚋunpackdevᚋinspectorᚋpkgᚋgraphᚐContract(ctx context.Context, sel ast.SelectionSet, v *Contract) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -6134,6 +6367,11 @@ func (ec *executionContext) marshalNContractEdge2ᚖgithubᚗcomᚋunpackdevᚋi
 		return graphql.Null
 	}
 	return ec._ContractEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNContractUnpackRequest2githubᚗcomᚋunpackdevᚋinspectorᚋpkgᚋgraphᚐContractUnpackRequest(ctx context.Context, v interface{}) (ContractUnpackRequest, error) {
+	res, err := ec.unmarshalInputContractUnpackRequest(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {

@@ -2,6 +2,7 @@ package subscribers
 
 import (
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/unpackdev/inspector/pkg/events"
 )
 
 // HookType defines the stage at which a hook should be executed relative
@@ -25,3 +26,5 @@ const (
 // Implementations of this function can modify the block and must return the
 // modified block or an error if the processing fails.
 type BlockHookFn func(block *types.Block) (*types.Block, error)
+
+type UnpackerHookFn func(block *events.Unpack) error

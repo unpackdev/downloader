@@ -135,6 +135,8 @@ func (b *Block) Start() error {
 			// Cancel the context for the state... We cannot use defer...
 			cancel()
 
+			fmt.Println("NEW HEAD RECEIVED....", block.NumberU64())
+
 			// Execute post hooks on the block.
 			for _, hook := range b.hooks[PostHook] {
 				block, err := hook(block)

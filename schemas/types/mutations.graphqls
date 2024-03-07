@@ -1,0 +1,26 @@
+"""
+Request Input type for specifying a contract address and its corresponding network ID for unpacking.
+"""
+input ContractUnpackRequest {
+    """
+    The blockchain address of the contract to be unpacked.
+    """
+    address: String!
+
+    """
+    The ID of the network where the contract resides.
+    """
+    networkId: Int!
+}
+
+"""
+Mutation to submit one or more contracts for unpacking based on their addresses and network IDs.
+After unpacking, it returns a connection to the affected or related contracts, allowing for pagination and further inspection.
+"""
+type Mutations {
+    """
+    Submits a list of contracts identified by their addresses and network IDs for unpacking.
+    After the process, it provides access to a paginated list of contracts that were impacted or are relevant to the unpacking operation.
+    """
+    unpack(contract: ContractUnpackRequest!): Contract!
+}

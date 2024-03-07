@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/unpackdev/inspector/pkg/entries"
+	"github.com/unpackdev/inspector/pkg/events"
+	"github.com/unpackdev/inspector/pkg/options"
 	"github.com/unpackdev/inspector/pkg/state"
 	"github.com/unpackdev/inspector/pkg/unpacker"
+	"github.com/unpackdev/solgo/contracts"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
 	"time"
@@ -160,5 +163,83 @@ func BlockInterceptor(srv *Service, network utils.Network, networkId utils.Netwo
 		}
 
 		return block, nil
+	}
+}
+
+func UnpackerInterceptor(srv *Service) func(event *events.Unpack) error {
+	return func(event *events.Unpack) error {
+		networkId := utils.NetworkID(event.NetworkId)
+		network := networkId.ToNetwork()
+
+		ctx, cancel := context.WithTimeout(srv.ctx, 30*time.Second)
+		defer cancel()
+
+		// First we need to initialize new contract instance. Reason why this is done prior to unpacking is because
+		// we need to know block and transaction information. As well, no need to unpack the contract if one is not actual contract
+		// or is being destroyed.
+		contract, err := contracts.NewContract(
+			ctx, network, srv.pool, nil, nil, nil, nil,
+			srv.etherscan, nil, srv.bindManager, nil, nil,
+			event.Address,
+		)
+		if err != nil {
+			return err
+		}
+
+		entry := &entries.Entry{
+			Network:      network,
+			NetworkID:    networkId,
+			ContractAddr: event.Address,
+		}
+
+		if entry.Header == nil || entry.Tx == nil || entry.Receipt == nil {
+			if err := contract.DiscoverChainInfo(ctx, options.G().Unpacker.OtsEnabled); err != nil {
+				return err
+			}
+		} else {
+			contract.SetBlock(entry.Header)
+			contract.SetTransaction(entry.Tx)
+			contract.SetReceipt(entry.Receipt)
+		}
+
+		// Basically, SolGo AST parser can panic in time to time...
+		// What we want here is to capture these events and as well to report them as critical later on
+		// with grafana/prom/loki being up...
+		defer func(cloneEntry *entries.Entry) {
+			if r := recover(); r != nil {
+				zap.L().Error(
+					"Recovered from panic in contract unpacking process...",
+					zap.Any("panic", r),
+					zap.Any("network", cloneEntry.Network),
+					zap.Any("contract_address", cloneEntry.ContractAddr),
+					zap.Uint64("contract_block_number", cloneEntry.Header.Number.Uint64()),
+					zap.String("contract_tx_hash", cloneEntry.Tx.Hash().Hex()),
+				)
+			}
+		}(entry)
+
+		_, err = srv.unpacker.Unpack(ctx, entry.GetDescriptor(srv.unpacker, contract), unpacker.DiscoverState)
+		if err != nil {
+			return err
+		}
+
+		// Mark event as resolved. We did not receive any type of errors so, we're cool!
+		event.Resolved = true
+
+		dataBytes, err := event.MarshalBinary()
+		if err != nil {
+			return fmt.Errorf(
+				"failure to marshal unpacker response event: %s", err,
+			)
+		}
+
+		if err := srv.nats.Publish(event.CorrelationID, dataBytes); err != nil {
+			return fmt.Errorf(
+				"failure to publish unpacker correlation event acknowledgement '%s': %w",
+				event.CorrelationID, err,
+			)
+		}
+
+		return nil
 	}
 }

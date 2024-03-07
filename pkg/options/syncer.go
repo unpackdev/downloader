@@ -6,6 +6,7 @@ import (
 
 type Subscriber struct {
 	Enabled          bool   `yaml:"enabled"`
+	SubjectName      string `yaml:"subjectName"`
 	Network          string `yaml:"network"`
 	Resumption       bool   `yaml:"resumption"`
 	Type             string `yaml:"type"`

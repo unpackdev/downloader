@@ -31,7 +31,7 @@ func (d *Descriptor) GetContractEntry() *models.Contract {
 		BlockNumber:          types.NewBigInt(d.Header.Number),
 		BlockHash:            types.NewHash(d.Header.Hash()),
 		TransactionHash:      types.NewHash(d.Tx.Hash()),
-		Address:              d.GetAddr(),
+		Address:              types.NewAddress(d.GetAddr()),
 		Name:                 descriptor.GetName(),
 		Standards:            make([]standards.Standard, 0),
 		Proxy:                descriptor.Proxy,

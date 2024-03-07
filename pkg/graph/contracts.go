@@ -2,9 +2,12 @@ package graph
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/unpackdev/inspector/pkg/models"
 	"github.com/unpackdev/inspector/pkg/options"
 	"github.com/unpackdev/solgo/utils"
@@ -158,4 +161,92 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 	}
 
 	return toReturn, nil
+}
+
+func (r *mutationResolver) resolveContract(ctx context.Context, networkId int64, address common.Address) (*Contract, error) {
+	dialect := goqu.Dialect("sqlite3")
+	selectDsl := dialect.From("contracts").Select(
+		"id", "network_id", "block_number", "block_hash", "transaction_hash", "address", "name",
+		"standards", "proxy", "license", "compiler_version", "solgo_version", "optimized",
+		"optimization_runs", "evm_version", "abi", "verified", "sources_provider", "verification_provider",
+		"execution_bytecode", "bytecode", "source_available", "safety_state", "self_destructed", "proxy_implementations",
+		"completed_states", "failed_states", "processed", "partial", "created_at", "updated_at",
+	).Where(goqu.Ex{
+		"network_id": goqu.Op{"eq": networkId},
+		"address":    goqu.Op{"eq": address.Hex()},
+	})
+
+	query, params, err := selectDsl.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("error preparing query: %w", err)
+	}
+
+	fmt.Println(query)
+
+	row := r.Db.GetDB().QueryRowContext(ctx, query, params...)
+	if err := row.Err(); err != nil {
+		return nil, fmt.Errorf("error executing query: %w", err)
+	}
+
+	var contract models.Contract
+
+	err = row.Scan(
+		&contract.Id, &contract.NetworkId, &contract.BlockNumber, &contract.BlockHash, &contract.TransactionHash, &contract.Address,
+		&contract.Name, &contract.Standards, &contract.Proxy, &contract.License, &contract.CompilerVersion,
+		&contract.SolgoVersion, &contract.Optimized, &contract.OptimizationRuns,
+		&contract.EVMVersion, &contract.ABI, &contract.Verified, &contract.SourcesProvider,
+		&contract.VerificationProvider, &contract.ExecutionBytecode, &contract.Bytecode, &contract.SourceAvailable,
+		&contract.SafetyState, &contract.SelfDestructed, &contract.ProxyImplementations,
+		&contract.CompletedStates, &contract.FailedStates, &contract.Processed, &contract.Partial,
+		&contract.CreatedAt, &contract.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("contract not found")
+		}
+
+		return nil, fmt.Errorf("error scanning row: %w", err)
+	}
+
+	network, _ := options.G().GetNetworkById(contract.NetworkId.Uint64())
+
+	return &Contract{
+		Network: &Network{
+			Name:          network.Name,
+			NetworkID:     network.NetworkId,
+			Symbol:        network.Symbol,
+			CanonicalName: network.CanonicalName,
+			Website:       network.Website,
+			Suspended:     network.Suspended,
+			Maintenance:   network.Maintenance,
+		},
+		Address:              contract.Address.Hex(),
+		Standards:            contract.Standards.StringArray(),
+		Name:                 contract.Name,
+		BlockNumber:          int(contract.BlockNumber.Uint64()),
+		BlockHash:            contract.BlockHash.Hex(),
+		TransactionHash:      contract.TransactionHash.Hex(),
+		License:              &contract.License,
+		Optimized:            contract.Optimized,
+		OptimizationRuns:     int(contract.OptimizationRuns),
+		Proxy:                contract.Proxy,
+		Implementations:      contract.ProxyImplementations.StringArray(),
+		SolgoVersion:         &contract.SolgoVersion,
+		CompilerVersion:      &contract.CompilerVersion,
+		EvmVersion:           &contract.EVMVersion,
+		Verified:             contract.Verified,
+		SourceAvailable:      contract.SourceAvailable,
+		SourcesProvider:      &contract.SourcesProvider,
+		VerificationProvider: &contract.VerificationProvider,
+		SelfDestructed:       contract.SelfDestructed,
+		Abi:                  &contract.ABI,
+		ExecutionBytecode:    contract.ExecutionBytecode.ToHexPtr(),
+		Bytecode:             contract.Bytecode.ToHexPtr(),
+		CompletedStates:      contract.CompletedStates.StringArray(),
+		FailedStates:         contract.FailedStates.StringArray(),
+		Completed:            contract.Processed,
+		Partial:              contract.Partial,
+		CreatedAt:            contract.CreatedAt,
+		UpdatedAt:            contract.UpdatedAt,
+	}, nil
 }

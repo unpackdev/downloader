@@ -3,98 +3,157 @@ A representation of a blockchain smart contract and its associated metadata.
 """
 type Contract {
     """
-    The network information associated with this contract.
+    The network information associated with this contract, detailing on which blockchain network the contract resides.
     """
     network: Network!
-    
+
     """
-    The blockchain address of the contract.
+    The blockchain address of the contract, serving as a unique identifier on the blockchain.
     """
     address: String!
 
     """
-    The name of the contract.
+    The name of the contract, providing a human-readable identifier.
     """
     name: String!
 
+    """
+    The block number where the contract was deployed.
+    """
     blockNumber: Int!
+
+    """
+    The hash of the block where the contract was deployed.
+    """
     blockHash: String!
+
+    """
+    The hash of the transaction through which the contract was deployed.
+    """
     transactionHash: String!
+
+    """
+    A list of standards that the contract claims to implement, e.g., ERC20, ERC721.
+    """
     standards: [String!]
+
+    """
+    The software license of the contract source code, if available.
+    """
     license: String
+
+    """
+    Indicates whether optimization was enabled during the contract's compilation.
+    """
     optimized: Boolean!
+
+    """
+    The number of optimization runs performed if optimization was enabled.
+    """
     optimizationRuns: Int!
+
+    """
+    Indicates if the contract is a proxy contract.
+    """
     proxy: Boolean!
+
+    """
+    A list of addresses for contracts that are implementations of this proxy, if applicable.
+    """
     implementations: [String!]
 
+    """
+    The contract's ABI (Application Binary Interface) as a JSON string.
+    """
     abi: String
+
+    """
+    The bytecode executed during contract creation.
+    """
     executionBytecode: String
+
+    """
+    The bytecode of the contract as deployed on the blockchain.
+    """
     bytecode: String
+
+    """
+    The EVM (Ethereum Virtual Machine) version the contract was compiled for.
+    """
     evmVersion: String
+
+    """
+    Indicates if the contract's source code has been verified.
+    """
     verified: Boolean!
+
+    """
+    Indicates if the source code for the contract is available.
+    """
     sourceAvailable: Boolean!
+
+    """
+    The provider from which the contract's sources were obtained, if available.
+    """
     sourcesProvider: String
+
+    """
+    The provider used for verifying the contract's source code, if verification was performed.
+    """
     verificationProvider: String
+
+    """
+    Indicates if the contract has been self-destructed.
+    """
     selfDestructed: Boolean!
 
     """
-    The version of the Solidity compiler used.
+    The version of the Solidity compiler used to compile this contract.
     """
     compilerVersion: String
 
     """
-    The version of the Solgo compiler used.
+    The version of the Solgo compiler used, if applicable.
     """
     solgoVersion: String
 
     """
-    The current processing state of the contract.
+    The current processing state of the contract, indicating the stage in the contract's lifecycle.
     """
     currentState: String!
-    
+
     """
-    The next expected processing state of the contract.
+    The next expected processing state of the contract, indicating the anticipated next step in processing.
     """
     nextState: String!
-    
+
     """
-    The states that have been completed in processing the contract.
+    A list of states that have been completed in the processing of the contract, showing progress.
     """
     completedStates: [String!]!
 
     """
-    The states that have been failed in processing the contract.
+    A list of states that have failed during the processing of the contract, indicating errors or issues.
     """
     failedStates: [String!]!
 
-
     """
-    Indicates if the contract processing has been completed.
+    Indicates if the processing of the contract has been completed.
     """
     completed: Boolean!
-    
+
     """
-    Indicates if the contract is only partially processed.
+    Indicates if the contract has been only partially processed, potentially due to errors or interruptions.
     """
     partial: Boolean!
-    
+
     """
-    Indicates if the contract has been corrupted.
-    """
-    corrupted: Boolean!
-    
-    """
-    The reason for the contract being marked as corrupted.
-    """
-    corruptedReason: String
-    
-    """
-    The timestamp indicating when the contract data was created in the database.
+    The timestamp indicating when the contract data was initially created in the database.
     """
     createdAt: Time!
-    
+
     """
-    The timestamp indicating the last update time for the contract data in the database.
+    The timestamp indicating the last time the contract data was updated in the database.
     """
     updatedAt: Time!
 }
