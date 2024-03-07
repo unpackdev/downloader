@@ -1,0 +1,12 @@
+mutation UnpackContract {
+    unpack(contract: {
+        networkId: 1,
+        address: "0x6c629DfdB76B3beBD26C6904269320De880539b3"
+    }){
+        address
+        abi
+        blockNumber
+        transactionHash
+        blockHash
+    }
+}
