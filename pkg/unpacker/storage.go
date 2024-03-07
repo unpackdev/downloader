@@ -3,6 +3,7 @@ package unpacker
 import (
 	"fmt"
 	"github.com/unpackdev/inspector/pkg/models"
+	"github.com/unpackdev/inspector/pkg/models/types"
 	"github.com/unpackdev/solgo/standards"
 	"github.com/unpackdev/solgo/utils"
 	"path/filepath"
@@ -26,10 +27,10 @@ func (d *Descriptor) GetContractEntry() *models.Contract {
 	descriptor := d.GetContract().GetDescriptor()
 
 	toReturn := &models.Contract{
-		NetworkId:            d.NetworkID.ToBig(),
-		BlockNumber:          d.Header.Number,
-		BlockHash:            d.Header.Hash(),
-		TransactionHash:      d.Tx.Hash(),
+		NetworkId:            types.NewBigInt(d.NetworkID.ToBig()),
+		BlockNumber:          types.NewBigInt(d.Header.Number),
+		BlockHash:            types.NewHash(d.Header.Hash()),
+		TransactionHash:      types.NewHash(d.Tx.Hash()),
 		Address:              d.GetAddr(),
 		Name:                 descriptor.GetName(),
 		Standards:            make([]standards.Standard, 0),

@@ -6,8 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/unpackdev/inspector/pkg/machine"
-	"github.com/unpackdev/solgo/standards"
+	"github.com/unpackdev/inspector/pkg/models/types"
 	"github.com/unpackdev/solgo/utils"
 	"math/big"
 	"strings"
@@ -19,13 +18,13 @@ const ContractKeyPrefix = "contract:entry"
 
 type Contract struct {
 	Id                   int64
-	NetworkId            *big.Int
-	BlockNumber          *big.Int
-	BlockHash            common.Hash
-	TransactionHash      common.Hash
+	NetworkId            *types.BigInt
+	BlockNumber          *types.BigInt
+	BlockHash            types.Hash
+	TransactionHash      types.Hash
 	Address              common.Address
 	Name                 string
-	Standards            []standards.Standard
+	Standards            types.Standards
 	Proxy                bool
 	License              string
 	CompilerVersion      string
@@ -37,14 +36,14 @@ type Contract struct {
 	Verified             bool
 	SourcesProvider      string
 	VerificationProvider string
-	ExecutionBytecode    []byte
-	Bytecode             []byte
+	ExecutionBytecode    types.Bytecode
+	Bytecode             types.Bytecode
 	SafetyState          utils.SafetyStateType
 	SourceAvailable      bool
 	SelfDestructed       bool
-	ProxyImplementations []common.Address
-	CompletedStates      []machine.State
-	FailedStates         []machine.State
+	ProxyImplementations types.Addresses
+	CompletedStates      types.States
+	FailedStates         types.States
 	Processed            bool
 	Partial              bool
 	CreatedAt            time.Time
@@ -78,8 +77,6 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 
 	networkIdStr := networkId.Uint64()
 	blockNumberStr := blockNumber.Uint64()
-	var blockHash string
-	var txHash string
 	var standardsModel string
 	var executionBytecode string
 	var bytecode string
@@ -101,7 +98,7 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 	row := db.QueryRow(query, networkIdStr, blockNumberStr, address)
 
 	err := row.Scan(
-		&contract.Id, &networkIdStr, &blockNumberStr, &blockHash, &txHash,
+		&contract.Id, &contract.NetworkId, &contract.BlockNumber, &contract.BlockHash, &contract.TransactionHash,
 		&contract.Address, &contract.Name, &standardsModel, &contract.Proxy, &contract.License,
 		&contract.CompilerVersion, &contract.SolgoVersion, &contract.Optimized,
 		&contract.OptimizationRuns, &contract.EVMVersion, &contract.ABI,
@@ -118,10 +115,6 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 	}
 
 	// Convert the retrieved values back to their specific types
-	contract.NetworkId = new(big.Int).SetUint64(networkIdStr)
-	contract.BlockNumber = new(big.Int).SetUint64(blockNumberStr)
-	contract.BlockHash = common.HexToHash(blockHash)
-	contract.TransactionHash = common.HexToHash(txHash)
 	contract.ExecutionBytecode = common.Hex2Bytes(executionBytecode)
 	contract.Bytecode = common.Hex2Bytes(bytecode)
 	contract.SafetyState = utils.SafetyStateType(safetyState)

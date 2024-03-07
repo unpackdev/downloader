@@ -4,15 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/doug-martin/goqu/v9"
 	"github.com/unpackdev/inspector/pkg/options"
 
 	_ "modernc.org/sqlite"
 )
 
 type Db struct {
-	ctx  context.Context
-	opts *options.Options
-	db   *sql.DB
+	ctx    context.Context
+	opts   *options.Options
+	db     *sql.DB
+	goquDb *goqu.Database
 }
 
 // NewDB ...
@@ -42,9 +44,10 @@ func NewDB(ctx context.Context, opts *options.Options) (*Db, error) {
 	// -----------------------------------------------------------------------
 
 	toReturn := &Db{
-		ctx:  ctx,
-		opts: opts,
-		db:   db,
+		ctx:    ctx,
+		opts:   opts,
+		db:     db,
+		goquDb: goqu.New("sqlite3", db),
 	}
 
 	return toReturn, nil
@@ -61,3 +64,5 @@ func (d *Db) GetDialect() string {
 func (d *Db) GetDB() *sql.DB {
 	return d.db
 }
+
+func (d *Db) GetGoqu() *goqu.Database { return d.goquDb }

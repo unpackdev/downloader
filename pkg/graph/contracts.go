@@ -3,24 +3,23 @@ package graph
 import (
 	"context"
 	"fmt"
+	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 	"github.com/unpackdev/inspector/pkg/models"
 	"github.com/unpackdev/inspector/pkg/options"
+	"github.com/unpackdev/solgo/utils"
 	"math/big"
-	"strings"
 )
 
 func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, blockNumbers []int, blockHashes []string, transactionHashes []string, addresses []string, limit *int, first *int, after *string) (*ContractConnection, error) {
-	// Initialize the return structure with empty slices
 	toReturn := &ContractConnection{
 		Edges:    []*ContractEdge{},
 		PageInfo: &PageInfo{},
 	}
 
-	var actualLimit int
+	actualLimit := 10
 	if limit != nil {
 		actualLimit = *limit
-	} else {
-		actualLimit = 10 // Default limit value
 	}
 
 	var startAfter *big.Int
@@ -34,74 +33,91 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 		startAfter = big.NewInt(0) // Start from the beginning if 'after' is not provided
 	}
 
-	// Construct the query dynamically based on provided filters
-	var queryBuilder strings.Builder
-	queryBuilder.WriteString(
-		`SELECT 
-    			id, network_id, block_number, block_hash, transaction_hash,
-    			address, name, license, optimized, optimization_runs, proxy,
-    			created_at, updated_at 
-			FROM contracts WHERE id > ?`,
-	)
-	args := []interface{}{startAfter.Int64()}
+	preloads := GetPreloads(ctx)
 
-	if len(networkIds) > 0 {
-		queryBuilder.WriteString("AND network_id IN (")
-		for i, id := range networkIds {
-			if i > 0 {
-				queryBuilder.WriteString(",")
-			}
-			queryBuilder.WriteString("?")
-			args = append(args, id)
-		}
-		queryBuilder.WriteString(") ")
+	// TODO: Select only what is necessary by looking into the preloads
+	// We need to ensure that select is modified as well as scanner part in order for preloads to work
+	// This will speed up the result processing...
+	dialect := goqu.Dialect("sqlite3")
+	selectDsl := dialect.From("contracts").Select(
+		"id", "network_id", "block_number", "block_hash", "transaction_hash", "address", "name",
+		"standards", "proxy", "license", "compiler_version", "solgo_version", "optimized",
+		"optimization_runs", "evm_version", "abi", "verified", "sources_provider", "verification_provider",
+		"execution_bytecode", "bytecode", "source_available", "safety_state", "self_destructed", "proxy_implementations",
+		"completed_states", "failed_states", "processed", "partial", "created_at", "updated_at",
+	).Where(goqu.Ex{
+		"id": goqu.Op{"gt": startAfter.Int64()},
+	}).Order(goqu.C("id").Asc()).Limit(uint(actualLimit))
+
+	if networkIds != nil && len(networkIds) > 0 {
+		selectDsl = selectDsl.Where(goqu.C("network_id").In(networkIds))
 	}
 
-	if len(addresses) > 0 {
-		queryBuilder.WriteString("AND address IN (")
-		for i, addr := range addresses {
-			if i > 0 {
-				queryBuilder.WriteString(",")
-			}
-			queryBuilder.WriteString("?")
-			args = append(args, addr)
-		}
-		queryBuilder.WriteString(") ")
+	if addresses != nil && len(addresses) > 0 {
+		selectDsl = selectDsl.Where(goqu.C("address").In(networkIds))
 	}
 
-	queryBuilder.WriteString("ORDER BY id ASC LIMIT ?")
-	args = append(args, actualLimit)
+	if blockNumbers != nil && len(blockNumbers) > 0 {
+		selectDsl = selectDsl.Where(goqu.C("block_number").In(blockNumbers))
+	}
 
-	fmt.Println(args)
+	if blockHashes != nil && len(blockHashes) > 0 {
+		selectDsl = selectDsl.Where(goqu.C("block_hash").In(blockHashes))
+	}
 
-	// Execute the query
-	rows, err := r.Db.GetDB().QueryContext(ctx, queryBuilder.String(), args...)
+	if transactionHashes != nil && len(transactionHashes) > 0 {
+		selectDsl = selectDsl.Where(goqu.C("transaction_hash").In(transactionHashes))
+	}
+
+	query, params, err := selectDsl.ToSQL()
 	if err != nil {
-		return nil, fmt.Errorf("error executing query: %v", err)
+		return nil, fmt.Errorf("error preparing query: %w", err)
+	}
+
+	rows, err := r.Db.GetDB().QueryContext(ctx, query, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %w", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var edge ContractEdge
 		var contract models.Contract
-		var networkId uint64
-		var blockNumber uint64
-		var txHash string
-		var blockHash string
 
 		err := rows.Scan(
-			&contract.Id, &networkId, &blockNumber, &blockHash, &txHash, &contract.Address,
-			&contract.Name, &contract.License, &contract.Optimized, &contract.OptimizationRuns,
-			&contract.Proxy, &contract.CreatedAt, &contract.UpdatedAt,
+			&contract.Id, &contract.NetworkId, &contract.BlockNumber, &contract.BlockHash, &contract.TransactionHash, &contract.Address,
+			&contract.Name, &contract.Standards, &contract.Proxy, &contract.License, &contract.CompilerVersion,
+			&contract.SolgoVersion, &contract.Optimized, &contract.OptimizationRuns,
+			&contract.EVMVersion, &contract.ABI, &contract.Verified, &contract.SourcesProvider,
+			&contract.VerificationProvider, &contract.ExecutionBytecode, &contract.Bytecode, &contract.SourceAvailable,
+			&contract.SafetyState, &contract.SelfDestructed, &contract.ProxyImplementations,
+			&contract.CompletedStates, &contract.FailedStates, &contract.Processed, &contract.Partial,
+			&contract.CreatedAt, &contract.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		network, _ := options.G().GetNetworkById(networkId)
+		network, _ := options.G().GetNetworkById(contract.NetworkId.Uint64())
 
 		edge.Node = &Contract{
-			Network: &Network{
+			Address:          contract.Address.Hex(),
+			Name:             contract.Name,
+			BlockNumber:      int(contract.BlockNumber.Uint64()),
+			BlockHash:        contract.BlockHash.Hex(),
+			TransactionHash:  contract.TransactionHash.Hex(),
+			License:          &contract.License,
+			Optimized:        contract.Optimized,
+			OptimizationRuns: int(contract.OptimizationRuns),
+			Proxy:            contract.Proxy,
+			Implementations:  contract.ProxyImplementations.StringArray(),
+			SolgoVersion:     &contract.SolgoVersion,
+			Completed:        contract.Processed,
+			Partial:          contract.Partial,
+		}
+
+		if utils.StringInSlice("edges.node.network", preloads) {
+			edge.Node.Network = &Network{
 				Name:          network.Name,
 				NetworkID:     network.NetworkId,
 				Symbol:        network.Symbol,
@@ -109,28 +125,17 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 				Website:       network.Website,
 				Suspended:     network.Suspended,
 				Maintenance:   network.Maintenance,
-			},
-			Address:          contract.Address.Hex(),
-			Name:             contract.Name,
-			BlockNumber:      int(blockNumber),
-			BlockHash:        blockHash,
-			TransactionHash:  txHash,
-			License:          &contract.License,
-			Optimized:        contract.Optimized,
-			OptimizationRuns: int(contract.OptimizationRuns),
-			//Proxy:            contract.Proxy,
-			//Implementations:  entry.ImplementationAddrs,
-			SolgoVersion: &contract.SolgoVersion,
+			}
 		}
 
 		edge.Cursor = contract.EncodeCursor()
 		toReturn.Edges = append(toReturn.Edges, &edge)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating rows: %v", err)
 	}
 
-	// Set PageInfo based on the results
 	if len(toReturn.Edges) > 0 {
 		toReturn.PageInfo.StartCursor = toReturn.Edges[0].Cursor
 		toReturn.PageInfo.EndCursor = toReturn.Edges[len(toReturn.Edges)-1].Cursor
