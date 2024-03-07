@@ -19,3 +19,12 @@ func (s *Bytecode) Scan(value interface{}) error {
 func (s *Bytecode) Value() (driver.Value, error) {
 	return common.Bytes2Hex(*s), nil
 }
+
+func (s *Bytecode) ToHex() string {
+	return common.Bytes2Hex(*s)
+}
+
+func (s *Bytecode) ToHexPtr() *string {
+	hexData := s.ToHex()
+	return &hexData
+}

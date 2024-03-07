@@ -27,7 +27,7 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 	if after != nil {
 		startAfter, err = models.DecodeCursor(*after)
 		if err != nil {
-			return nil, fmt.Errorf("cannot decode 'after' into its appropriate representation: %s", err)
+			return nil, fmt.Errorf("cannot decode 'after' into its appropriate representation: %w", err)
 		}
 	} else {
 		startAfter = big.NewInt(0) // Start from the beginning if 'after' is not provided
@@ -95,25 +95,40 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 			&contract.CreatedAt, &contract.UpdatedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error scanning row: %v", err)
+			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
 
 		network, _ := options.G().GetNetworkById(contract.NetworkId.Uint64())
 
 		edge.Node = &Contract{
-			Address:          contract.Address.Hex(),
-			Name:             contract.Name,
-			BlockNumber:      int(contract.BlockNumber.Uint64()),
-			BlockHash:        contract.BlockHash.Hex(),
-			TransactionHash:  contract.TransactionHash.Hex(),
-			License:          &contract.License,
-			Optimized:        contract.Optimized,
-			OptimizationRuns: int(contract.OptimizationRuns),
-			Proxy:            contract.Proxy,
-			Implementations:  contract.ProxyImplementations.StringArray(),
-			SolgoVersion:     &contract.SolgoVersion,
-			Completed:        contract.Processed,
-			Partial:          contract.Partial,
+			Address:              contract.Address.Hex(),
+			Standards:            contract.Standards.StringArray(),
+			Name:                 contract.Name,
+			BlockNumber:          int(contract.BlockNumber.Uint64()),
+			BlockHash:            contract.BlockHash.Hex(),
+			TransactionHash:      contract.TransactionHash.Hex(),
+			License:              &contract.License,
+			Optimized:            contract.Optimized,
+			OptimizationRuns:     int(contract.OptimizationRuns),
+			Proxy:                contract.Proxy,
+			Implementations:      contract.ProxyImplementations.StringArray(),
+			SolgoVersion:         &contract.SolgoVersion,
+			CompilerVersion:      &contract.CompilerVersion,
+			EvmVersion:           &contract.EVMVersion,
+			Verified:             contract.Verified,
+			SourceAvailable:      contract.SourceAvailable,
+			SourcesProvider:      &contract.SourcesProvider,
+			VerificationProvider: &contract.VerificationProvider,
+			SelfDestructed:       contract.SelfDestructed,
+			Abi:                  &contract.ABI,
+			ExecutionBytecode:    contract.ExecutionBytecode.ToHexPtr(),
+			Bytecode:             contract.Bytecode.ToHexPtr(),
+			CompletedStates:      contract.CompletedStates.StringArray(),
+			FailedStates:         contract.FailedStates.StringArray(),
+			Completed:            contract.Processed,
+			Partial:              contract.Partial,
+			CreatedAt:            contract.CreatedAt,
+			UpdatedAt:            contract.UpdatedAt,
 		}
 
 		if utils.StringInSlice("edges.node.network", preloads) {
@@ -133,7 +148,7 @@ func (r *queryResolver) resolveContracts(ctx context.Context, networkIds []int, 
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %v", err)
+		return nil, fmt.Errorf("error iterating rows: %w", err)
 	}
 
 	if len(toReturn.Edges) > 0 {

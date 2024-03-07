@@ -13,16 +13,28 @@ type Contract struct {
 	// The blockchain address of the contract.
 	Address string `json:"address"`
 	// The name of the contract.
-	Name             string   `json:"name"`
-	BlockNumber      int      `json:"blockNumber"`
-	BlockHash        string   `json:"blockHash"`
-	TransactionHash  string   `json:"transactionHash"`
-	License          *string  `json:"license,omitempty"`
-	Optimized        bool     `json:"optimized"`
-	OptimizationRuns int      `json:"optimizationRuns"`
-	Proxy            bool     `json:"proxy"`
-	Implementations  []string `json:"implementations,omitempty"`
+	Name                 string   `json:"name"`
+	BlockNumber          int      `json:"blockNumber"`
+	BlockHash            string   `json:"blockHash"`
+	TransactionHash      string   `json:"transactionHash"`
+	Standards            []string `json:"standards,omitempty"`
+	License              *string  `json:"license,omitempty"`
+	Optimized            bool     `json:"optimized"`
+	OptimizationRuns     int      `json:"optimizationRuns"`
+	Proxy                bool     `json:"proxy"`
+	Implementations      []string `json:"implementations,omitempty"`
+	Abi                  *string  `json:"abi,omitempty"`
+	ExecutionBytecode    *string  `json:"executionBytecode,omitempty"`
+	Bytecode             *string  `json:"bytecode,omitempty"`
+	EvmVersion           *string  `json:"evmVersion,omitempty"`
+	Verified             bool     `json:"verified"`
+	SourceAvailable      bool     `json:"sourceAvailable"`
+	SourcesProvider      *string  `json:"sourcesProvider,omitempty"`
+	VerificationProvider *string  `json:"verificationProvider,omitempty"`
+	SelfDestructed       bool     `json:"selfDestructed"`
 	// The version of the Solidity compiler used.
+	CompilerVersion *string `json:"compilerVersion,omitempty"`
+	// The version of the Solgo compiler used.
 	SolgoVersion *string `json:"solgoVersion,omitempty"`
 	// The current processing state of the contract.
 	CurrentState string `json:"currentState"`
@@ -30,6 +42,8 @@ type Contract struct {
 	NextState string `json:"nextState"`
 	// The states that have been completed in processing the contract.
 	CompletedStates []string `json:"completedStates"`
+	// The states that have been failed in processing the contract.
+	FailedStates []string `json:"failedStates"`
 	// Indicates if the contract processing has been completed.
 	Completed bool `json:"completed"`
 	// Indicates if the contract is only partially processed.
@@ -88,4 +102,8 @@ type PageInfo struct {
 	StartCursor string `json:"startCursor"`
 	// The cursor for the last item in the current set.
 	EndCursor string `json:"endCursor"`
+}
+
+// Defines the queries available on the network.
+type Query struct {
 }

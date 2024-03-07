@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/api"
 	"github.com/99designs/gqlgen/codegen/config"
 	"github.com/99designs/gqlgen/plugin/modelgen"
-	"github.com/unpackdev/downloader/schemas"
+	"github.com/unpackdev/inspector/schemas"
 )
 
 const (

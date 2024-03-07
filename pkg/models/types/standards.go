@@ -20,3 +20,12 @@ func (s *Standards) Value() (driver.Value, error) {
 	value, err := utils.ToJSON(s)
 	return string(value), err
 }
+
+func (s *Standards) StringArray() []string {
+	toReturn := []string{}
+	for _, standard := range *s {
+		toReturn = append(toReturn, standard.String())
+	}
+
+	return toReturn
+}

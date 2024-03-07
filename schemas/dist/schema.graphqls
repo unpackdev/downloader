@@ -75,15 +75,30 @@ type Contract {
     blockNumber: Int!
     blockHash: String!
     transactionHash: String!
-
+    standards: [String!]
     license: String
     optimized: Boolean!
     optimizationRuns: Int!
     proxy: Boolean!
     implementations: [String!]
 
+    abi: String
+    executionBytecode: String
+    bytecode: String
+    evmVersion: String
+    verified: Boolean!
+    sourceAvailable: Boolean!
+    sourcesProvider: String
+    verificationProvider: String
+    selfDestructed: Boolean!
+
     """
     The version of the Solidity compiler used.
+    """
+    compilerVersion: String
+
+    """
+    The version of the Solgo compiler used.
     """
     solgoVersion: String
 
@@ -101,7 +116,13 @@ type Contract {
     The states that have been completed in processing the contract.
     """
     completedStates: [String!]!
-    
+
+    """
+    The states that have been failed in processing the contract.
+    """
+    failedStates: [String!]!
+
+
     """
     Indicates if the contract processing has been completed.
     """
