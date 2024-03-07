@@ -1,0 +1,54 @@
+{
+    # List contracts over paginated results
+    # for all or specific supported networks
+    contracts(networkIds:[1], limit: 1) {
+        edges{
+            node{
+                network {
+                    name
+                    networkId
+                    symbol
+                    canonicalName
+                    website
+                    suspended
+                    maintenance
+                }
+                address
+                name
+                blockNumber
+                blockHash
+                transactionHash
+                license
+                optimized
+                optimizationRuns
+                proxy
+                implementations
+                completedStates
+                failedStates
+                abi
+                executionBytecode
+                bytecode
+                standards
+                evmVersion
+                verified
+                sourceAvailable
+                sourcesProvider
+                verificationProvider
+                selfDestructed
+                compilerVersion
+                completed
+                partial
+                solgoVersion
+                createdAt
+                updatedAt
+            }
+            cursor
+        }
+        pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            startCursor
+        }
+    }
+}
