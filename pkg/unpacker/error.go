@@ -3,6 +3,7 @@ package unpacker
 import (
 	"context"
 	"github.com/unpackdev/inspector/pkg/machine"
+	"go.uber.org/zap"
 )
 
 // ErrorContractHandler defines a handler for processing contracts that have encountered errors.
@@ -35,6 +36,16 @@ func (dh *ErrorContractHandler) Enter(data machine.Data) (machine.Data, error) {
 // @TODO: Metrics should be written at this stage. I don't think anything else is necessary for now.
 func (dh *ErrorContractHandler) Process(data machine.Data) (machine.State, machine.Data, error) {
 	descriptor := toDescriptor(data)
+
+	zap.L().Error(
+		"failure to process contract unpacking",
+		zap.String("network", descriptor.GetNetwork().String()),
+		zap.Any("network_id", descriptor.GetNetworkID()),
+		zap.String("contract_address", descriptor.GetAddr().Hex()),
+		zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
+		zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
+		zap.String("source_provider", descriptor.GetContract().GetDescriptor().GetSourcesProvider()),
+	)
 	return DoneState, descriptor, nil
 }
 

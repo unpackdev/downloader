@@ -171,6 +171,7 @@ func (sm *StateMachine) Process() error {
 			}
 			return err
 		}
+
 		if nextState == sm.finalState {
 			return nil
 		}

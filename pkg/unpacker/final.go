@@ -7,6 +7,7 @@ import (
 	"github.com/unpackdev/inspector/pkg/options"
 	"go.uber.org/zap"
 	"path/filepath"
+	"strings"
 )
 
 type FinalContractHandler struct {
@@ -45,17 +46,34 @@ func (dh *FinalContractHandler) Process(data machine.Data) (machine.State, machi
 
 	if descriptor.GetContractModel() == nil {
 		if err := models.SaveContract(dh.u.db.GetDB(), entry); err != nil {
-			zap.L().Error(
-				"failure to save database contract entry",
-				zap.Error(err),
-				zap.String("network", descriptor.GetNetwork().String()),
-				zap.Any("network_id", descriptor.GetNetworkID()),
-				zap.String("contract_address", descriptor.GetAddr().Hex()),
-				zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
-				zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
-				zap.String("source_provider", cdescriptor.GetSourcesProvider()),
-			)
-			descriptor.AppendFailedState(FinalState)
+
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+				if err := models.UpdateContract(dh.u.db.GetDB(), entry); err != nil {
+					zap.L().Error(
+						"failure to update database contract entry",
+						zap.Error(err),
+						zap.String("network", descriptor.GetNetwork().String()),
+						zap.Any("network_id", descriptor.GetNetworkID()),
+						zap.String("contract_address", descriptor.GetAddr().Hex()),
+						zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
+						zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
+						zap.String("source_provider", cdescriptor.GetSourcesProvider()),
+					)
+					descriptor.AppendFailedState(FinalState)
+				}
+			} else {
+				zap.L().Error(
+					"failure to save database contract entry",
+					zap.Error(err),
+					zap.String("network", descriptor.GetNetwork().String()),
+					zap.Any("network_id", descriptor.GetNetworkID()),
+					zap.String("contract_address", descriptor.GetAddr().Hex()),
+					zap.Uint64("block_number", descriptor.GetHeader().Number.Uint64()),
+					zap.String("transaction_hash", descriptor.GetTransaction().Hash().Hex()),
+					zap.String("source_provider", cdescriptor.GetSourcesProvider()),
+				)
+				descriptor.AppendFailedState(FinalState)
+			}
 		}
 	} else {
 		if err := models.UpdateContract(dh.u.db.GetDB(), entry); err != nil {

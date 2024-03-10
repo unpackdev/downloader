@@ -202,7 +202,7 @@ func (r *mutationResolver) resolveContract(ctx context.Context, networkId int64,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("contract not found")
+			return nil, err
 		}
 
 		return nil, fmt.Errorf("error scanning row: %w", err)

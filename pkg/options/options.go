@@ -38,6 +38,7 @@ type Options struct {
 	Graphql          GraphQL            `yaml:"graphql"`
 	Pprof            Pprof              `yaml:"pprof"`
 	Ipfs             Ipfs               `yaml:"ipfs"`
+	Rpc              Rpc                `yaml:"rpc"`
 }
 
 // NewDefaultOptions creates a new Options object with the given configuration paths.

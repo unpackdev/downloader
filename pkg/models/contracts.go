@@ -225,6 +225,8 @@ func UpdateContract(db *sql.DB, contract *Contract) error {
         transaction_hash=?, 
         address=?, 
         name=?, 
+        standards=?,
+        proxy=?,
         license=?, 
         compiler_version=?, 
         solgo_version=?, 
@@ -232,11 +234,19 @@ func UpdateContract(db *sql.DB, contract *Contract) error {
         optimization_runs=?, 
         evm_version=?, 
         abi=?, 
-        verified=?, 
-        verification_provider=?, 
+        verified=?,
+        sources_provider=?,
+        verification_provider=?,
+        execution_bytecode=?,
+        bytecode=?,
+        source_available=?,
+        safety_state=?,
+        self_destructed=?,
+        proxy_implementations=?,
+        completed_states=?,
+        failed_states=?,
         processed=?, 
         partial=?, 
-        created_at=?, 
         updated_at=? 
         WHERE id=?`)
 	if err != nil {
@@ -244,14 +254,27 @@ func UpdateContract(db *sql.DB, contract *Contract) error {
 	}
 	defer stmt.Close()
 
+	standardsJson, _ := utils.ToJSON(contract.Standards)
+	proxyImplementationJson, _ := utils.ToJSON(contract.ProxyImplementations)
+	completedStates, _ := utils.ToJSON(contract.CompletedStates)
+
+	failedStates, fsErr := utils.ToJSON(contract.FailedStates)
+	if fsErr != nil {
+		return fmt.Errorf(
+			"error casting failed states to json: %w", fsErr,
+		)
+	}
+
 	// Execute SQL statement
 	_, err = stmt.Exec(
 		contract.NetworkId.Uint64(),
 		contract.BlockNumber.Uint64(),
 		contract.BlockHash.Hex(),
 		contract.TransactionHash.Hex(),
-		contract.Address,
+		contract.Address.Hex(),
 		contract.Name,
+		string(standardsJson),
+		contract.Proxy,
 		contract.License,
 		contract.CompilerVersion,
 		contract.SolgoVersion,
@@ -260,10 +283,18 @@ func UpdateContract(db *sql.DB, contract *Contract) error {
 		contract.EVMVersion,
 		contract.ABI,
 		contract.Verified,
+		contract.SourcesProvider,
 		contract.VerificationProvider,
+		common.Bytes2Hex(contract.ExecutionBytecode),
+		common.Bytes2Hex(contract.Bytecode),
+		contract.SourceAvailable,
+		contract.SafetyState.String(),
+		contract.SelfDestructed,
+		string(proxyImplementationJson),
+		string(completedStates),
+		string(failedStates),
 		contract.Processed,
 		contract.Partial,
-		contract.CreatedAt,
 		contract.UpdatedAt,
 		contract.Id,
 	)

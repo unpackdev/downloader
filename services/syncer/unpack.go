@@ -122,6 +122,9 @@ func (s *Service) UnpackFromEntry(ctx context.Context, entry *entries.Entry, sta
 		if err := contract.DiscoverChainInfo(ctx, options.G().Unpacker.OtsEnabled); err != nil {
 			return nil, err
 		}
+		entry.Header = contract.GetBlock()
+		entry.Tx = contract.GetTransaction()
+		entry.Receipt = contract.GetReceipt()
 	} else {
 		contract.SetBlock(entry.Header)
 		contract.SetTransaction(entry.Tx)

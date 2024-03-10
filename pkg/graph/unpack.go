@@ -13,6 +13,21 @@ func (r *mutationResolver) unpack(ctx context.Context, contract ContractUnpackRe
 	// Subscribing to the subject where the response is a specific request, in this case
 	// we're pushing new unpack request to the service that in async mode unpacks the contract...
 	correlationId := fmt.Sprintf("unpack.response.%d.%s", contract.NetworkID, contract.Address)
+
+	eventRequestData := events.Unpack{
+		CorrelationID: correlationId,
+		NetworkId:     int64(contract.NetworkID),
+		Address:       common.HexToAddress(contract.Address),
+	}
+
+	// Attempt to resolve from database prior we go into unpacking mode...
+	contractDb, err := r.resolveContract(ctx, eventRequestData.NetworkId, eventRequestData.Address)
+	if err == nil {
+		if contractDb.Completed && !contractDb.Partial {
+			return contractDb, nil
+		}
+	}
+
 	sub, err := r.Nats.SubscribeSync(correlationId)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -20,12 +35,6 @@ func (r *mutationResolver) unpack(ctx context.Context, contract ContractUnpackRe
 		)
 	}
 	defer sub.Unsubscribe()
-
-	eventRequestData := events.Unpack{
-		CorrelationID: correlationId,
-		NetworkId:     int64(contract.NetworkID),
-		Address:       common.HexToAddress(contract.Address),
-	}
 
 	dataBytes, err := eventRequestData.MarshalBinary()
 	if err != nil {

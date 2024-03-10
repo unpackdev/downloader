@@ -30,8 +30,17 @@ nodes:
     endpoint: "ws://localhost:8545"
     concurrentClients: 10
 
+rpc:
+  enabled: true
+  addr: "localhost:6877"
+
 nats:
+  enabled: true
   addr: "localhost:4222"
+
+ipfs:
+  enabled: false
+  addr: ""
 
 db:
   dialect: "sqlite3"
@@ -54,6 +63,9 @@ etherscan:
 
 syncer:
   subscribers:
+    - type: unpacker
+      enabled: true
+      subjectName: "contracts:unpack"
     - type: head
       enabled: true
       resumption: false
@@ -89,4 +101,4 @@ graphql:
 
 pprof:
   enabled: true
-  addr: "0.0.0.0:7599"
+  addr: "localhost:7599"

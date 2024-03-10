@@ -31,6 +31,7 @@ type Service struct {
 	cache       *cache.Redis
 	pprof       *pprof.Pprof
 	state       *state.State
+	rpc         *Server
 }
 
 func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error {
@@ -59,6 +60,12 @@ func (s *Service) Start(network utils.Network, networkId utils.NetworkID) error 
 	if opts.Pprof.Enabled {
 		g.Go(func() error {
 			return s.pprof.Start()
+		})
+	}
+
+	if opts.Rpc.Enabled {
+		g.Go(func() error {
+			return s.rpc.Start()
 		})
 	}
 
@@ -156,6 +163,14 @@ func NewService(ctx context.Context) (*Service, error) {
 		pprof:       pprof.New(ctx, opts.Pprof),
 		state:       stateManager,
 	}
+
+	rpcServer, err := NewGRPCServer(ctx, toReturn)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failure to create new rpc server: %w", err,
+		)
+	}
+	toReturn.rpc = rpcServer
 
 	return toReturn, nil
 }
