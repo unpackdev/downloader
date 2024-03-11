@@ -103,7 +103,7 @@ func (dh *DiscoverContractHandler) Process(data machine.Data) (machine.State, ma
 	// In 99% of the cases, states will require this particular state to be resolved prior it can be processed...
 	descriptor.AppendCompletedState(DiscoverState)
 
-	zap.L().Info(
+	zap.L().Debug(
 		"Contract dependencies discovery state completed",
 		zap.Any("network", descriptor.GetNetwork()),
 		zap.Any("network_id", descriptor.GetNetworkID()),

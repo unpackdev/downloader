@@ -2,17 +2,23 @@ package syncer
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/unpackdev/inspector/pkg/entries"
+	"github.com/unpackdev/inspector/pkg/helpers"
+	"github.com/unpackdev/inspector/pkg/models"
 	"github.com/unpackdev/inspector/pkg/options"
 	"github.com/unpackdev/inspector/pkg/unpacker"
 	contracts_pb "github.com/unpackdev/protos/dist/go/contracts"
 	server_pb "github.com/unpackdev/protos/dist/go/server"
+	"github.com/unpackdev/solgo"
 	"github.com/unpackdev/solgo/utils"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"net"
+	"path/filepath"
 	"sync"
 )
 
@@ -95,6 +101,46 @@ func (s *Server) Unpack(ctx context.Context, req *server_pb.UnpackRequest) (resp
 			return nil, err
 		}
 
+		contractResponse := &server_pb.UnpackResponse_ContractQueueResponse{
+			Status: server_pb.UnpackResponse_ContractQueueResponse_CQR_UNKNOWN,
+		}
+
+		// Now it's time to attempt to discover contract from the storage
+		contract, err := models.GetContractByAddress(s.db.GetDB(), networkId.ToBig(), common.HexToAddress(addrHex))
+		if err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return nil, err
+			}
+		} else {
+			contractResponse.Status = server_pb.UnpackResponse_ContractQueueResponse_CQR_FOUND
+			contractResponse.Contract = &contracts_pb.Contract{
+				NetworkId:        networkId.ToBig().Int64(),
+				Address:          addrHex,
+				Name:             contract.Name,
+				Abi:              contract.ABI,
+				License:          contract.License,
+				CompilerVersion:  contract.CompilerVersion,
+				BlockNumber:      contract.BlockNumber.Int64(),
+				BlockHash:        contract.BlockHash.Hex(),
+				TransactionHash:  contract.TransactionHash.Hex(),
+				Verified:         contract.Verified,
+				Optimized:        contract.Optimized,
+				IsProxy:          contract.Proxy,
+				OptimizationRuns: int32(contract.OptimizationRuns),
+			}
+
+			sourcesPath := filepath.Join(
+				options.G().Storage.ContractsPath,
+				helpers.GetStorageCachePath(network, contract.BlockNumber.String(), common.HexToAddress(addrHex)),
+			)
+
+			if sources, err := solgo.NewSourcesFromPath(contract.Name, sourcesPath); err == nil {
+				contractResponse.Contract.Sources = sources.ToProto()
+				resp.Contracts = append(resp.Contracts, contractResponse)
+				continue
+			}
+		}
+
 		entry := &entries.Entry{
 			Network:      network,
 			NetworkID:    networkId,
@@ -104,10 +150,6 @@ func (s *Server) Unpack(ctx context.Context, req *server_pb.UnpackRequest) (resp
 		descriptor, err := s.UnpackFromEntry(ctx, entry, unpacker.DiscoverState)
 		if err != nil {
 			return nil, err
-		}
-
-		contractResponse := &server_pb.UnpackResponse_ContractQueueResponse{
-			Status: server_pb.UnpackResponse_ContractQueueResponse_CQR_UNKNOWN,
 		}
 
 		if descriptor.GetContract() != nil && descriptor.GetContract().GetDescriptor() != nil {

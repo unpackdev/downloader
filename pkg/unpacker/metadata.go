@@ -41,7 +41,7 @@ func (dh *MetadataContractHandler) Process(data machine.Data) (machine.State, ma
 		_, err := contract.DiscoverMetadata(dh.ctx)
 		if err != nil {
 			if !strings.Contains(err.Error(), "provided bytecode slice is smaller than the length") {
-				zap.L().Error(
+				zap.L().Debug(
 					"failed to decode bytecode metadata from contract deployed code",
 					zap.Error(err),
 					zap.String("network", descriptor.GetNetwork().String()),

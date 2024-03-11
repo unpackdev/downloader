@@ -95,7 +95,81 @@ func GetContractByUniqueIndex(db *sql.DB, networkId *big.Int, blockNumber *big.I
 	FROM contracts 
 	WHERE network_id = ? AND block_number = ? AND address = ?`
 
-	row := db.QueryRow(query, networkIdStr, blockNumberStr, address)
+	row := db.QueryRow(query, networkIdStr, blockNumberStr, address.Hex())
+
+	err := row.Scan(
+		&contract.Id, &contract.NetworkId, &contract.BlockNumber, &contract.BlockHash, &contract.TransactionHash,
+		&contract.Address, &contract.Name, &standardsModel, &contract.Proxy, &contract.License,
+		&contract.CompilerVersion, &contract.SolgoVersion, &contract.Optimized,
+		&contract.OptimizationRuns, &contract.EVMVersion, &contract.ABI,
+		&contract.Verified, &contract.SourcesProvider, &contract.VerificationProvider,
+		&executionBytecode, &bytecode, &contract.SourceAvailable, &safetyState,
+		&contract.SelfDestructed, &proxyImplementations, &completedStates, &failedStates, &contract.Processed,
+		&contract.Partial, &contract.CreatedAt, &contract.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("error querying contract by unique index: %v", err)
+	}
+
+	// Convert the retrieved values back to their specific types
+	contract.ExecutionBytecode = common.Hex2Bytes(executionBytecode)
+	contract.Bytecode = common.Hex2Bytes(bytecode)
+	contract.SafetyState = utils.SafetyStateType(safetyState)
+
+	if err := utils.FromJSON([]byte(standardsModel), &contract.Standards); err != nil {
+		return nil, fmt.Errorf(
+			"failure to decode standards into contract: %w", err,
+		)
+	}
+
+	if err := utils.FromJSON([]byte(proxyImplementations), &contract.ProxyImplementations); err != nil {
+		return nil, fmt.Errorf(
+			"failure to decode proxy implementations into contract: %w", err,
+		)
+	}
+
+	if err := utils.FromJSON([]byte(completedStates), &contract.CompletedStates); err != nil {
+		return nil, fmt.Errorf(
+			"failure to decode completed states into contract: %w", err,
+		)
+	}
+
+	if err := utils.FromJSON([]byte(failedStates), &contract.FailedStates); err != nil {
+		return nil, fmt.Errorf(
+			"failure to decode completed states into contract: %w", err,
+		)
+	}
+
+	return &contract, nil
+}
+
+// GetContractByAddress retrieves a single contract from the database based on a unique combination of network_id, block_number, and address.
+func GetContractByAddress(db *sql.DB, networkId *big.Int, address common.Address) (*Contract, error) {
+	var contract Contract
+
+	networkIdStr := networkId.Uint64()
+	var standardsModel string
+	var executionBytecode string
+	var bytecode string
+	var safetyState string
+	var proxyImplementations string
+	var completedStates string
+	var failedStates string
+
+	query := `
+	SELECT 
+	    id, network_id, block_number, block_hash, transaction_hash, address, name, 
+		standards, proxy, license, compiler_version, solgo_version, optimized, optimization_runs, 
+		evm_version, abi, verified, sources_provider, verification_provider,
+	    execution_bytecode, bytecode, source_available, safety_state, self_destructed, 
+	    proxy_implementations, completed_states, failed_states, processed, partial, created_at, updated_at
+	FROM contracts 
+	WHERE network_id = ? AND address = ?`
+
+	row := db.QueryRow(query, networkIdStr, address.Hex())
 
 	err := row.Scan(
 		&contract.Id, &contract.NetworkId, &contract.BlockNumber, &contract.BlockHash, &contract.TransactionHash,
