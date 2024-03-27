@@ -113,7 +113,7 @@ func (b *Block) Start() error {
 			return err // Handle subscription errors.
 		case header := <-headCh:
 			// Process new head block.
-			block, err := client.BlockByHash(b.ctx, header.Hash())
+			block, err := client.BlockByNumber(b.ctx, header.Number)
 			if err != nil {
 				zap.L().Error("Failed to get block by hash", zap.Error(err), zap.Any("direction", HeadBlockSubscriber), zap.Uint64("header_number", header.Number.Uint64()), zap.String("header_hash", header.Hash().String()))
 				continue
