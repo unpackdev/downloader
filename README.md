@@ -1,4 +1,4 @@
-# Ethereum Smart Contracts Downloader and Storage Manager
+# (Un)Pack Introspector - Ethereum-based smart contract downloader and introspection toolkit
 
 ## UNDER EARLY DEVELOPMENT
 
